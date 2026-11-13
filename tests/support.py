@@ -30,7 +30,9 @@ def solid_png(color: tuple[float, float, float], size: int = 48) -> bytes:
     context = cairo.Context(surface)
     context.set_source_rgb(*color)
     context.paint()
-    path = Path(tempfile.mkstemp(suffix=".png")[1])
+    handle, name = tempfile.mkstemp(suffix=".png")
+    os.close(handle)
+    path = Path(name)
     try:
         surface.write_to_png(str(path))
         return path.read_bytes()
@@ -99,8 +101,16 @@ class WorkspaceTestCase(unittest.TestCase):
         base = Path(GLib.get_user_cache_dir()) / "custicon-tests"
         base.mkdir(parents=True, exist_ok=True)
         workspace = Path(tempfile.mkdtemp(dir=base))
+        self.addCleanup(self._remove_empty_base, base)
         self.addCleanup(shutil.rmtree, workspace, True)
         return workspace
+
+    @staticmethod
+    def _remove_empty_base(base: Path) -> None:
+        try:
+            base.rmdir()
+        except OSError:
+            pass
 
     def require_metadata(self, probe: Path) -> None:
         if gvfs_metadata_works(probe):

@@ -3,6 +3,7 @@ import re
 import unittest
 import xml.etree.ElementTree as ET
 
+from custicon import layout
 from custicon.color import parse_hex
 from custicon.compose import SVG_NS, GlyphStyle, compose
 from custicon.errors import InvalidIconError
@@ -84,6 +85,27 @@ class ComposeTests(WorkspaceTestCase):
         inner = self.glyph_text(svg)
         self.assertEqual(re.findall(r'\bid="([^"]+)"', inner), ["a"])
         self.assertIn("url(#a)", inner)
+
+    def test_a_wide_glyph_on_an_offset_non_square_folder_is_centered_and_scaled_by_its_longest_side(self):
+        folder = f'{SVG_OPEN} viewBox="10 20 256 128"><rect x="10" y="20" width="256" height="128" fill="#3366cc"/></svg>'
+        glyph = f'{SVG_OPEN} viewBox="4 6 32 8"><path d="M4 6h32v8H4z"/></svg>'
+        svg = self.compose(folder=folder, glyph=glyph)
+        transform = self.glyph_group(svg).get("transform")
+        numbers = [float(value) for value in re.findall(r"-?\d+(?:\.\d+)?(?:e-?\d+)?", transform)]
+        center_x, center_y, scale, back_x, back_y = numbers
+        self.assertAlmostEqual(center_x, 10 + layout.FACE_X * 256, places=6)
+        self.assertAlmostEqual(center_y, 20 + layout.FACE_Y * 128, places=6)
+        self.assertAlmostEqual(scale, layout.GLYPH_SIZE * 256 / 32, places=6)
+        self.assertAlmostEqual(back_x, -(4 + 16), places=6)
+        self.assertAlmostEqual(back_y, -(6 + 4), places=6)
+        self.assertEqual(self.parse(svg).get("viewBox"), "10 20 256 128")
+
+    def test_a_tall_glyph_is_scaled_by_its_height(self):
+        folder = f'{SVG_OPEN} viewBox="0 0 128 128"><rect width="128" height="128" fill="#3366cc"/></svg>'
+        glyph = f'{SVG_OPEN} viewBox="0 0 8 32"><path d="M0 0h8v32H0z"/></svg>'
+        transform = self.glyph_group(self.compose(folder=folder, glyph=glyph)).get("transform")
+        scale = float(re.search(r"scale\(([-\d.e]+)\)", transform).group(1))
+        self.assertAlmostEqual(scale, layout.GLYPH_SIZE * 128 / 32, places=6)
 
     def test_stroke_only_glyph_keeps_its_hollow_shape(self):
         glyph = (

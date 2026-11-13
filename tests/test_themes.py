@@ -1,6 +1,8 @@
 import unittest
 from unittest import mock
 
+from gi.repository import GLib
+
 from custicon import themes
 from custicon.errors import IconNotFoundError
 from custicon.themes import IconTheme, active_icon_theme, host_icon_dirs
@@ -108,6 +110,69 @@ class ActiveThemeTests(unittest.TestCase):
             themes, "settings_icon_theme", return_value=None
         ):
             self.assertEqual(active_icon_theme(), themes.DEFAULT_THEME)
+
+
+def portal_reply(inner: GLib.Variant) -> GLib.Variant:
+    return GLib.Variant("(v)", (inner,))
+
+
+class PortalThemeTests(unittest.TestCase):
+    def ask(self, reply=None, error=None):
+        bus = mock.Mock()
+        if error is not None:
+            bus.call_sync.side_effect = error
+        else:
+            bus.call_sync.return_value = reply
+        with mock.patch.object(themes.Gio, "bus_get_sync", return_value=bus):
+            return themes.portal_icon_theme(), bus
+
+    def test_the_theme_name_is_read_from_the_portal_reply(self):
+        name, bus = self.ask(portal_reply(GLib.Variant("s", "Papirus")))
+        self.assertEqual(name, "Papirus")
+        arguments = bus.call_sync.call_args.args
+        self.assertEqual(arguments[0:4], (themes.PORTAL_NAME, themes.PORTAL_PATH, themes.PORTAL_SETTINGS, "Read"))
+        self.assertEqual(arguments[4].unpack(), (themes.INTERFACE_SCHEMA, themes.ICON_THEME_KEY))
+
+    def test_a_doubly_boxed_reply_is_unwrapped(self):
+        name, _bus = self.ask(portal_reply(GLib.Variant("v", GLib.Variant("s", "Adwaita"))))
+        self.assertEqual(name, "Adwaita")
+
+    def test_a_reply_that_is_not_a_string_is_ignored(self):
+        name, _bus = self.ask(portal_reply(GLib.Variant("i", 3)))
+        self.assertIsNone(name)
+
+    def test_a_portal_failure_gives_no_answer(self):
+        name, _bus = self.ask(error=GLib.Error("no portal"))
+        self.assertIsNone(name)
+
+
+class SettingsThemeTests(unittest.TestCase):
+    def test_without_the_schema_there_is_no_answer(self):
+        source = mock.Mock()
+        source.lookup.return_value = None
+        with mock.patch.object(themes.Gio.SettingsSchemaSource, "get_default", return_value=source):
+            self.assertIsNone(themes.settings_icon_theme())
+
+    def test_without_any_schema_source_there_is_no_answer(self):
+        with mock.patch.object(themes.Gio.SettingsSchemaSource, "get_default", return_value=None):
+            self.assertIsNone(themes.settings_icon_theme())
+
+    def test_the_theme_is_read_from_the_settings(self):
+        source = mock.Mock()
+        source.lookup.return_value = object()
+        settings = mock.Mock()
+        settings.get_string.return_value = "Papirus"
+        with mock.patch.object(themes.Gio.SettingsSchemaSource, "get_default", return_value=source):
+            with mock.patch.object(themes.Gio.Settings, "new", return_value=settings) as new:
+                self.assertEqual(themes.settings_icon_theme(), "Papirus")
+        new.assert_called_once_with(themes.INTERFACE_SCHEMA)
+        settings.get_string.assert_called_once_with(themes.ICON_THEME_KEY)
+
+    def test_the_default_theme_is_the_last_resort(self):
+        with mock.patch.object(themes, "portal_icon_theme", return_value=None):
+            with mock.patch.object(themes, "settings_icon_theme", return_value=None):
+                self.assertEqual(active_icon_theme(), themes.DEFAULT_THEME)
+
 
 
 if __name__ == "__main__":

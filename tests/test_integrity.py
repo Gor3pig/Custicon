@@ -283,6 +283,22 @@ class ApplyIntegrityTests(ServiceTestCase):
         self.service.forget(link)
         self.assertEqual(self.store.all(), {})
 
+    def test_unreadable_metadata_is_reported_as_a_status(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, STAR)
+        with mock.patch.object(service_module, "read_custom_icon", side_effect=MetadataError("no daemon")):
+            self.assertEqual(self.service.entry_status(entry), service_module.STATUS_UNREADABLE)
+            listed = self.service.customized()
+        self.assertEqual([item.status for item in listed], [service_module.STATUS_UNREADABLE])
+
+    def test_regeneration_skips_nothing_but_fails_cleanly_when_metadata_is_unreadable(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, STAR)
+        report = RegenerationReport()
+        with mock.patch.object(service_module, "read_custom_icon", side_effect=MetadataError("no daemon")):
+            self.service.regenerate_entry(entry, report)
+        self.assertIn(entry.folder, report.failed)
+
     def test_reset_of_an_unknown_folder_reports_it(self):
         self.assertEqual(self.service.reset(self.make_folder()), RESET_UNKNOWN)
 
