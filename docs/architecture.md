@@ -74,7 +74,7 @@ externes sont retirés, et la taille est limitée à 5 Mo.
 | Permission | Justification |
 |---|---|
 | `--socket=wayland`, `--socket=fallback-x11`, `--share=ipc` | Affichage GTK. |
-| `--filesystem=home` | Écrire les métadonnées sur le **vrai chemin** des dossiers. Un accès plus restreint est dangereux : le point de montage vu du bac à sable diffère alors de celui de l’hôte et GVfs écrit dans un arbre que Nautilus ne lit pas, sans erreur. Les dossiers de thèmes de l’hôte sont visibles sans cette permission. |
+| `--filesystem=home:ro` | Voir le **vrai chemin** des dossiers, en **lecture seule**. L’application ne peut donc pas modifier le contenu de vos dossiers : seul le service GVfs de l’hôte écrit la métadonnée, hors du bac à sable. Un accès plus restreint est dangereux : le point de montage vu du bac à sable diffère alors de celui de l’hôte et GVfs écrit dans un arbre que Nautilus ne lit pas, sans erreur. Les dossiers de thèmes de l’hôte sont visibles sans cette permission. Le dossier de données de l’application reste accessible en écriture. |
 | `--talk-name=org.gtk.vfs.Metadata` et `org.gtk.vfs.Daemon` | Communiquer avec le démon de métadonnées de GVfs. Sans les deux, l’écriture est refusée. |
 
 Il n’y a pas d’accès au réseau, ni à `org.freedesktop.Flatpak` (pas d’évasion du bac à sable).
@@ -117,5 +117,23 @@ Les textes sont en anglais dans le code et traduits avec gettext (`po/`). La lan
 ## Capture d’écran
 
 `python3 -m custicon --capture <écran> --out <fichier.png>` produit une image de l’interface à partir de données
-de démonstration, sans ouvrir de fenêtre sur le bureau lorsqu’il est lancé sous Broadway. Les captures de
+de démonstration, sans ouvrir de fenêtre sur le bureau lorsqu’il est lancé sous Broadway. Ce mode est réservé au développement : `capture.py` n’est pas installé avec l’application. Les captures de
 cette documentation sont produites ainsi.
+
+## Sécurité
+
+Custicon lit des fichiers qu’il ne maîtrise pas (pictogrammes choisis, thèmes d’icônes installés, registre
+de données) et écrit une métadonnée dans les dossiers de l’utilisateur. Ce qui est garanti :
+
+- **Le contenu des dossiers n’est jamais modifié.** Seul l’attribut `metadata::custom-icon` est écrit, par le
+  service GVfs. Dans Flatpak, le dossier personnel est monté en lecture seule.
+- **Aucun accès au réseau**, et aucune donnée envoyée. Le rendu SVG ne lit rien hors de son propre dossier.
+- **Entrées bornées et refusées proprement** (voir « Composition ») : taille de fichier, dimensions des images,
+  nombre d’éléments et profondeur des SVG, nombres non finis. Les scripts, objets étrangers et références
+  externes d’un SVG sont retirés.
+- **Isolation du pictogramme** : un pictogramme SVG est incorporé comme document séparé et ne peut pas modifier
+  l’apparence du dossier.
+- **Reprise après arrêt brutal** : le registre est écrit avant la métadonnée, avec retour arrière en cas
+  d’échec ; l’icône d’origine de l’utilisateur n’est jamais perdue. Le registre est écrit de façon atomique,
+  doublé d’une sauvegarde, et validé à la lecture.
+- **Nettoyage prudent** : une image n’est supprimée que si aucun dossier ne la référence.

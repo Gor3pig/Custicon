@@ -116,8 +116,9 @@ si vous ajoutez l’option `--delete-data`.
 ### Permissions demandées
 
 Custicon fonctionne dans le bac à sable Flatpak et ne demande que ce dont il a besoin :
-l’affichage, l’accès à votre dossier personnel (pour écrire les métadonnées sur le vrai chemin de
-vos dossiers et lire vos thèmes d’icônes) et la communication avec le service de métadonnées de GVfs.
+l’affichage, l’accès à votre dossier personnel **en lecture seule** (pour voir le vrai chemin de vos
+dossiers et lire vos thèmes d’icônes) et la communication avec le service de métadonnées de GVfs, qui écrit
+l’icône hors du bac à sable. Le contenu de vos dossiers ne peut donc pas être modifié par Custicon.
 Il n’a pas accès au réseau. Le détail est dans [docs/architecture.md](docs/architecture.md).
 
 ## Utilisation

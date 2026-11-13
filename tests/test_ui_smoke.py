@@ -46,6 +46,12 @@ def settle(condition=None, timeout: float = 4.0) -> bool:
     return condition is None or condition()
 
 
+class DisplayRequirementTests(unittest.TestCase):
+    def test_the_display_is_available_when_it_is_required(self):
+        if os.environ.get("CUSTICON_REQUIRE_DISPLAY"):
+            self.assertTrue(DISPLAY_AVAILABLE, "no Broadway display, but CUSTICON_REQUIRE_DISPLAY is set")
+
+
 @unittest.skipUnless(DISPLAY_AVAILABLE, "interface tests only run on a Broadway display (GDK_BACKEND=broadway)")
 class WindowTestCase(WorkspaceTestCase):
     def setUp(self):

@@ -1,6 +1,24 @@
 #!/usr/bin/env bash
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    printf 'check.sh must run inside the git repository of the project\n'
+    exit 1
+fi
+
+workdirs=()
+cleanup() {
+    [ ${#workdirs[@]} -gt 0 ] && rm -rf "${workdirs[@]}"
+    return 0
+}
+trap cleanup EXIT
+
+WORKDIR=""
+make_workdir() {
+    WORKDIR=$(mktemp -d) || return 1
+    workdirs+=("$WORKDIR")
+}
 
 APP_ID="io.github.gor3pig.Custicon"
 failures=()
@@ -20,7 +38,7 @@ step() {
 no_comments_in_sources() {
     local found
     found=$(git ls-files --cached --others --exclude-standard -- '*.py' '*meson.build' \
-        | xargs -r grep -nE '^\s*(#|""")' || true)
+        | xargs -r grep -nE '^\s*(#|""")')
     if [ -n "$found" ]; then
         printf '%s\n' "$found"
         return 1
@@ -30,7 +48,7 @@ no_comments_in_sources() {
 no_long_dashes() {
     local found
     found=$(git ls-files --cached --others --exclude-standard -- . ':!COPYING' \
-        | xargs -r grep -nIE $'\xe2\x80\x94|\xe2\x80\x93' || true)
+        | xargs -r grep -nIE $'\xe2\x80\x94|\xe2\x80\x93')
     if [ -n "$found" ]; then
         printf '%s\n' "$found"
         return 1
@@ -48,22 +66,18 @@ versions_match() {
 
 validate_desktop_file() {
     local workdir status
-    workdir=$(mktemp -d)
+    make_workdir || return 1
+    workdir=$WORKDIR
     cp "data/$APP_ID.desktop.in" "$workdir/$APP_ID.desktop"
     desktop-file-validate "$workdir/$APP_ID.desktop"
-    status=$?
-    rm -rf "$workdir"
-    return $status
 }
 
 validate_metainfo() {
-    local workdir status
-    workdir=$(mktemp -d)
+    local workdir
+    make_workdir || return 1
+    workdir=$WORKDIR
     cp "data/$APP_ID.metainfo.xml.in" "$workdir/$APP_ID.metainfo.xml"
     appstreamcli validate --no-net --explain "$workdir/$APP_ID.metainfo.xml"
-    status=$?
-    rm -rf "$workdir"
-    return $status
 }
 
 validate_manifest() {
@@ -85,11 +99,13 @@ translatable_files_are_listed() {
 
 translations_are_complete() {
     local workdir language statistics incomplete=0
-    workdir=$(mktemp -d)
+    make_workdir || return 1
+    workdir=$WORKDIR
     xgettext --files-from=po/POTFILES.in --from-code=UTF-8 \
         --keyword=_ --keyword=ngettext:1,2 --package-name=custicon \
         --output="$workdir/custicon.pot" 2>/dev/null
-    for language in $(cat po/LINGUAS); do
+    while IFS= read -r language; do
+        [ -n "$language" ] || continue
         msgmerge --quiet --no-fuzzy-matching "po/$language.po" "$workdir/custicon.pot" \
             --output-file="$workdir/$language.po"
         statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language.po" 2>&1) || incomplete=1
@@ -97,14 +113,13 @@ translations_are_complete() {
         if grep -qE 'non traduit|untranslated|approximati|fuzzy' <<<"$statistics"; then
             incomplete=1
         fi
-    done
-    rm -rf "$workdir"
+    done < po/LINGUAS
     return $incomplete
 }
 
 french_guillemets_use_non_breaking_spaces() {
     local found
-    found=$(grep -nF -e '« ' -e ' »' po/fr.po || true)
+    found=$(grep -nF -e '« ' -e ' »' po/fr.po)
     if [ -n "$found" ]; then
         printf 'po/fr.po: use a non-breaking space inside « » on these lines:\n%s\n' "$found"
         return 1
@@ -113,7 +128,7 @@ french_guillemets_use_non_breaking_spaces() {
 
 french_typography_is_consistent() {
     local found
-    found=$(grep -nP '^msgstr(\[\d\])? ".*(\w\x27\w| [:?!;](\s|\\n|"|$))' po/fr.po || true)
+    found=$(grep -nP '^msgstr(\[\d\])? ".*(\w\x27\w| [:?!;](\s|\\n|"|$))' po/fr.po)
     if [ -n "$found" ]; then
         printf 'po/fr.po: use a typographic apostrophe and a non-breaking space before : ? ! ; on these lines:\n%s\n' "$found"
         return 1
@@ -140,7 +155,8 @@ interface_tests() {
     local display=":$((200 + RANDOM % 700))"
     local runtime="${XDG_RUNTIME_DIR:-}" own_runtime=""
     if [[ -z "$runtime" ]]; then
-        own_runtime=$(mktemp -d)
+        make_workdir || return 1
+        own_runtime=$WORKDIR
         chmod 700 "$own_runtime"
         runtime="$own_runtime"
     fi
@@ -148,10 +164,10 @@ interface_tests() {
     local server=$!
     sleep 1
     XDG_RUNTIME_DIR="$runtime" GDK_BACKEND=broadway BROADWAY_DISPLAY="$display" \
-        CUSTICON_REQUIRE_METADATA=1 with_session_bus python3 -W ignore -m unittest tests.test_ui_smoke
+        CUSTICON_REQUIRE_METADATA=1 CUSTICON_REQUIRE_DISPLAY=1 with_session_bus \
+        python3 -W ignore -m unittest tests.test_ui_smoke
     local status=$?
     kill "$server" 2>/dev/null
-    [[ -n "$own_runtime" ]] && rm -rf "$own_runtime"
     return $status
 }
 

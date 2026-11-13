@@ -10,27 +10,49 @@ on:
         required: false
         default: ""
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
-  flatpak:
+  build:
     name: Flatpak package
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.context.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
     env:
       TAG: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
     steps:
+      - name: Check the tag name
+        id: context
+        run: |
+          if [ -n "$TAG" ] && ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "The tag must look like v1.2.3, not $TAG"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ env.TAG != '' && format('refs/tags/{0}', env.TAG) || '' }}
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Check that the tagged commit is on the main branch
+        if: env.TAG != ''
+        run: |
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "$TAG does not point to a commit of the main branch"
+            exit 1
+          fi
 
       - name: Make the checked out commit the main branch
         run: git checkout -B main
 
       - name: Check that every version matches
+        id: version
         run: |
           version=$(sed -n "s/^  version: '\(.*\)',$/\1/p" meson.build)
           config_version=$(sed -n 's/^VERSION = "\(.*\)"$/\1/p' src/custicon/config.py)
@@ -45,6 +67,7 @@ jobs:
             echo "The tag is $TAG, but the version is $version"
             exit 1
           fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Install Flatpak tools
@@ -62,23 +85,42 @@ jobs:
             repo "custicon-$VERSION.flatpak" io.github.gor3pig.Custicon
           sha256sum "custicon-$VERSION.flatpak" > "custicon-$VERSION.flatpak.sha256"
 
-      - name: Attach the package to the release
-        if: env.TAG != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if ! gh release view "$TAG" > /dev/null 2>&1; then
-            gh release create "$TAG" --draft --verify-tag --title "Custicon $VERSION" \
-              --notes "Release notes to be written before publishing."
-          fi
-          gh release upload "$TAG" "custicon-$VERSION.flatpak" "custicon-$VERSION.flatpak.sha256" --clobber
-
-      - name: Keep the test package
-        if: env.TAG == ''
-        uses: actions/upload-artifact@v7
+      - name: Keep the package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: custicon-test-package
+          name: custicon-package
           path: |
             custicon-${{ env.VERSION }}.flatpak
             custicon-${{ env.VERSION }}.flatpak.sha256
           retention-days: 14
+
+  release:
+    name: Draft release
+    needs: build
+    if: needs.build.outputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.build.outputs.tag }}
+      VERSION: ${{ needs.build.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Download the package
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: custicon-package
+
+      - name: Attach the package to a draft release
+        run: |
+          state=$(gh release view "$TAG" --json isDraft --jq '.isDraft' 2>/dev/null || echo "none")
+          if [ "$state" = "false" ]; then
+            echo "The release $TAG is already published and is not modified"
+            exit 1
+          fi
+          if [ "$state" = "none" ]; then
+            gh release create "$TAG" --draft --verify-tag --title "Custicon $VERSION" \
+              --notes "Release notes to be written before publishing."
+          fi
+          gh release upload "$TAG" "custicon-$VERSION.flatpak" "custicon-$VERSION.flatpak.sha256" --clobber
