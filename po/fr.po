@@ -1,0 +1,302 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: custicon\n"
+"Last-Translator: \n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Customize the icon of a folder in Nautilus."
+msgstr "Personnalisez l’icône d’un dossier dans Nautilus."
+
+msgid "%d px"
+msgstr "%d px"
+
+msgid "Pictogram"
+msgstr "Pictogramme"
+
+msgid "System Icon"
+msgstr "Icône du système"
+
+msgid "Choose…"
+msgstr "Choisir…"
+
+msgid "SVG or PNG File"
+msgstr "Fichier SVG ou PNG"
+
+msgid "Browse…"
+msgstr "Parcourir…"
+
+msgid "Tint the Pictogram"
+msgstr "Teinter le pictogramme"
+
+msgid "For a file: applies the chosen color"
+msgstr "Pour un fichier : applique la couleur choisie"
+
+msgid "Appearance"
+msgstr "Apparence"
+
+msgid "Reset to Defaults"
+msgstr "Rétablir les valeurs par défaut"
+
+msgid "Automatic Color"
+msgstr "Couleur automatique"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "Horizontal Position"
+msgstr "Position horizontale"
+
+msgid "Vertical Position"
+msgstr "Position verticale"
+
+msgid ""
+"Nautilus does not refresh its icons by itself: after applying, press F5 in "
+"the Nautilus window."
+msgstr ""
+"Nautilus n’actualise pas ses icônes tout seul : après l’application, "
+"appuyez sur F5 dans la fenêtre de Nautilus."
+
+msgid "Remove Icon"
+msgstr "Retirer l’icône"
+
+msgid "Apply"
+msgstr "Appliquer"
+
+msgid "No pictogram chosen"
+msgstr "Aucun pictogramme choisi"
+
+msgid "No file chosen"
+msgstr "Aucun fichier choisi"
+
+msgid "A darker shade of the folder color (%s)"
+msgstr "Teinte plus foncée de la couleur du dossier (%s)"
+
+msgid "A darker shade of the folder color"
+msgstr "Teinte plus foncée de la couleur du dossier"
+
+msgid "%d%%"
+msgstr "%d %%"
+
+msgid "An icon that is needed was not found in your icon theme."
+msgstr "Une icône nécessaire est introuvable dans votre thème d’icônes."
+
+msgid "An icon file could not be read."
+msgstr "Un fichier d’icône n’a pas pu être lu."
+
+msgid "These settings are not valid."
+msgstr "Ces réglages ne sont pas valides."
+
+msgid "This is not a usable folder."
+msgstr "Ce n’est pas un dossier utilisable."
+
+msgid ""
+"Nautilus could not be told about the new icon. Check that Custicon can "
+"access this folder."
+msgstr ""
+"Nautilus n’a pas pu être informé de la nouvelle icône. Vérifiez que "
+"Custicon peut accéder à ce dossier."
+
+msgid "Custicon could not save its data."
+msgstr "Custicon n’a pas pu enregistrer ses données."
+
+msgid "An unexpected error occurred."
+msgstr "Une erreur inattendue s’est produite."
+
+msgid "Folder not found"
+msgstr "Dossier introuvable"
+
+msgid "Icon changed from Nautilus"
+msgstr "Icône modifiée depuis Nautilus"
+
+msgid "Icon file missing"
+msgstr "Fichier d’icône manquant"
+
+msgid "Metadata unreadable"
+msgstr "Métadonnées illisibles"
+
+msgid "This folder no longer exists."
+msgstr "Ce dossier n’existe plus."
+
+msgid "This icon was replaced from Nautilus: Custicon no longer touches it."
+msgstr "Cette icône a été remplacée depuis Nautilus : Custicon n’y touche plus."
+
+msgid "The icon file of this folder is missing."
+msgstr "Le fichier d’icône de ce dossier est manquant."
+
+msgid "The metadata of this folder cannot be read."
+msgstr "Les métadonnées de ce dossier ne peuvent pas être lues."
+
+msgid "Take Back the Custicon Icon"
+msgstr "Reprendre l’icône Custicon"
+
+msgid "Regenerate the Icon"
+msgstr "Régénérer l’icône"
+
+msgid "%d icon updated"
+msgid_plural "%d icons updated"
+msgstr[0] "%d icône mise à jour"
+msgstr[1] "%d icônes mises à jour"
+
+msgid "%d icon already up to date"
+msgid_plural "%d icons already up to date"
+msgstr[0] "%d icône déjà à jour"
+msgstr[1] "%d icônes déjà à jour"
+
+msgid "%d folder skipped: icon changed from Nautilus"
+msgid_plural "%d folders skipped: icon changed from Nautilus"
+msgstr[0] "%d dossier ignoré : icône modifiée depuis Nautilus"
+msgstr[1] "%d dossiers ignorés : icône modifiée depuis Nautilus"
+
+msgid "%d folder not found"
+msgid_plural "%d folders not found"
+msgstr[0] "%d dossier introuvable"
+msgstr[1] "%d dossiers introuvables"
+
+msgid "%d folder could not be updated"
+msgid_plural "%d folders could not be updated"
+msgstr[0] "%d dossier n’a pas pu être mis à jour"
+msgstr[1] "%d dossiers n’ont pas pu être mis à jour"
+
+msgid "Choose a Pictogram"
+msgstr "Choisir un pictogramme"
+
+msgid "Search by name, in English (example: camera, music)"
+msgstr "Rechercher par nom, en anglais (exemple : camera, music)"
+
+msgid "Choose"
+msgstr "Choisir"
+
+msgid "%d pictogram found"
+msgid_plural "%d pictograms found"
+msgstr[0] "%d pictogramme trouvé"
+msgstr[1] "%d pictogrammes trouvés"
+
+msgid "No pictogram found"
+msgstr "Aucun pictogramme trouvé"
+
+msgid "Regenerate All Icons"
+msgstr "Régénérer toutes les icônes"
+
+msgid "About %s"
+msgstr "À propos de %s"
+
+msgid "Quit"
+msgstr "Quitter"
+
+msgid "Add Folder"
+msgstr "Ajouter un dossier"
+
+msgid "Choose a folder to customize"
+msgstr "Choisir un dossier à personnaliser"
+
+msgid "Main Menu"
+msgstr "Menu principal"
+
+msgid "No Customized Folders"
+msgstr "Aucun dossier personnalisé"
+
+msgid ""
+"Choose a folder to add a pictogram to it, like the Documents or Music "
+"folders have. The content of the folder is never modified."
+msgstr ""
+"Choisissez un dossier pour lui ajouter un pictogramme, comme celui des "
+"dossiers Documents ou Musique. Le contenu du dossier n’est jamais modifié."
+
+msgid "Choose a Folder…"
+msgstr "Choisir un dossier…"
+
+msgid "Customized Folders"
+msgstr "Dossiers personnalisés"
+
+msgid "Forget This Folder"
+msgstr "Oublier ce dossier"
+
+msgid "Live preview with the folder icon of the current theme (%s)."
+msgstr "Aperçu en direct, avec l’icône de dossier du thème actif (%s)."
+
+msgid "Choose a Folder"
+msgstr "Choisir un dossier"
+
+msgid "Folder Not Accessible"
+msgstr "Dossier inaccessible"
+
+msgid ""
+"Custicon needs the real location of the folder. Choose a folder inside your "
+"home folder."
+msgstr ""
+"Custicon a besoin de l’emplacement réel du dossier. Choisissez un dossier "
+"situé dans votre dossier personnel."
+
+msgid "SVG and PNG images"
+msgstr "Images SVG et PNG"
+
+msgid "Choose a Pictogram File"
+msgstr "Choisir un fichier de pictogramme"
+
+msgid "Could Not Apply the Icon"
+msgstr "Impossible d’appliquer l’icône"
+
+msgid "Icon applied to “%s”. Press F5 in Nautilus to see it."
+msgstr "Icône appliquée à « %s ». Appuyez sur F5 dans Nautilus pour l’afficher."
+
+msgid "Got It"
+msgstr "Compris"
+
+msgid "Forget “%s”?"
+msgstr "Oublier « %s » ?"
+
+msgid ""
+"Custicon will stop managing this folder. Its current icon is not changed."
+msgstr ""
+"Custicon cessera de gérer ce dossier. Son icône actuelle n’est pas modifiée."
+
+msgid "Forget"
+msgstr "Oublier"
+
+msgid "Remove the Icon of “%s”?"
+msgstr "Retirer l’icône de « %s » ?"
+
+msgid ""
+"The folder will get back the icon it had before Custicon. Its content is not "
+"modified."
+msgstr ""
+"Le dossier retrouvera l’icône qu’il avait avant Custicon. Son contenu n’est "
+"pas modifié."
+
+msgid "Remove"
+msgstr "Retirer"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Could Not Remove the Icon"
+msgstr "Impossible de retirer l’icône"
+
+msgid "“%s”: the icon you chose in Nautilus was kept."
+msgstr "« %s » : l’icône choisie dans Nautilus a été conservée."
+
+msgid "“%s” was forgotten."
+msgstr "« %s » a été oublié."
+
+msgid "Icon removed from “%s”. Press F5 in Nautilus to see it."
+msgstr "Icône retirée de « %s ». Appuyez sur F5 dans Nautilus pour voir le changement."
+
+msgid "There are no customized folders to regenerate."
+msgstr "Aucun dossier personnalisé à régénérer."
+
+msgid "Nothing needed to be updated."
+msgstr "Rien n’avait besoin d’être mis à jour."
+
+msgid "Press F5 in Nautilus to see the changes."
+msgstr "Appuyez sur F5 dans Nautilus pour voir les changements."
+
+msgid "Regeneration Complete"
+msgstr "Régénération terminée"
+
+msgid "Close"
+msgstr "Fermer"

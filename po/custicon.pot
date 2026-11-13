@@ -1,0 +1,317 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the custicon package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: custicon\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-13 16:01+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+msgid "Customize the icon of a folder in Nautilus."
+msgstr ""
+
+#, python-format
+msgid "%d px"
+msgstr ""
+
+msgid "Pictogram"
+msgstr ""
+
+msgid "System Icon"
+msgstr ""
+
+msgid "Choose…"
+msgstr ""
+
+msgid "SVG or PNG File"
+msgstr ""
+
+msgid "Browse…"
+msgstr ""
+
+msgid "Tint the Pictogram"
+msgstr ""
+
+msgid "For a file: applies the chosen color"
+msgstr ""
+
+msgid "Appearance"
+msgstr ""
+
+msgid "Reset to Defaults"
+msgstr ""
+
+msgid "Automatic Color"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Horizontal Position"
+msgstr ""
+
+msgid "Vertical Position"
+msgstr ""
+
+msgid ""
+"Nautilus does not refresh its icons by itself: after applying, press F5 in "
+"the Nautilus window."
+msgstr ""
+
+msgid "Remove Icon"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
+msgid "No pictogram chosen"
+msgstr ""
+
+msgid "No file chosen"
+msgstr ""
+
+#, python-format
+msgid "A darker shade of the folder color (%s)"
+msgstr ""
+
+msgid "A darker shade of the folder color"
+msgstr ""
+
+#, python-format
+msgid "%d%%"
+msgstr ""
+
+msgid "An icon that is needed was not found in your icon theme."
+msgstr ""
+
+msgid "An icon file could not be read."
+msgstr ""
+
+msgid "These settings are not valid."
+msgstr ""
+
+msgid "This is not a usable folder."
+msgstr ""
+
+msgid ""
+"Nautilus could not be told about the new icon. Check that Custicon can "
+"access this folder."
+msgstr ""
+
+msgid "Custicon could not save its data."
+msgstr ""
+
+msgid "An unexpected error occurred."
+msgstr ""
+
+msgid "Folder not found"
+msgstr ""
+
+msgid "Icon changed from Nautilus"
+msgstr ""
+
+msgid "Icon file missing"
+msgstr ""
+
+msgid "Metadata unreadable"
+msgstr ""
+
+msgid "This folder no longer exists."
+msgstr ""
+
+msgid "This icon was replaced from Nautilus: Custicon no longer touches it."
+msgstr ""
+
+msgid "The icon file of this folder is missing."
+msgstr ""
+
+msgid "The metadata of this folder cannot be read."
+msgstr ""
+
+msgid "Take Back the Custicon Icon"
+msgstr ""
+
+msgid "Regenerate the Icon"
+msgstr ""
+
+#, python-format
+msgid "%d icon updated"
+msgid_plural "%d icons updated"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%d icon already up to date"
+msgid_plural "%d icons already up to date"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%d folder skipped: icon changed from Nautilus"
+msgid_plural "%d folders skipped: icon changed from Nautilus"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%d folder not found"
+msgid_plural "%d folders not found"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%d folder could not be updated"
+msgid_plural "%d folders could not be updated"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Choose a Pictogram"
+msgstr ""
+
+msgid "Search by name, in English (example: camera, music)"
+msgstr ""
+
+msgid "Choose"
+msgstr ""
+
+#, python-format
+msgid "%d pictogram found"
+msgid_plural "%d pictograms found"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "No pictogram found"
+msgstr ""
+
+msgid "Regenerate All Icons"
+msgstr ""
+
+#, python-format
+msgid "About %s"
+msgstr ""
+
+msgid "Quit"
+msgstr ""
+
+msgid "Add Folder"
+msgstr ""
+
+msgid "Choose a folder to customize"
+msgstr ""
+
+msgid "Main Menu"
+msgstr ""
+
+msgid "No Customized Folders"
+msgstr ""
+
+msgid ""
+"Choose a folder to add a pictogram to it, like the Documents or Music "
+"folders have. The content of the folder is never modified."
+msgstr ""
+
+msgid "Choose a Folder…"
+msgstr ""
+
+msgid "Customized Folders"
+msgstr ""
+
+msgid "Forget This Folder"
+msgstr ""
+
+#, python-format
+msgid "Live preview with the folder icon of the current theme (%s)."
+msgstr ""
+
+msgid "Choose a Folder"
+msgstr ""
+
+msgid "Folder Not Accessible"
+msgstr ""
+
+msgid ""
+"Custicon needs the real location of the folder. Choose a folder inside your "
+"home folder."
+msgstr ""
+
+msgid "SVG and PNG images"
+msgstr ""
+
+msgid "Choose a Pictogram File"
+msgstr ""
+
+msgid "Could Not Apply the Icon"
+msgstr ""
+
+#, python-format
+msgid "Icon applied to “%s”. Press F5 in Nautilus to see it."
+msgstr ""
+
+msgid "Got It"
+msgstr ""
+
+#, python-format
+msgid "Forget “%s”?"
+msgstr ""
+
+msgid ""
+"Custicon will stop managing this folder. Its current icon is not changed."
+msgstr ""
+
+msgid "Forget"
+msgstr ""
+
+#, python-format
+msgid "Remove the Icon of “%s”?"
+msgstr ""
+
+msgid ""
+"The folder will get back the icon it had before Custicon. Its content is not "
+"modified."
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Could Not Remove the Icon"
+msgstr ""
+
+#, python-format
+msgid "“%s”: the icon you chose in Nautilus was kept."
+msgstr ""
+
+#, python-format
+msgid "“%s” was forgotten."
+msgstr ""
+
+#, python-format
+msgid "Icon removed from “%s”. Press F5 in Nautilus to see it."
+msgstr ""
+
+msgid "There are no customized folders to regenerate."
+msgstr ""
+
+msgid "Nothing needed to be updated."
+msgstr ""
+
+msgid "Press F5 in Nautilus to see the changes."
+msgstr ""
+
+msgid "Regeneration Complete"
+msgstr ""
+
+msgid "Close"
+msgstr ""
