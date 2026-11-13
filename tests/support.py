@@ -1,4 +1,5 @@
 import hashlib
+import os
 import shutil
 import tempfile
 import unittest
@@ -102,5 +103,8 @@ class WorkspaceTestCase(unittest.TestCase):
         return workspace
 
     def require_metadata(self, probe: Path) -> None:
-        if not gvfs_metadata_works(probe):
-            self.skipTest("gvfs metadata unavailable in this environment")
+        if gvfs_metadata_works(probe):
+            return
+        if os.environ.get("CUSTICON_REQUIRE_METADATA"):
+            self.fail("gvfs metadata does not work here, but CUSTICON_REQUIRE_METADATA is set")
+        self.skipTest("gvfs metadata unavailable in this environment")

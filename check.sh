@@ -120,14 +120,22 @@ french_typography_is_consistent() {
     fi
 }
 
+with_session_bus() {
+    if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v dbus-run-session >/dev/null; then
+        dbus-run-session -- "$@"
+    else
+        "$@"
+    fi
+}
+
 unit_tests() {
-    python3 -W ignore -m unittest discover -s tests -t .
+    CUSTICON_REQUIRE_METADATA=1 with_session_bus python3 -W ignore -m unittest discover -s tests -t .
 }
 
 interface_tests() {
     if ! command -v gtk4-broadwayd >/dev/null; then
-        printf 'gtk4-broadwayd is missing: the interface tests are skipped\n'
-        return 0
+        printf 'gtk4-broadwayd is missing: it is needed for the interface tests\n'
+        return 1
     fi
     local display=":$((200 + RANDOM % 700))"
     local runtime="${XDG_RUNTIME_DIR:-}" own_runtime=""
@@ -140,7 +148,7 @@ interface_tests() {
     local server=$!
     sleep 1
     XDG_RUNTIME_DIR="$runtime" GDK_BACKEND=broadway BROADWAY_DISPLAY="$display" \
-        python3 -W ignore -m unittest tests.test_ui_smoke
+        CUSTICON_REQUIRE_METADATA=1 with_session_bus python3 -W ignore -m unittest tests.test_ui_smoke
     local status=$?
     kill "$server" 2>/dev/null
     [[ -n "$own_runtime" ]] && rm -rf "$own_runtime"
