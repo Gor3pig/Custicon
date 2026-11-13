@@ -1,12 +1,22 @@
 from collections.abc import Callable
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
+
+import math
 
 from .color import auto_glyph_color, is_hex_color
 from .compose import GlyphStyle, compose
-from .errors import CusticonError, FolderError, IconNotFoundError, InvalidSettingsError, MetadataError
+from .errors import (
+    CusticonError,
+    FolderError,
+    IconNotFoundError,
+    InvalidIconError,
+    InvalidSettingsError,
+    MetadataError,
+)
 from .metadata import read_custom_icon, write_custom_icon
-from .store import Entry, Store
+from .render import is_png, read_icon_bytes
+from .store import GLYPH_FILE_PATTERN, Entry, Store
 from .themes import DEFAULT_THEME, IconTheme, active_icon_theme
 
 MIN_SIZE = 0.2
@@ -34,10 +44,21 @@ class Settings:
     offset_x: float = 0.0
     offset_y: float = 0.0
     tint: bool = True
+    glyph_copy: str | None = None
 
     def validate(self) -> None:
+        for text in (self.glyph_name, self.glyph_file, self.color, self.glyph_copy):
+            if text is not None and (not isinstance(text, str) or "\0" in text):
+                raise InvalidSettingsError("invalid text in the settings")
+        if not isinstance(self.tint, bool):
+            raise InvalidSettingsError("invalid tint setting")
+        for number in (self.size, self.offset_x, self.offset_y):
+            if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(number):
+                raise InvalidSettingsError("sizes and offsets must be finite numbers")
         if bool(self.glyph_name) == bool(self.glyph_file):
             raise InvalidSettingsError("choose either a symbolic icon name or a file")
+        if self.glyph_copy is not None and GLYPH_FILE_PATTERN.fullmatch(self.glyph_copy) is None:
+            raise InvalidSettingsError("invalid stored pictogram")
         if self.color is not None and not is_hex_color(self.color):
             raise InvalidSettingsError(f"invalid color {self.color!r}")
         if not MIN_SIZE <= self.size <= MAX_SIZE:
@@ -101,12 +122,13 @@ class Service:
             self._themes[name] = IconTheme(name, self._search_dirs)
         return self._themes[name]
 
-    def build(self, settings: Settings, theme_name: str | None = None) -> BuiltIcon:
+    def build(self, settings: Settings, theme_name: str | None = None, glyph_file: Path | None = None) -> BuiltIcon:
         settings.validate()
         name = theme_name or self._theme_name()
         theme = self._theme(name)
         folder_file = theme.folder_file()
-        glyph_file = Path(settings.glyph_file) if settings.glyph_file else self._find_glyph(theme, settings.glyph_name)
+        if glyph_file is None:
+            glyph_file = Path(settings.glyph_file) if settings.glyph_file else self._find_glyph(theme, settings.glyph_name)
         color = settings.color or auto_glyph_color(folder_file)
         style = GlyphStyle(
             color=color,
@@ -119,36 +141,43 @@ class Service:
 
     def apply(self, folder: Path | str, settings: Settings) -> Entry:
         target = self._checked_folder(folder)
-        built = self.build(settings)
-        digest = self._store.save_icon(built.svg)
         key = str(target)
         existing = self._store.get(key)
+        settings.validate()
+        glyph_file, glyph_copy = self._keep_glyph(settings, existing)
+        built = self.build(settings, glyph_file=glyph_file)
+        digest = self._store.save_icon(built.svg)
         try:
             current = read_custom_icon(target)
             if self._store.owns_uri(current):
                 previous = existing.previous if existing else None
             else:
                 previous = current
-            write_custom_icon(target, self._store.icon_uri(digest))
-        except CusticonError:
-            self._store.prune()
-            raise
-        entry = Entry(key, digest, built.theme, built.color, settings.to_dict(), previous)
-        try:
+            stored = replace(settings, glyph_copy=glyph_copy).to_dict()
+            entry = Entry(key, digest, built.theme, built.color, stored, previous)
             self._store.put(entry)
         except CusticonError:
-            write_custom_icon(target, current)
-            self._store.prune()
+            self._discard(digest, glyph_copy, existing)
             raise
-        self._store.prune()
+        try:
+            write_custom_icon(target, self._store.icon_uri(digest))
+        except CusticonError:
+            self._undo(target, key, current, existing)
+            self._discard(digest, glyph_copy, existing)
+            raise
+        if existing is not None:
+            if existing.digest != digest:
+                self._store.release(existing.digest)
+            old_copy = existing.settings.get("glyph_copy")
+            if old_copy != glyph_copy:
+                self._store.release_glyph(old_copy)
         return entry
 
     def reset(self, folder: Path | str) -> str:
-        key = str(Path(folder).expanduser().resolve())
-        entry = self._store.get(key)
+        key, entry = self._locate(folder)
         if entry is None:
             return RESET_UNKNOWN
-        target = Path(key)
+        target = self._resolved(key)
         outcome = RESET_FOLDER_MISSING
         if target.is_dir():
             outcome = RESET_KEPT_USER_ICON
@@ -156,12 +185,14 @@ class Service:
                 write_custom_icon(target, entry.previous)
                 outcome = RESET_RESTORED
         self._store.remove(key)
-        self._store.prune()
+        self._release(entry)
         return outcome
 
     def forget(self, folder: Path | str) -> None:
-        self._store.remove(str(Path(folder).expanduser().resolve()))
-        self._store.prune()
+        key, entry = self._locate(folder)
+        if entry is not None:
+            self._store.remove(key)
+            self._release(entry)
 
     def customized(self) -> list[Customized]:
         return [Customized(entry, self._status(entry)) for entry in self._store.all().values()]
@@ -180,7 +211,7 @@ class Service:
             return
         try:
             updated = self.apply(Path(entry.folder), Settings.from_dict(entry.settings))
-        except CusticonError as error:
+        except (CusticonError, OSError) as error:
             report.failed[entry.folder] = str(error)
             return
         (report.unchanged if updated.digest == entry.digest else report.updated).append(entry.folder)
@@ -212,11 +243,74 @@ class Service:
         return STATUS_OK
 
     @staticmethod
-    def _checked_folder(folder: Path | str) -> Path:
-        target = Path(folder).expanduser().resolve()
+    def _resolved(folder: Path | str) -> Path:
+        try:
+            return Path(folder).expanduser().resolve()
+        except (OSError, RuntimeError, ValueError) as error:
+            raise FolderError(f"unusable folder path: {error}") from error
+
+    def _checked_folder(self, folder: Path | str) -> Path:
+        target = self._resolved(folder)
+        try:
+            str(target).encode("utf-8")
+        except UnicodeEncodeError as error:
+            raise FolderError("the folder name is not valid UTF-8") from error
         if not target.is_dir():
             raise FolderError(f"not a folder: {target}")
         return target
+
+    def _locate(self, folder: Path | str) -> tuple[str, Entry | None]:
+        try:
+            given = str(Path(folder).expanduser())
+        except (RuntimeError, ValueError):
+            given = str(folder)
+        try:
+            resolved = str(self._resolved(folder))
+        except FolderError:
+            resolved = given
+        for key in dict.fromkeys((given, resolved)):
+            entry = self._store.get(key)
+            if entry is not None:
+                return key, entry
+        return resolved, None
+
+    def _keep_glyph(self, settings: Settings, existing: Entry | None) -> tuple[Path | None, str | None]:
+        if not settings.glyph_file:
+            return None, None
+        stored = self._store.glyph_path(settings.glyph_copy)
+        if stored is not None and stored.is_file():
+            return stored, settings.glyph_copy
+        try:
+            data = read_icon_bytes(Path(settings.glyph_file))
+        except InvalidIconError:
+            old = existing.settings if existing else {}
+            old_path = self._store.glyph_path(old.get("glyph_copy"))
+            if old.get("glyph_file") == settings.glyph_file and old_path is not None and old_path.is_file():
+                return old_path, old["glyph_copy"]
+            raise
+        name = self._store.save_glyph(data, ".png" if is_png(data) else ".svg")
+        return self._store.glyph_path(name), name
+
+    def _undo(self, target: Path, key: str, current: str | None, existing: Entry | None) -> None:
+        try:
+            if existing is None:
+                self._store.remove(key)
+            else:
+                self._store.put(existing)
+        except CusticonError:
+            pass
+        try:
+            write_custom_icon(target, current)
+        except CusticonError:
+            pass
+
+    def _discard(self, digest: str, glyph_copy: str | None, existing: Entry | None) -> None:
+        self._store.release(digest)
+        self._store.release_glyph(glyph_copy)
+
+    def _release(self, entry: Entry) -> None:
+        self._store.release(entry.digest)
+        self._store.release_glyph(entry.settings.get("glyph_copy"))
 
     def _find_glyph(self, theme: IconTheme, icon_name: str) -> Path:
         try:

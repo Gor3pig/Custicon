@@ -7,6 +7,10 @@ from custicon.store import Entry, Store
 from .support import WorkspaceTestCase
 
 
+def digest(number: int) -> str:
+    return f"{number:032x}"
+
+
 def entry(folder: str, digest: str, previous=None) -> Entry:
     return Entry(folder, digest, "Adwaita", "#438de6", {"glyph_name": "star-symbolic"}, previous)
 
@@ -30,12 +34,12 @@ class StoreTests(WorkspaceTestCase):
         self.assertNotEqual(self.store.save_icon("<svg>a</svg>"), self.store.save_icon("<svg>b</svg>"))
 
     def test_icon_content_is_stored_unchanged(self):
-        digest = self.store.save_icon("<svg>é</svg>")
-        self.assertEqual(self.store.icon_path(digest).read_text(encoding="utf-8"), "<svg>é</svg>")
+        name = self.store.save_icon("<svg>é</svg>")
+        self.assertEqual(self.store.icon_path(name).read_text(encoding="utf-8"), "<svg>é</svg>")
 
     def test_icon_uri_is_a_file_uri_inside_the_store(self):
-        digest = self.store.save_icon("<svg/>")
-        uri = self.store.icon_uri(digest)
+        name = self.store.save_icon("<svg/>")
+        uri = self.store.icon_uri(name)
         self.assertTrue(uri.startswith("file:///"))
         self.assertTrue(self.store.owns_uri(uri))
 
@@ -46,21 +50,21 @@ class StoreTests(WorkspaceTestCase):
         self.assertFalse(self.store.owns_uri(self.store.icons_dir.as_uri()))
 
     def test_entries_survive_a_new_store_instance(self):
-        item = entry("/a", "d1", previous="file:///old.png")
+        item = entry("/a", digest(1), previous="file:///old.png")
         self.store.put(item)
         self.assertEqual(Store(self.root).get("/a"), item)
 
     def test_remove_returns_the_entry_and_forgets_it(self):
-        item = entry("/a", "d1")
+        item = entry("/a", digest(1))
         self.store.put(item)
         self.assertEqual(self.store.remove("/a"), item)
         self.assertIsNone(self.store.get("/a"))
         self.assertIsNone(self.store.remove("/a"))
 
     def test_put_replaces_the_entry_of_the_same_folder(self):
-        self.store.put(entry("/a", "d1"))
-        self.store.put(entry("/a", "d2"))
-        self.assertEqual(self.store.get("/a").digest, "d2")
+        self.store.put(entry("/a", digest(1)))
+        self.store.put(entry("/a", digest(2)))
+        self.assertEqual(self.store.get("/a").digest, digest(2))
         self.assertEqual(len(self.store.all()), 1)
 
     def test_prune_removes_only_unreferenced_icons(self):
@@ -85,35 +89,35 @@ class StoreTests(WorkspaceTestCase):
 
     def test_writes_leave_no_temporary_file(self):
         self.store.save_icon("<svg/>")
-        self.store.put(entry("/a", "d1"))
+        self.store.put(entry("/a", digest(1)))
         names = [path.name for path in self.root.rglob("*") if path.is_file()]
         self.assertFalse([name for name in names if name.endswith(".tmp")])
 
     def test_a_corrupt_registry_is_recovered_from_the_backup(self):
-        self.store.put(entry("/a", "d1"))
-        self.store.put(entry("/b", "d2"))
+        self.store.put(entry("/a", digest(1)))
+        self.store.put(entry("/b", digest(2)))
         self.store.registry_path.write_text("{not json")
         self.assertEqual(set(self.store.all()), {"/a"})
 
     def test_saving_after_recovery_repairs_the_registry(self):
-        self.store.put(entry("/a", "d1"))
-        self.store.put(entry("/b", "d2"))
+        self.store.put(entry("/a", digest(1)))
+        self.store.put(entry("/b", digest(2)))
         self.store.registry_path.write_text("{not json")
-        self.store.put(entry("/c", "d3"))
+        self.store.put(entry("/c", digest(3)))
         self.assertEqual(set(Store(self.root).all()), {"/a", "/c"})
 
     def test_a_corrupt_registry_does_not_overwrite_the_good_backup(self):
-        self.store.put(entry("/a", "d1"))
-        self.store.put(entry("/b", "d2"))
+        self.store.put(entry("/a", digest(1)))
+        self.store.put(entry("/b", digest(2)))
         self.store.registry_path.write_text("{not json")
         backup = self.store.registry_path.with_name("registry.json.bak")
         good = backup.read_text()
-        self.store.put(entry("/c", "d3"))
+        self.store.put(entry("/c", digest(3)))
         self.assertEqual(backup.read_text(), good)
 
     def test_registry_and_backup_both_corrupt_raise(self):
-        self.store.put(entry("/a", "d1"))
-        self.store.put(entry("/b", "d2"))
+        self.store.put(entry("/a", digest(1)))
+        self.store.put(entry("/b", digest(2)))
         self.store.registry_path.write_text("{not json")
         self.store.registry_path.with_name("registry.json.bak").write_text("also broken")
         with self.assertRaises(StoreError):
@@ -132,7 +136,7 @@ class StoreTests(WorkspaceTestCase):
             self.store.all()
 
     def test_registry_is_readable_json(self):
-        self.store.put(entry("/a", "d1", previous="file:///old.png"))
+        self.store.put(entry("/a", digest(1), previous="file:///old.png"))
         document = json.loads(self.store.registry_path.read_text(encoding="utf-8"))
         self.assertEqual(document["version"], 1)
         self.assertEqual(document["entries"][0]["previous"], "file:///old.png")

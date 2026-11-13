@@ -11,7 +11,10 @@ def in_sandbox() -> bool:
 
 
 def host_data_home() -> str:
-    return os.environ.get(HOST_DATA_VARIABLE) or os.path.expanduser(DEFAULT_DATA_HOME)
+    value = os.environ.get(HOST_DATA_VARIABLE)
+    if value and os.path.isabs(value):
+        return value
+    return os.path.expanduser(DEFAULT_DATA_HOME)
 
 
 def share_host_metadata() -> None:
