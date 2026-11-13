@@ -5,6 +5,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from ..i18n import _, ngettext
+from ..keywords import english_fragments
 from ..themes import IconTheme
 
 COLUMNS = 8
@@ -27,7 +28,7 @@ class PickerDialog(Adw.Dialog):
         view.add_top_bar(header)
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, margin_top=6, margin_bottom=12, margin_start=16, margin_end=16)
-        self.search = Gtk.SearchEntry(placeholder_text=_("Search by name, in English (example: camera, music)"))
+        self.search = Gtk.SearchEntry(placeholder_text=_("Search by name, in English or French (example: camera, musique)"))
         self.search.connect("search-changed", self._on_search_changed)
         box.append(self.search)
 
@@ -77,7 +78,7 @@ class PickerDialog(Adw.Dialog):
             following = child.get_next_sibling()
             self.flow.remove(child)
             child = following
-        self._names = self._theme.symbolic_names(query, limit=RESULT_LIMIT)
+        self._names = self._search(query)
         for name in self._names:
             image = Gtk.Image.new_from_paintable(self._theme.paintable(name, CELL_SIZE))
             image.set_pixel_size(CELL_SIZE)
@@ -96,6 +97,14 @@ class PickerDialog(Adw.Dialog):
         else:
             self.status.set_text(_("No pictogram found"))
         self.choose_button.set_sensitive(bool(self._selected))
+
+    def _search(self, query: str) -> list[str]:
+        names = self._theme.symbolic_names(query, limit=RESULT_LIMIT)
+        for fragment in english_fragments(query):
+            if len(names) >= RESULT_LIMIT:
+                break
+            names.extend(name for name in self._theme.symbolic_names(fragment, limit=RESULT_LIMIT) if name not in names)
+        return names[:RESULT_LIMIT]
 
     def _on_selection_changed(self, _flow) -> None:
         children = self.flow.get_selected_children()

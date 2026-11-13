@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 22:44+0100\n"
+"POT-Creation-Date: 2026-11-13 23:18+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -238,8 +238,8 @@ msgstr[1] "%d dossiers n’ont pas pu être mis à jour"
 msgid "Choose a Pictogram"
 msgstr "Choisir un pictogramme"
 
-msgid "Search by name, in English (example: camera, music)"
-msgstr "Rechercher par nom, en anglais (exemple : camera, music)"
+msgid "Search by name, in English or French (example: camera, musique)"
+msgstr "Rechercher par nom, en anglais ou en français (exemple : camera, musique)"
 
 msgid "Choose"
 msgstr "Choisir"
@@ -344,7 +344,9 @@ msgstr "Impossible de retrouver le dossier"
 
 #, python-format
 msgid "“%s” is back in the list. Press F5 in Nautilus to see its icon."
-msgstr "« %s » est de retour dans la liste. Appuyez sur F5 dans Nautilus pour voir son icône."
+msgstr ""
+"« %s » est de retour dans la liste. Appuyez sur F5 dans Nautilus pour voir "
+"son icône."
 
 msgid "There are no customized folders."
 msgstr "Il n’y a aucun dossier personnalisé."
@@ -355,7 +357,9 @@ msgstr "Retirer toutes les icônes ?"
 msgid ""
 "Every customized folder gets back the icon it had before Custicon. The "
 "content of the folders is not modified."
-msgstr "Chaque dossier personnalisé retrouve l’icône qu’il avait avant Custicon. Le contenu des dossiers n’est pas modifié."
+msgstr ""
+"Chaque dossier personnalisé retrouve l’icône qu’il avait avant Custicon. Le "
+"contenu des dossiers n’est pas modifié."
 
 msgid "Remove All"
 msgstr "Tout retirer"
@@ -385,6 +389,16 @@ msgstr "Nom non pris en charge"
 msgid "This name is not valid UTF-8 text, so Custicon cannot use it."
 msgstr ""
 "Ce nom n’est pas un texte UTF-8 valide : Custicon ne peut pas l’utiliser."
+
+msgid "Not a Folder"
+msgstr "Ce n’est pas un dossier"
+
+msgid "Custicon customizes folders, not files."
+msgstr "Custicon personnalise des dossiers, pas des fichiers."
+
+#, python-format
+msgid "Custicon opens one folder at a time: “%s” was opened."
+msgstr "Custicon n’ouvre qu’un dossier à la fois : « %s » a été ouvert."
 
 msgid "Choose a Folder"
 msgstr "Choisir un dossier"
@@ -645,6 +659,9 @@ msgid "Put a pictogram on the real folder icon of your current icon theme"
 msgstr ""
 "Posez un pictogramme sur la vraie icône de dossier de votre thème d’icônes "
 "actuel"
+
+#~ msgid "Search by name, in English (example: camera, music)"
+#~ msgstr "Rechercher par nom, en anglais (exemple : camera, music)"
 
 #~ msgid "Automatic Color"
 #~ msgstr "Couleur automatique"

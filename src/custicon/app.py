@@ -41,7 +41,7 @@ def register_development_icons() -> None:
 
 class Application(Adw.Application):
     def __init__(self, service: Service | None = None, unique: bool = True):
-        flags = Gio.ApplicationFlags.DEFAULT_FLAGS if unique else Gio.ApplicationFlags.NON_UNIQUE
+        flags = Gio.ApplicationFlags.HANDLES_OPEN if unique else Gio.ApplicationFlags.NON_UNIQUE | Gio.ApplicationFlags.HANDLES_OPEN
         super().__init__(application_id=APP_ID, flags=flags)
         self._service = service
 
@@ -55,10 +55,18 @@ class Application(Adw.Application):
         self.set_accels_for_action("win.search", ["<Control>f"])
 
     def do_activate(self) -> None:
+        self._window().present()
+
+    def do_open(self, files, _count, _hint) -> None:
+        window = self._window()
+        window.present()
+        window.open_files(list(files))
+
+    def _window(self) -> MainWindow:
         window = self.props.active_window
         if window is None:
             window = MainWindow(self, self._service or default_service())
-        window.present()
+        return window
 
     def _add_action(self, name: str, callback, accels: list[str] | None = None) -> None:
         action = Gio.SimpleAction.new(name, None)

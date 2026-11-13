@@ -29,6 +29,7 @@ IDLE_SETTLE = 0.12
 
 
 _APPLICATION = []
+_OPEN_APPLICATION = []
 
 
 def shared_application() -> Adw.Application:
@@ -916,6 +917,155 @@ class StartupCleanupTests(WindowTestCase):
         self.addCleanup(window.destroy)
         self.assertFalse(self.service.store.icon_path(orphan).exists())
         self.assertFalse(stray.exists())
+
+
+class FrenchSearchTests(WindowTestCase):
+    def dialog(self):
+        from custicon.themes import IconTheme
+        from custicon.ui.picker import PickerDialog
+
+        themes = self.root / "themes"
+        glyphs = {name: glyph_svg() for name in ("audio-x-generic-symbolic", "user-home-symbolic", "starred-symbolic", "camera-photo-symbolic")}
+        make_theme(themes, "Fr", folder=folder_svg(), glyphs=glyphs)
+        return PickerDialog(IconTheme("Fr", [str(themes)]), None, lambda name: None)
+
+    def search(self, dialog, text, expected):
+        dialog.search.set_text(text)
+        settle(lambda: dialog._names == expected)
+        return dialog._names
+
+    def test_a_french_word_finds_english_named_pictograms(self):
+        dialog = self.dialog()
+        self.assertEqual(self.search(dialog, "musique", ["audio-x-generic-symbolic"]), ["audio-x-generic-symbolic"])
+
+    def test_accents_do_not_matter(self):
+        dialog = self.dialog()
+        self.assertEqual(self.search(dialog, "Étoile", ["starred-symbolic"]), ["starred-symbolic"])
+
+    def test_english_search_still_works_and_comes_first(self):
+        dialog = self.dialog()
+        self.assertEqual(self.search(dialog, "camera", ["camera-photo-symbolic"]), ["camera-photo-symbolic"])
+
+    def test_direct_matches_are_listed_before_translated_ones(self):
+        dialog = self.dialog()
+        names = self.search(dialog, "photo", ["camera-photo-symbolic"])
+        self.assertEqual(names, ["camera-photo-symbolic"])
+
+    def test_the_placeholder_mentions_both_languages(self):
+        self.assertIn("French", self.dialog().search.get_placeholder_text())
+
+    def test_the_result_list_has_no_duplicates(self):
+        dialog = self.dialog()
+        dialog.search.set_text("ma")
+        settle(lambda: "user-home-symbolic" in dialog._names)
+        self.assertEqual(len(dialog._names), len(set(dialog._names)))
+
+
+class OpenFilesTests(WindowTestCase):
+    def test_a_folder_opens_in_the_editor(self):
+        folder = self.make_folder()
+        self.window.open_files([Gio.File.new_for_path(str(folder))])
+        settle()
+        self.assertEqual(self.window.editor.draft.folder, folder)
+        self.assertEqual(self.window._pending.folder, folder)
+
+    def test_nothing_happens_without_files(self):
+        self.window.open_files([])
+        self.assertEqual(self.service.store.all(), {})
+        self.assertIsNone(self.window._pending)
+
+    def test_a_file_is_refused_with_an_explanation(self):
+        path = self.root / "note.txt"
+        path.write_text("x")
+        self.window.open_files([Gio.File.new_for_path(str(path))])
+        settle()
+        self.assertIsNone(self.window._pending)
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_only_the_first_folder_is_opened_and_the_user_is_told(self):
+        first, second = self.make_folder("a"), self.make_folder("b")
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.open_files([Gio.File.new_for_path(str(first)), Gio.File.new_for_path(str(second))])
+        settle()
+        self.assertEqual(self.window._pending.folder, first)
+        self.assertIn("one folder at a time", toast.call_args.args[0])
+
+    def test_an_already_customized_folder_is_selected(self):
+        folder = self.add_and_apply()
+        self.window.open_files([Gio.File.new_for_path(str(folder))])
+        settle()
+        self.assertIsNone(self.window._pending)
+        self.assertEqual(self.window._current_key, str(folder.resolve()))
+
+    def test_a_portal_path_without_access_opens_the_permission_help(self):
+        with mock.patch.object(window_module.environment, "home_access", return_value=False):
+            self.window.open_files([Gio.File.new_for_path("/run/user/1000/doc/abcd1234/Projects")])
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog().get_extra_child())
+
+    def test_dropping_a_folder_opens_it(self):
+        from gi.repository import Gdk
+
+        folder = self.make_folder()
+        dropped = Gdk.FileList.new_from_list([Gio.File.new_for_path(str(folder))])
+        self.assertTrue(self.window._on_files_dropped(None, dropped, 0, 0))
+        settle()
+        self.assertEqual(self.window._pending.folder, folder)
+
+    def test_the_window_accepts_file_drops(self):
+        from gi.repository import Gdk
+
+        controllers = self.window.observe_controllers()
+        drops = [controllers.get_item(index) for index in range(controllers.get_n_items()) if isinstance(controllers.get_item(index), Gtk.DropTarget)]
+        self.assertEqual(len(drops), 1)
+        self.assertEqual(drops[0].get_actions(), Gdk.DragAction.COPY)
+
+
+class ApplicationOpenTests(WindowTestCase):
+    def application(self):
+        from custicon.app import Application
+
+        if not _OPEN_APPLICATION:
+            application = Application(self.service, unique=False)
+            application.register(None)
+            _OPEN_APPLICATION.append(application)
+        application = _OPEN_APPLICATION[0]
+        application._service = self.service
+        self.addCleanup(lambda: [window.destroy() for window in application.get_windows()])
+        return application
+
+    def test_the_application_handles_files(self):
+        from custicon.app import Application
+
+        for unique in (True, False):
+            self.assertTrue(Application(self.service, unique=unique).get_flags() & Gio.ApplicationFlags.HANDLES_OPEN)
+
+    def test_opening_a_folder_creates_the_window_and_selects_the_folder(self):
+        application = self.application()
+        folder = self.make_folder()
+        application.open([Gio.File.new_for_path(str(folder))], "")
+        settle()
+        window = application.props.active_window
+        self.assertIsNotNone(window)
+        self.assertEqual(window._pending.folder, folder)
+
+    def test_a_second_request_reuses_the_same_window(self):
+        application = self.application()
+        first, second = self.make_folder("a"), self.make_folder("b")
+        application.open([Gio.File.new_for_path(str(first))], "")
+        settle()
+        window = application.props.active_window
+        application.open([Gio.File.new_for_path(str(second))], "")
+        settle()
+        self.assertIs(application.props.active_window, window)
+        self.assertEqual(len(application.get_windows()), 1)
+        self.assertEqual(window._pending.folder, second)
+
+    def test_activating_without_files_still_opens_the_window(self):
+        application = self.application()
+        application.activate()
+        settle()
+        self.assertIsNotNone(application.props.active_window)
 
 
 if __name__ == "__main__":

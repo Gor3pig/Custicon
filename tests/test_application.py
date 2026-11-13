@@ -43,5 +43,17 @@ class PackageImportTests(unittest.TestCase):
         importlib.reload(custicon)
 
 
+class DesktopEntryTests(unittest.TestCase):
+    def entry(self) -> dict:
+        path = Path(__file__).resolve().parent.parent / "data" / "io.github.gor3pig.Custicon.desktop.in"
+        return dict(line.split("=", 1) for line in path.read_text(encoding="utf-8").splitlines() if "=" in line)
+
+    def test_the_launcher_receives_the_selected_folders(self):
+        self.assertTrue(self.entry()["Exec"].endswith(" %F"))
+
+    def test_the_application_is_offered_for_folders(self):
+        self.assertEqual(self.entry()["MimeType"], "inode/directory;")
+
+
 if __name__ == "__main__":
     unittest.main()

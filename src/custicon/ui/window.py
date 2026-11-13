@@ -4,7 +4,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, GLib, GObject, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
 from .. import environment
 from ..config import APP_ID, APP_NAME
@@ -102,6 +102,9 @@ class MainWindow(Adw.ApplicationWindow):
         breakpoint_.add_setter(self.split, "collapsed", True)
         self.add_breakpoint(breakpoint_)
 
+        drop = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
+        drop.connect("drop", self._on_files_dropped)
+        self.add_controller(drop)
         self.connect("close-request", self._on_close_request)
         self.connect("notify::is-active", self._on_active_changed)
         settings = Gtk.Settings.get_default()
@@ -456,6 +459,24 @@ class MainWindow(Adw.ApplicationWindow):
             self._alert(_("Name Not Supported"), _("This name is not valid UTF-8 text, so Custicon cannot use it."))
             return None
         return path
+
+    def open_files(self, files: list) -> None:
+        if not files:
+            return
+        path = self._real_path(files[0])
+        if path is None:
+            return
+        folder = Path(path)
+        if not folder.is_dir():
+            self._alert(_("Not a Folder"), _("Custicon customizes folders, not files."))
+            return
+        if len(files) > 1:
+            self.toast(_("Custicon opens one folder at a time: “%s” was opened.") % folder_name(folder))
+        self.add_folder(folder)
+
+    def _on_files_dropped(self, _target, value, _x, _y) -> bool:
+        self.open_files(value.get_files())
+        return True
 
     def _choose_folder(self) -> None:
         dialog = Gtk.FileDialog(title=_("Choose a Folder"))
