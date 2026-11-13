@@ -23,7 +23,7 @@ jobs:
           docker run --rm --volume "$PWD:/src:ro" registry.fedoraproject.org/fedora:44 bash -c '
             set -euo pipefail
             dnf install -y --setopt=install_weak_deps=False \
-              git findutils python3-gobject python3-cairo gtk4 libadwaita librsvg2 \
+              git findutils python3-gobject python3-cairo gobject-introspection gtk4 libadwaita librsvg2 \
               gettext desktop-file-utils appstream glib2 dejavu-sans-fonts
             git config --system --add safe.directory "*"
             git clone --quiet /src /work
