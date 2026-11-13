@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build the release package for, such as v1.0.0. Leave empty to build a test package without creating a release.
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  flatpak:
+    name: Flatpak package
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Make the checked out commit the main branch
+        run: git checkout -B main
+
+      - name: Check that every version matches
+        run: |
+          version=$(sed -n "s/^  version: '\(.*\)',$/\1/p" meson.build)
+          config_version=$(sed -n 's/^VERSION = "\(.*\)"$/\1/p' src/custicon/config.py)
+          release_version=$(sed -n 's/^ *<release version="\([^"]*\)".*/\1/p' data/io.github.gor3pig.Custicon.metainfo.xml.in | head -n 1)
+          for found in "meson.build:$version" "config.py:$config_version" "metainfo release:$release_version"; do
+            if [ "${found#*:}" != "$version" ]; then
+              echo "${found%%:*} says ${found#*:}, but meson.build says $version"
+              exit 1
+            fi
+          done
+          if [ -n "$TAG" ] && [ "v$version" != "$TAG" ]; then
+            echo "The tag is $TAG, but the version is $version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Install Flatpak tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Build the package
+        run: |
+          flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse \
+            --force-clean --repo=repo build build-aux/io.github.gor3pig.Custicon.json
+          flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
+            repo "custicon-$VERSION.flatpak" io.github.gor3pig.Custicon
+          sha256sum "custicon-$VERSION.flatpak" > "custicon-$VERSION.flatpak.sha256"
+
+      - name: Attach the package to the release
+        if: env.TAG != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --draft --verify-tag --title "Custicon $VERSION" \
+              --notes "Release notes to be written before publishing."
+          fi
+          gh release upload "$TAG" "custicon-$VERSION.flatpak" "custicon-$VERSION.flatpak.sha256" --clobber
+
+      - name: Keep the test package
+        if: env.TAG == ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: custicon-test-package
+          path: |
+            custicon-${{ env.VERSION }}.flatpak
+            custicon-${{ env.VERSION }}.flatpak.sha256
+          retention-days: 14

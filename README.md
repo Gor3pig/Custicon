@@ -72,19 +72,28 @@ dans l’espace de données de l’application. Rien n’est écrit dans le doss
 
 ## Installation
 
-Custicon se distribue sous forme de paquet Flatpak, construit à partir des sources.
+Custicon se distribue sous forme de paquet Flatpak.
 
-### 1. Préparer Flatpak
+### Depuis une release (le plus simple)
+
+Téléchargez le fichier `custicon-X.Y.Z.flatpak` joint à une [release](https://github.com/Gor3pig/Custicon/releases)
+(le dépôt est privé : connectez-vous d’abord à GitHub), puis :
+
+```sh
+sha256sum -c custicon-X.Y.Z.flatpak.sha256
+flatpak install --user custicon-X.Y.Z.flatpak
+flatpak run io.github.gor3pig.Custicon
+```
+
+Flatpak propose d’ajouter Flathub pour installer l’environnement GNOME 51 si besoin. Sans l’option `--user`,
+l’installation est faite pour tout le système.
+
+### Depuis les sources
 
 Il faut `flatpak`, `flatpak-builder` et l’environnement GNOME 51 de Flathub :
 
 ```sh
 flatpak install flathub org.gnome.Platform//51 org.gnome.Sdk//51
-```
-
-### 2. Construire et installer
-
-```sh
 git clone https://github.com/Gor3pig/Custicon.git
 cd Custicon
 flatpak-builder --user --install --disable-rofiles-fuse --force-clean build-dir \
@@ -94,7 +103,7 @@ flatpak run io.github.gor3pig.Custicon
 
 Le paquet est construit à partir des fichiers du dépôt git (le dernier commit de la branche `main`).
 
-### 3. Désinstaller
+### Désinstaller
 
 ```sh
 flatpak uninstall --user io.github.gor3pig.Custicon

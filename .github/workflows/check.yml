@@ -1,0 +1,32 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check.sh
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Run check.sh in Fedora 44
+        run: |
+          docker run --rm --volume "$PWD:/src:ro" registry.fedoraproject.org/fedora:44 bash -c '
+            set -euo pipefail
+            dnf install -y --setopt=install_weak_deps=False \
+              git findutils python3-gobject python3-cairo gtk4 libadwaita librsvg2 \
+              gettext desktop-file-utils appstream glib2 dejavu-sans-fonts
+            git config --system --add safe.directory "*"
+            git clone --quiet /src /work
+            cd /work
+            ./check.sh
+          '

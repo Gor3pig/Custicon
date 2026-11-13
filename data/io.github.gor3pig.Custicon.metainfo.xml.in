@@ -46,9 +46,18 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
-    <release version="0.1.0" date="2026-11-13">
+    <release version="1.0.0" date="2026-11-13">
       <description>
-        <p>First version.</p>
+        <p>The first stable version of Custicon.</p>
+        <ul>
+          <li>Put a pictogram on the real folder icon of your current icon theme</li>
+          <li>Choose a pictogram from your icon theme, or use your own SVG or PNG file</li>
+          <li>Let the color be chosen automatically, or set the color, the size and the position yourself</li>
+          <li>See the result live before applying it</li>
+          <li>Remove an icon at any time: the folder gets back the icon it had before</li>
+          <li>Regenerate every icon after a change of icon theme</li>
+          <li>The content of your folders is never modified</li>
+        </ul>
       </description>
     </release>
   </releases>
