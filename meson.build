@@ -13,6 +13,7 @@ install_subdir(
   'src' / 'custicon',
   install_dir: python.get_install_dir(),
   exclude_directories: ['__pycache__', 'ui' / '__pycache__'],
+  exclude_files: ['capture.py'],
 )
 
 configure_file(

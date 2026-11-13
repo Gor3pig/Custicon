@@ -206,19 +206,25 @@ class Editor(Gtk.Box):
 
     def load(self, draft: Draft, existing: bool, status: str = "ok", banner_text: str | None = None, banner_action: str | None = None, remove_label: str | None = None) -> None:
         self._loading = True
-        self._existing = existing
-        self._status = status
-        self._draft = draft
-        self.name_label.set_text(folder_name(draft.folder))
-        self.path_label.set_text(display_path(draft.folder))
-        self.path_label.set_tooltip_text(str(draft.folder))
-        self._show_widgets(draft)
-        self.banner.set_title(banner_text or "")
-        self.banner.set_button_label(banner_action)
-        self.banner.set_revealed(bool(banner_text))
-        self.remove_button.set_label(remove_label or _("Remove Icon"))
-        self.remove_button.set_visible(existing)
-        self._loading = False
+        try:
+            self._existing = existing
+            self._status = status
+            self._draft = draft
+            self.name_label.set_text(folder_name(draft.folder))
+            self.path_label.set_text(display_path(draft.folder))
+            self.path_label.set_tooltip_text(str(draft.folder))
+            self._show_widgets(draft)
+            self.banner.set_title(banner_text or "")
+            self.banner.set_button_label(banner_action)
+            self.banner.set_revealed(bool(banner_text))
+            self.remove_button.set_label(remove_label or _("Remove Icon"))
+            self.remove_button.set_visible(existing or remove_label is not None)
+            if existing:
+                self.remove_button.add_css_class("destructive-action")
+            else:
+                self.remove_button.remove_css_class("destructive-action")
+        finally:
+            self._loading = False
         self._refresh_actions()
 
     def _show_widgets(self, draft: Draft) -> None:
@@ -236,9 +242,11 @@ class Editor(Gtk.Box):
 
     def update_glyph(self, draft: Draft) -> None:
         self._loading = True
-        self._draft = draft
-        self._show_widgets(draft)
-        self._loading = False
+        try:
+            self._draft = draft
+            self._show_widgets(draft)
+        finally:
+            self._loading = False
         self._refresh_actions()
         self._emit_change()
 
@@ -247,8 +255,10 @@ class Editor(Gtk.Box):
             self.auto_row.set_subtitle(_("A darker shade of the folder color (%s)") % color)
             if self._draft and self._draft.auto_color:
                 self._loading = True
-                self.swatch.set_rgba(rgba_from_hex(color))
-                self._loading = False
+                try:
+                    self.swatch.set_rgba(rgba_from_hex(color))
+                finally:
+                    self._loading = False
         else:
             self.auto_row.set_subtitle(_("A darker shade of the folder color"))
 
@@ -287,7 +297,10 @@ class Editor(Gtk.Box):
         if self._loading or self._draft is None:
             return
         self.swatch.set_sensitive(not row.get_active())
-        self._update(auto_color=row.get_active())
+        if row.get_active():
+            self._update(auto_color=True)
+        else:
+            self._update(auto_color=False, color=hex_from_rgba(self.swatch.get_rgba()))
 
     def _on_color(self, button, _param) -> None:
         self._update(color=hex_from_rgba(button.get_rgba()))
@@ -306,6 +319,8 @@ class Editor(Gtk.Box):
             return
         self._draft = self._draft.with_default_appearance()
         self._loading = True
-        self._show_widgets(self._draft)
-        self._loading = False
+        try:
+            self._show_widgets(self._draft)
+        finally:
+            self._loading = False
         self._emit_change()

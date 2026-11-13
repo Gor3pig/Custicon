@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 17:11+0100\n"
+"POT-Creation-Date: 2026-11-13 19:08+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -226,7 +226,13 @@ msgstr ""
 msgid "Customized Folders"
 msgstr ""
 
+msgid "Could Not Read the Saved Data"
+msgstr ""
+
 msgid "Forget This Folder"
+msgstr ""
+
+msgid "Cancel"
 msgstr ""
 
 #, python-format
@@ -242,6 +248,12 @@ msgstr ""
 msgid ""
 "Custicon needs the real location of the folder. Choose a folder inside your "
 "home folder."
+msgstr ""
+
+msgid "Name Not Supported"
+msgstr ""
+
+msgid "This name is not valid UTF-8 text, so Custicon cannot use it."
 msgstr ""
 
 msgid "SVG and PNG images"
@@ -283,10 +295,11 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
-msgid "Cancel"
+msgid "Could Not Remove the Icon"
 msgstr ""
 
-msgid "Could Not Remove the Icon"
+#, python-format
+msgid "“%s” was no longer in the list."
 msgstr ""
 
 #, python-format

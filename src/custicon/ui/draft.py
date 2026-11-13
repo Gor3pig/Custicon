@@ -1,10 +1,23 @@
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from ..service import Settings
+import math
+
+from ..color import is_hex_color
+from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE, Settings
 from ..store import Entry
 
 DEFAULT_COLOR = "#3584e4"
+
+
+def clean_number(value, lower: float, upper: float, default: float) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        return default
+    return min(upper, max(lower, float(value)))
+
+
+def clean_text(value) -> str | None:
+    return value if isinstance(value, str) and value and "\0" not in value else None
 
 
 @dataclass(frozen=True)
@@ -49,14 +62,17 @@ class Draft:
     @classmethod
     def from_entry(cls, entry: Entry) -> "Draft":
         settings = Settings.from_dict(entry.settings)
+        glyph_name = clean_text(settings.glyph_name)
+        glyph_file = None if glyph_name else clean_text(settings.glyph_file)
+        color = settings.color if is_hex_color(settings.color) else None
         return cls(
             folder=Path(entry.folder),
-            glyph_name=settings.glyph_name,
-            glyph_file=settings.glyph_file,
-            tint=settings.tint,
-            auto_color=settings.color is None,
-            color=settings.color or entry.color,
-            size=settings.size,
-            offset_x=settings.offset_x,
-            offset_y=settings.offset_y,
+            glyph_name=glyph_name,
+            glyph_file=glyph_file,
+            tint=settings.tint if isinstance(settings.tint, bool) else True,
+            auto_color=color is None,
+            color=color or (entry.color if is_hex_color(entry.color) else DEFAULT_COLOR),
+            size=clean_number(settings.size, MIN_SIZE, MAX_SIZE, 1.0),
+            offset_x=clean_number(settings.offset_x, -MAX_OFFSET, MAX_OFFSET, 0.0),
+            offset_y=clean_number(settings.offset_y, -MAX_OFFSET, MAX_OFFSET, 0.0),
         )

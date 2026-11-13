@@ -35,3 +35,11 @@ def from_percent(value: float) -> float:
 def is_portal_path(path: Path | str) -> bool:
     text = str(path)
     return text.startswith("/run/user/") and "/doc/" in text
+
+
+def is_text_path(path: str) -> bool:
+    try:
+        path.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True

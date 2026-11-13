@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 17:11+0100\n"
+"POT-Creation-Date: 2026-11-13 19:08+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -226,8 +226,14 @@ msgstr "Choisir un dossier…"
 msgid "Customized Folders"
 msgstr "Dossiers personnalisés"
 
+msgid "Could Not Read the Saved Data"
+msgstr "Impossible de lire les données enregistrées"
+
 msgid "Forget This Folder"
 msgstr "Oublier ce dossier"
+
+msgid "Cancel"
+msgstr "Annuler"
 
 #, python-format
 msgid "Live preview with the folder icon of the current theme (%s)."
@@ -245,6 +251,12 @@ msgid ""
 msgstr ""
 "Custicon a besoin de l’emplacement réel du dossier. Choisissez un dossier "
 "situé dans votre dossier personnel."
+
+msgid "Name Not Supported"
+msgstr "Nom non pris en charge"
+
+msgid "This name is not valid UTF-8 text, so Custicon cannot use it."
+msgstr "Ce nom n’est pas un texte UTF-8 valide : Custicon ne peut pas l’utiliser."
 
 msgid "SVG and PNG images"
 msgstr "Images SVG et PNG"
@@ -289,11 +301,12 @@ msgstr ""
 msgid "Remove"
 msgstr "Retirer"
 
-msgid "Cancel"
-msgstr "Annuler"
-
 msgid "Could Not Remove the Icon"
 msgstr "Impossible de retirer l’icône"
+
+#, python-format
+msgid "“%s” was no longer in the list."
+msgstr "« %s » ne figurait plus dans la liste."
 
 #, python-format
 msgid "“%s”: the icon you chose in Nautilus was kept."
@@ -373,4 +386,6 @@ msgid "The first stable version of Custicon."
 msgstr "La première version stable de Custicon."
 
 msgid "Put a pictogram on the real folder icon of your current icon theme"
-msgstr "Posez un pictogramme sur la vraie icône de dossier de votre thème d’icônes actuel"
+msgstr ""
+"Posez un pictogramme sur la vraie icône de dossier de votre thème d’icônes "
+"actuel"

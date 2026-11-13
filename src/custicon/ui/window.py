@@ -12,6 +12,7 @@ from ..i18n import _
 from ..service import (
     RESET_FOLDER_MISSING,
     RESET_KEPT_USER_ICON,
+    RESET_UNKNOWN,
     STATUS_FOLDER_MISSING,
     STATUS_ICON_CHANGED,
     STATUS_ICON_FILE_MISSING,
@@ -21,7 +22,7 @@ from ..service import (
 )
 from .draft import Draft
 from .editor import BIG_SIZE, SMALL_SIZES, Editor
-from .format import display_path, folder_name, is_portal_path
+from .format import display_path, folder_name, is_portal_path, is_text_path
 from .messages import banner_action, describe_error, report_lines, status_banner, status_label
 from .picker import PickerDialog
 from .textures import texture_from_file, texture_from_svg_text
@@ -66,6 +67,8 @@ class MainWindow(Adw.ApplicationWindow):
         self._reloading = False
         self._preview_source = 0
         self._regeneration: tuple | None = None
+        self._regeneration_source = 0
+        self._shown_error: str | None = None
         self._rows: dict[str, FolderRow] = {}
 
         self._build_actions()
@@ -80,6 +83,7 @@ class MainWindow(Adw.ApplicationWindow):
         breakpoint_.add_setter(self.split, "collapsed", True)
         self.add_breakpoint(breakpoint_)
 
+        self.connect("close-request", self._on_close_request)
         self.connect("notify::is-active", self._on_active_changed)
         settings = Gtk.Settings.get_default()
         if settings is not None:
@@ -147,6 +151,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.SINGLE)
         self.list.add_css_class("navigation-sidebar")
         self.list.connect("row-selected", self._on_row_selected)
+        self.list.connect("row-activated", self._on_row_activated)
         scrolled = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
         scrolled.set_child(self.list)
         box.append(scrolled)
@@ -171,8 +176,24 @@ class MainWindow(Adw.ApplicationWindow):
         self.content_page = Adw.NavigationPage.new(view, APP_NAME)
         return self.content_page
 
-    def reload(self, select: str | None = None) -> None:
+    def reload(self, select: str | None = None, keep_editor: bool = False) -> None:
         self._reloading = True
+        try:
+            self._rebuild_rows()
+            if not self._rows:
+                self._current_key = None
+                self.stack.set_visible_child_name("empty")
+                return
+            self.stack.set_visible_child_name("main")
+            key = select if select in self._rows else (self._current_key if self._current_key in self._rows else next(iter(self._rows)))
+            self.list.select_row(self._rows[key])
+            self._current_key = key
+        finally:
+            self._reloading = False
+        if not keep_editor:
+            self._show_key(key)
+
+    def _rebuild_rows(self) -> None:
         child = self.list.get_first_child()
         while child is not None:
             following = child.get_next_sibling()
@@ -180,7 +201,7 @@ class MainWindow(Adw.ApplicationWindow):
             child = following
         self._rows.clear()
         scale = self.get_scale_factor()
-        items = sorted(self._service.customized(), key=lambda item: folder_name(item.entry.folder).lower())
+        items = self._customized()
         if self._pending is not None:
             self._add_row(
                 str(self._pending.folder),
@@ -197,16 +218,21 @@ class MainWindow(Adw.ApplicationWindow):
             except CusticonError:
                 texture = self._plain_folder_texture(scale)
             self._add_row(entry.folder, folder_name(entry.folder), display_path(entry.folder), texture, status_label(item.status), False)
-        self._reloading = False
 
-        if not self._rows:
-            self._current_key = None
-            self.stack.set_visible_child_name("empty")
-            return
-        self.stack.set_visible_child_name("main")
-        key = select if select in self._rows else (self._current_key if self._current_key in self._rows else next(iter(self._rows)))
-        self.list.select_row(self._rows[key])
-        self._show_key(key)
+    def _customized(self) -> list:
+        try:
+            items = self._service.customized()
+        except CusticonError as error:
+            self._report_registry_error(error)
+            return []
+        self._shown_error = None
+        return sorted(items, key=lambda item: folder_name(item.entry.folder).lower())
+
+    def _report_registry_error(self, error: CusticonError) -> None:
+        message = str(error)
+        if message != self._shown_error:
+            self._shown_error = message
+            self._alert(_("Could Not Read the Saved Data"), describe_error(error))
 
     def _add_row(self, key, name, subtitle, texture, warning, pending) -> None:
         row = FolderRow(key, name, subtitle, texture, warning, pending)
@@ -225,18 +251,32 @@ class MainWindow(Adw.ApplicationWindow):
         self._show_key(row.key)
         self.split.set_show_content(True)
 
+    def _on_row_activated(self, _list, row) -> None:
+        if self._reloading or row is None:
+            return
+        if row.key != self._current_key:
+            self._show_key(row.key)
+        self.split.set_show_content(True)
+
+    def _entry(self, key: str):
+        try:
+            return self._service.store.get(key)
+        except CusticonError as error:
+            self._report_registry_error(error)
+            return None
+
     def _show_key(self, key: str) -> None:
         self._current_key = key
         if self._pending is not None and key == str(self._pending.folder):
             self._load(self._pending, False, STATUS_OK)
             return
-        entry = self._service.store.get(key)
+        entry = self._entry(key)
         if entry is None:
             return
         self._load(Draft.from_entry(entry), True, self._service.entry_status(entry))
 
     def _load(self, draft: Draft, existing: bool, status: str) -> None:
-        remove_label = _("Forget This Folder") if status in FORGET_STATUSES else None
+        remove_label = _("Forget This Folder") if status in FORGET_STATUSES else (None if existing else _("Cancel"))
         self.content_page.set_title(folder_name(draft.folder))
         self.editor.load(draft, existing, status, status_banner(status), banner_action(status), remove_label)
         self._schedule_preview()
@@ -288,11 +328,18 @@ class MainWindow(Adw.ApplicationWindow):
         if path is None or is_portal_path(path):
             self._alert(_("Folder Not Accessible"), _("Custicon needs the real location of the folder. Choose a folder inside your home folder."))
             return
+        if not is_text_path(path):
+            self._alert(_("Name Not Supported"), _("This name is not valid UTF-8 text, so Custicon cannot use it."))
+            return
         self.add_folder(Path(path))
 
     def add_folder(self, path: Path) -> None:
-        key = str(path.resolve())
-        if self._service.store.get(key) is None:
+        try:
+            key = str(path.resolve())
+        except (OSError, RuntimeError):
+            self._alert(_("Folder Not Accessible"), _("Custicon needs the real location of the folder. Choose a folder inside your home folder."))
+            return
+        if self._entry(key) is None:
             self._pending = Draft(folder=Path(key))
         self.reload(select=key)
         self.split.set_show_content(True)
@@ -320,8 +367,12 @@ class MainWindow(Adw.ApplicationWindow):
         except GLib.Error:
             return
         path = gfile.get_path()
-        if path and self.editor.draft is not None:
-            self.editor.update_glyph(self.editor.draft.with_glyph_file(path))
+        if not path or self.editor.draft is None:
+            return
+        if not is_text_path(path):
+            self._alert(_("Name Not Supported"), _("This name is not valid UTF-8 text, so Custicon cannot use it."))
+            return
+        self.editor.update_glyph(self.editor.draft.with_glyph_file(path))
 
     def _apply(self) -> None:
         draft = self.editor.draft
@@ -341,7 +392,11 @@ class MainWindow(Adw.ApplicationWindow):
         draft = self.editor.draft
         if draft is None or self._current_key is None:
             return
-        entry = self._service.store.get(self._current_key)
+        if self._pending is not None and self._current_key == str(self._pending.folder):
+            self._pending = None
+            self.reload()
+            return
+        entry = self._entry(self._current_key)
         status = self._service.entry_status(entry) if entry else STATUS_OK
         name = folder_name(draft.folder)
         if status in FORGET_STATUSES:
@@ -370,7 +425,9 @@ class MainWindow(Adw.ApplicationWindow):
         except CusticonError as error:
             self._alert(_("Could Not Remove the Icon"), describe_error(error))
             return
-        if outcome == RESET_KEPT_USER_ICON:
+        if outcome == RESET_UNKNOWN:
+            self.toast(_("“%s” was no longer in the list.") % name)
+        elif outcome == RESET_KEPT_USER_ICON:
             self.toast(_("“%s”: the icon you chose in Nautilus was kept.") % name)
         elif outcome == RESET_FOLDER_MISSING:
             self.toast(_("“%s” was forgotten.") % name)
@@ -381,27 +438,47 @@ class MainWindow(Adw.ApplicationWindow):
     def _start_regeneration(self) -> None:
         if self._regeneration is not None:
             return
-        entries = list(self._service.store.all().values())
+        try:
+            entries = list(self._service.store.all().values())
+        except CusticonError as error:
+            self._report_registry_error(error)
+            return
         if not entries:
             self.toast(_("There are no customized folders to regenerate."))
             return
         self._service.refresh_themes()
         self._regeneration = (iter(entries), RegenerationReport())
         self.regenerate_button.set_sensitive(False)
-        GLib.idle_add(self._regeneration_step)
+        self._regeneration_source = GLib.idle_add(self._regeneration_step)
 
     def _regeneration_step(self) -> bool:
         iterator, report = self._regeneration
         try:
             entry = next(iterator)
         except StopIteration:
-            self._regeneration = None
-            self.regenerate_button.set_sensitive(True)
-            self.reload()
+            self._finish_regeneration()
+            self.reload(keep_editor=self.has_unsaved_changes())
             self._show_report(report)
             return False
-        self._service.regenerate_entry(entry, report)
+        try:
+            self._service.regenerate_entry(entry, report)
+        except Exception as error:
+            report.failed[entry.folder] = str(error)
         return True
+
+    def _finish_regeneration(self) -> None:
+        self._regeneration = None
+        self._regeneration_source = 0
+        self.regenerate_button.set_sensitive(True)
+
+    def _on_close_request(self, *_args) -> bool:
+        if self._preview_source:
+            GLib.source_remove(self._preview_source)
+            self._preview_source = 0
+        if self._regeneration_source:
+            GLib.source_remove(self._regeneration_source)
+            self._finish_regeneration()
+        return False
 
     def _show_report(self, report: RegenerationReport) -> None:
         lines = report_lines(report)
@@ -432,7 +509,7 @@ class MainWindow(Adw.ApplicationWindow):
             return False
         if self._pending is not None and self._current_key == str(self._pending.folder):
             return False
-        entry = self._service.store.get(self._current_key)
+        entry = self._entry(self._current_key)
         return entry is None or Draft.from_entry(entry) != draft
 
     def _on_active_changed(self, *_args) -> None:

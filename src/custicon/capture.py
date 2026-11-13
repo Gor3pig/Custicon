@@ -1,3 +1,4 @@
+import argparse
 import shutil
 import sys
 from pathlib import Path
@@ -116,35 +117,39 @@ def snapshot(window, out: Path) -> bool:
     return True
 
 
+def parse_arguments(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog="custicon --capture", description="Save a screenshot of one screen of the interface.")
+    parser.add_argument("--capture", dest="screen", required=True, choices=SCREENS)
+    parser.add_argument("--out", required=True, type=Path)
+    return parser.parse_args(argv[1:])
+
+
 def main(argv: list[str]) -> int:
-    screen = argv[argv.index("--capture") + 1]
-    out = Path(argv[argv.index("--out") + 1])
-    if screen not in SCREENS:
-        print(f"unknown screen {screen!r}; choose from {', '.join(SCREENS)}", file=sys.stderr)
-        return 2
+    arguments = parse_arguments(argv)
+    screen, out = arguments.screen, arguments.out
     demo = Demo()
-    demo.create(populate=screen != "empty")
-    if screen in ("states", "report"):
-        demo.break_some()
-    app = Application(demo.service, unique=False)
-
-    def on_activate(application) -> None:
-        window = application.props.active_window
-        arrange(screen, window, demo)
-
-        attempts = [0]
-
-        def finish() -> bool:
-            attempts[0] += 1
-            if not snapshot(window, out) and attempts[0] < RETRIES:
-                return True
-            application.quit()
-            return False
-
-        GLib.timeout_add(DIALOG_SETTLE_MS if screen in DIALOG_SCREENS else SETTLE_MS, finish)
-
-    app.connect_after("activate", on_activate)
     try:
+        demo.create(populate=screen != "empty")
+        if screen in ("states", "report"):
+            demo.break_some()
+        app = Application(demo.service, unique=False)
+
+        def on_activate(application) -> None:
+            window = application.props.active_window
+            arrange(screen, window, demo)
+
+            attempts = [0]
+
+            def finish() -> bool:
+                attempts[0] += 1
+                if not snapshot(window, out) and attempts[0] < RETRIES:
+                    return True
+                application.quit()
+                return False
+
+            GLib.timeout_add(DIALOG_SETTLE_MS if screen in DIALOG_SCREENS else SETTLE_MS, finish)
+
+        app.connect_after("activate", on_activate)
         return app.run([argv[0]])
     finally:
         demo.cleanup()

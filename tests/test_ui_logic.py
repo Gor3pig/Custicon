@@ -1,3 +1,4 @@
+import os
 import unittest
 from pathlib import Path
 
@@ -21,7 +22,7 @@ from custicon.service import (
 )
 from custicon.store import Entry
 from custicon.ui.draft import DEFAULT_COLOR, Draft
-from custicon.ui.format import display_path, folder_name, from_percent, is_portal_path, percent_text, to_percent
+from custicon.ui.format import display_path, folder_name, from_percent, is_portal_path, is_text_path, percent_text, to_percent
 from custicon.ui.messages import banner_action, describe_error, report_lines, status_banner, status_label
 
 
@@ -82,6 +83,43 @@ class DraftTests(unittest.TestCase):
         draft = Draft.from_entry(entry)
         self.assertTrue(draft.auto_color)
         self.assertEqual(draft.color, "#438de6")
+
+
+class DamagedEntryTests(unittest.TestCase):
+    def draft(self, **settings):
+        entry = Entry("/f", "0" * 32, "Adwaita", "#438de6", settings, None)
+        return Draft.from_entry(entry)
+
+    def test_numbers_that_are_not_numbers_fall_back_to_defaults(self):
+        draft = self.draft(glyph_name="a-symbolic", size="big", offset_x=None, offset_y=True)
+        self.assertEqual((draft.size, draft.offset_x, draft.offset_y), (1.0, 0.0, 0.0))
+
+    def test_out_of_range_numbers_are_clamped(self):
+        draft = self.draft(glyph_name="a-symbolic", size=1e9, offset_x=-50, offset_y=float("nan"))
+        self.assertEqual(draft.size, 3.0)
+        self.assertEqual(draft.offset_x, -0.5)
+        self.assertEqual(draft.offset_y, 0.0)
+
+    def test_a_bad_color_or_tint_falls_back(self):
+        draft = self.draft(glyph_name="a-symbolic", color="red", tint="yes")
+        self.assertTrue(draft.auto_color)
+        self.assertEqual(draft.color, "#438de6")
+        self.assertIs(draft.tint, True)
+        self.assertIs(self.draft(glyph_name="a-symbolic", tint=0).tint, True)
+
+    def test_texts_that_are_not_text_are_ignored(self):
+        draft = self.draft(glyph_name=["a"], glyph_file=3)
+        self.assertFalse(draft.ready)
+
+    def test_a_name_wins_over_a_file(self):
+        draft = self.draft(glyph_name="a-symbolic", glyph_file="/x.svg")
+        self.assertEqual((draft.glyph_name, draft.glyph_file), ("a-symbolic", None))
+
+
+class TextPathTests(unittest.TestCase):
+    def test_only_utf8_encodable_paths_are_text(self):
+        self.assertTrue(is_text_path("/home/été"))
+        self.assertFalse(is_text_path(os.fsdecode(b"/tmp/caf\xe9")))
 
 
 class FormatTests(unittest.TestCase):

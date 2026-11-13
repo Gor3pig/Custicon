@@ -1,6 +1,8 @@
 import os
 import time
 import unittest
+from pathlib import Path
+from unittest import mock
 
 import gi
 
@@ -8,9 +10,11 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk
 
+from custicon.ui.editor import hex_from_rgba
 from custicon.metadata import read_custom_icon, write_custom_icon
 from custicon.service import Service, Settings
-from custicon.store import Store
+from custicon.store import Entry, Store
+from custicon.ui.draft import Draft
 
 from .support import WorkspaceTestCase, folder_svg, glyph_svg, make_theme
 
@@ -104,7 +108,8 @@ class EmptyAndNewFolderTests(WindowTestCase):
         self.assertEqual(self.window.editor.draft.folder, folder)
         self.assertFalse(self.window.editor.draft.ready)
         self.assertFalse(self.window.editor.apply_button.get_sensitive())
-        self.assertFalse(self.window.editor.remove_button.get_visible())
+        self.assertTrue(self.window.editor.remove_button.get_visible())
+        self.assertEqual(self.window.editor.remove_button.get_label(), "Cancel")
         self.assertEqual(self.service.store.all(), {})
 
     def test_the_new_folder_is_listed_before_being_applied(self):
@@ -143,6 +148,14 @@ class FakeFolderDialog:
         self._file = Gio.File.new_for_path(path)
 
     def select_folder_finish(self, _result):
+        return self._file
+
+
+class FakeOpenDialog:
+    def __init__(self, path):
+        self._file = Gio.File.new_for_path(path)
+
+    def open_finish(self, _result):
         return self._file
 
 
@@ -241,6 +254,15 @@ class EditorBehaviourTests(WindowTestCase):
         self.editor.auto_row.set_active(False)
         self.assertFalse(self.editor.draft.auto_color)
         self.assertTrue(self.editor.swatch.get_sensitive())
+
+    def test_turning_automatic_color_off_keeps_the_displayed_color(self):
+        self.editor.set_auto_color_text("#aa5500")
+        shown = hex_from_rgba(self.editor.swatch.get_rgba())
+        self.assertEqual(shown, "#aa5500")
+        self.editor.auto_row.set_active(False)
+        self.assertEqual(self.editor.draft.color, "#aa5500")
+        self.assertEqual(hex_from_rgba(self.editor.swatch.get_rgba()), shown)
+        self.assertEqual(self.editor.draft.to_settings().color, shown)
 
     def test_reset_returns_to_the_default_appearance(self):
         self.editor.size_slider.adjustment.set_value(200)
@@ -390,3 +412,166 @@ class PickerTests(WindowTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ResilienceTests(WindowTestCase):
+    def test_an_unreadable_registry_does_not_prevent_the_window_from_opening(self):
+        from custicon.ui.window import MainWindow
+
+        self.service.store.root.mkdir(parents=True, exist_ok=True)
+        self.service.store.registry_path.write_text("{broken")
+        window = MainWindow(shared_application(), self.service)
+        self.addCleanup(window.destroy)
+        settle()
+        self.assertEqual(window.stack.get_visible_child_name(), "empty")
+        self.assertIsNotNone(window.get_visible_dialog())
+
+    def test_the_registry_error_is_shown_once_not_at_every_refresh(self):
+        self.service.store.root.mkdir(parents=True, exist_ok=True)
+        self.service.store.registry_path.write_text("{broken")
+        self.window.reload()
+        settle()
+        first = self.window.get_visible_dialog()
+        first.force_close()
+        settle()
+        self.window.reload()
+        settle()
+        self.assertIsNone(self.window.get_visible_dialog())
+
+    def test_a_flag_is_released_when_rebuilding_the_list_fails(self):
+        with mock.patch.object(self.window, "_rebuild_rows", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                self.window.reload()
+        self.assertFalse(self.window._reloading)
+
+    def test_the_editor_flag_is_released_when_a_load_fails(self):
+        editor = self.window.editor
+        with mock.patch.object(editor, "_show_widgets", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                editor.load(Draft(self.workspace, glyph_name="star-symbolic"), False)
+        self.assertFalse(editor._loading)
+
+    def test_the_remove_button_is_hidden_for_a_new_folder_without_a_label(self):
+        self.window.editor.load(Draft(self.workspace, glyph_name="star-symbolic"), False)
+        self.assertFalse(self.window.editor.remove_button.get_visible())
+        self.window.editor.load(Draft(self.workspace, glyph_name="star-symbolic"), True)
+        self.assertTrue(self.window.editor.remove_button.get_visible())
+        self.assertTrue(self.window.editor.remove_button.has_css_class("destructive-action"))
+        self.window.editor.load(Draft(self.workspace, glyph_name="star-symbolic"), False, remove_label="Cancel")
+        self.assertFalse(self.window.editor.remove_button.has_css_class("destructive-action"))
+
+    def test_closing_the_window_stops_a_running_regeneration(self):
+        self.add_and_apply()
+        self.window._start_regeneration()
+        self.assertIsNotNone(self.window._regeneration)
+        self.window._on_close_request()
+        self.assertIsNone(self.window._regeneration)
+        self.assertEqual(self.window._regeneration_source, 0)
+        self.assertTrue(self.window.regenerate_button.get_sensitive())
+
+    def test_the_editor_flag_is_released_when_loading_fails(self):
+        editor = self.window.editor
+        with mock.patch.object(editor, "_show_widgets", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                editor.update_glyph(Draft(self.workspace, glyph_name="star-symbolic"))
+        self.assertFalse(editor._loading)
+
+    def test_clicking_the_selected_row_opens_the_editor_in_narrow_mode(self):
+        folder = self.add_and_apply()
+        self.window.split.set_collapsed(True)
+        self.window.split.set_show_content(False)
+        row = self.window._rows[str(folder)]
+        self.window.list.emit("row-activated", row)
+        self.assertTrue(self.window.split.get_show_content())
+
+    def test_reloading_does_not_switch_the_narrow_view_to_the_editor(self):
+        folder = self.add_and_apply()
+        self.window.split.set_collapsed(True)
+        self.window.split.set_show_content(False)
+        self.window.reload(select=str(folder))
+        self.assertFalse(self.window.split.get_show_content())
+
+    def test_cancelling_a_pending_folder_forgets_it_without_asking(self):
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.window._confirm_remove()
+        settle()
+        self.assertIsNone(self.window._pending)
+        self.assertEqual(self.window.stack.get_visible_child_name(), "empty")
+        self.assertIsNone(self.window.get_visible_dialog())
+
+    def test_removing_an_unknown_folder_says_so(self):
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.remove(str(self.workspace / "nowhere"), "nowhere")
+        toast.assert_called_once()
+        self.assertIn("no longer in the list", toast.call_args.args[0])
+
+    def test_a_name_that_is_not_utf8_is_refused_when_choosing_a_folder(self):
+        bad = os.fsencode(self.workspace) + b"/caf\xe9"
+        os.mkdir(bad)
+        self.addCleanup(os.rmdir, bad)
+        self.window._folder_chosen(FakeFolderDialog(os.fsdecode(bad)), None)
+        settle()
+        self.assertIsNone(self.window._pending)
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_a_pictogram_file_name_that_is_not_utf8_is_refused(self):
+        bad = os.fsencode(self.workspace) + b"/ic\xf4ne.svg"
+        with open(bad, "wb") as handle:
+            handle.write(glyph_svg().encode())
+        self.addCleanup(os.remove, bad)
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.window._glyph_file_chosen(FakeOpenDialog(os.fsdecode(bad)), None)
+        settle()
+        self.assertIsNone(self.window.editor.draft.glyph_file)
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_a_folder_that_cannot_be_resolved_is_refused_cleanly(self):
+        with mock.patch.object(Path, "resolve", side_effect=OSError("too many levels of symbolic links")):
+            self.window.add_folder(self.workspace)
+        settle()
+        self.assertIsNone(self.window._pending)
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_a_damaged_registry_does_not_break_later_actions(self):
+        self.add_and_apply()
+        self.service.store.registry_path.write_text("{broken")
+        self.service.store.registry_path.with_name("registry.json.bak").write_text("{broken")
+        self.window.has_unsaved_changes()
+        self.window._start_regeneration()
+        settle()
+        self.assertIsNone(self.window._regeneration)
+        self.assertTrue(self.window.regenerate_button.get_sensitive())
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_closing_the_window_removes_the_pending_timers(self):
+        self.window.add_folder(self.make_folder())
+        self.window._schedule_preview()
+        self.assertNotEqual(self.window._preview_source, 0)
+        self.window._on_close_request()
+        self.assertEqual(self.window._preview_source, 0)
+
+    def test_regeneration_does_not_discard_unsaved_changes(self):
+        self.add_and_apply()
+        self.window.editor.size_slider.adjustment.set_value(170)
+        self.window._start_regeneration()
+        settle(lambda: self.window._regeneration is None)
+        settle()
+        self.assertAlmostEqual(self.window.editor.draft.size, 1.7)
+
+    def test_an_unexpected_error_during_regeneration_does_not_block_the_button(self):
+        self.add_and_apply()
+        with mock.patch.object(self.service, "regenerate_entry", side_effect=RuntimeError("boom")):
+            self.window._start_regeneration()
+            self.assertTrue(settle(lambda: self.window._regeneration is None))
+        self.assertTrue(self.window.regenerate_button.get_sensitive())
+
+    def test_a_damaged_registry_entry_still_opens_in_the_editor(self):
+        folder = self.add_and_apply()
+        entry = self.service.store.get(str(folder))
+        damaged = Entry(entry.folder, entry.digest, entry.theme, entry.color, {"glyph_name": "star-symbolic", "size": "huge", "tint": "x"}, None)
+        self.service.store.put(damaged)
+        self.window.reload(select=str(folder))
+        settle()
+        self.assertEqual(self.window.editor.draft.size, 1.0)
