@@ -87,11 +87,24 @@ class Service:
         self._store = store
         self._theme_name = theme_name
         self._search_dirs = search_dirs
+        self._themes: dict[str, IconTheme] = {}
+
+    @property
+    def store(self) -> Store:
+        return self._store
+
+    def refresh_themes(self) -> None:
+        self._themes.clear()
+
+    def _theme(self, name: str) -> IconTheme:
+        if name not in self._themes:
+            self._themes[name] = IconTheme(name, self._search_dirs)
+        return self._themes[name]
 
     def build(self, settings: Settings, theme_name: str | None = None) -> BuiltIcon:
         settings.validate()
         name = theme_name or self._theme_name()
-        theme = IconTheme(name, self._search_dirs)
+        theme = self._theme(name)
         folder_file = theme.folder_file()
         glyph_file = Path(settings.glyph_file) if settings.glyph_file else self._find_glyph(theme, settings.glyph_name)
         color = settings.color or auto_glyph_color(folder_file)
@@ -154,20 +167,35 @@ class Service:
         return [Customized(entry, self._status(entry)) for entry in self._store.all().values()]
 
     def regenerate_all(self) -> RegenerationReport:
+        self.refresh_themes()
         report = RegenerationReport()
         for entry in list(self._store.all().values()):
-            target = Path(entry.folder)
-            status = self._status(entry)
-            if status in (STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED):
-                report.skipped[entry.folder] = status
-                continue
-            try:
-                updated = self.apply(target, Settings.from_dict(entry.settings))
-            except CusticonError as error:
-                report.failed[entry.folder] = str(error)
-                continue
-            (report.unchanged if updated.digest == entry.digest else report.updated).append(entry.folder)
+            self.regenerate_entry(entry, report)
         return report
+
+    def regenerate_entry(self, entry: Entry, report: RegenerationReport) -> None:
+        status = self._status(entry)
+        if status in (STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED):
+            report.skipped[entry.folder] = status
+            return
+        try:
+            updated = self.apply(Path(entry.folder), Settings.from_dict(entry.settings))
+        except CusticonError as error:
+            report.failed[entry.folder] = str(error)
+            return
+        (report.unchanged if updated.digest == entry.digest else report.updated).append(entry.folder)
+
+    def entry_status(self, entry: Entry) -> str:
+        return self._status(entry)
+
+    def folder_file(self, theme_name: str | None = None) -> Path:
+        return self._theme(theme_name or self._theme_name()).folder_file()
+
+    def current_theme(self) -> str:
+        return self._theme_name()
+
+    def icon_theme(self, theme_name: str | None = None) -> IconTheme:
+        return self._theme(theme_name or self._theme_name())
 
     def _status(self, entry: Entry) -> str:
         target = Path(entry.folder)
@@ -194,4 +222,4 @@ class Service:
         try:
             return theme.glyph_file(icon_name)
         except IconNotFoundError:
-            return IconTheme(DEFAULT_THEME, self._search_dirs).glyph_file(icon_name)
+            return self._theme(DEFAULT_THEME).glyph_file(icon_name)

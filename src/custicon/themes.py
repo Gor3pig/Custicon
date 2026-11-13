@@ -87,6 +87,11 @@ class IconTheme:
             raise IconNotFoundError(f"{icon_name} has no file in theme {self.name}")
         return Path(file.get_path())
 
+    def paintable(self, icon_name: str, size: int, scale: int = 1):
+        if not self.has_icon(icon_name):
+            raise IconNotFoundError(f"{icon_name} not found in theme {self.name}")
+        return self._theme.lookup_icon(icon_name, None, size, scale, Gtk.TextDirection.NONE, 0)
+
     def folder_file(self) -> Path:
         return self.find("folder")
 

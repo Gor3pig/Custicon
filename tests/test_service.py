@@ -380,6 +380,34 @@ class ListingTests(ServiceTestCase):
         self.assertEqual(self.status(folder), STATUS_OK)
 
 
+class ThemeCacheTests(ServiceTestCase):
+    def test_a_theme_is_loaded_once(self):
+        self.assertIs(self.service.icon_theme("Blue"), self.service.icon_theme("Blue"))
+        self.assertIsNot(self.service.icon_theme("Blue"), self.service.icon_theme("Green"))
+
+    def test_refreshing_drops_the_cached_themes(self):
+        before = self.service.icon_theme("Blue")
+        self.service.refresh_themes()
+        self.assertIsNot(self.service.icon_theme("Blue"), before)
+
+    def test_regenerating_all_refreshes_the_cached_themes(self):
+        before = self.service.icon_theme("Blue")
+        self.service.regenerate_all()
+        self.assertIsNot(self.service.icon_theme("Blue"), before)
+
+    def test_the_plain_folder_file_follows_the_theme(self):
+        self.assertEqual(self.service.folder_file("Blue").parts[-4], "Blue")
+        self.assertEqual(self.service.folder_file("Green").parts[-4], "Green")
+        self.assertEqual(self.service.current_theme(), "Blue")
+
+    def test_regenerate_entry_reports_into_the_given_report(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, STAR)
+        report = service_module.RegenerationReport()
+        self.service.regenerate_entry(entry, report)
+        self.assertEqual(report.unchanged, [str(folder)])
+
+
 class SettingsTests(unittest.TestCase):
     def test_a_symbolic_name_xor_a_file_is_required(self):
         with self.assertRaises(InvalidSettingsError):
