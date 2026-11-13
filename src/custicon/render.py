@@ -1,4 +1,6 @@
 import io
+import stat
+import struct
 from pathlib import Path
 
 import cairo
@@ -8,18 +10,41 @@ gi.require_version("Rsvg", "2.0")
 from gi.repository import GLib, Rsvg
 
 from .errors import InvalidIconError
-from .layout import MAX_FILE_BYTES
+from .layout import MAX_FILE_BYTES, MAX_IMAGE_SIDE, MAX_SVG_TAGS
 
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
 def read_icon_bytes(path: Path) -> bytes:
     try:
-        if path.stat().st_size > MAX_FILE_BYTES:
+        info = path.stat()
+        if not stat.S_ISREG(info.st_mode):
+            raise InvalidIconError(f"{path.name}: not a regular file")
+        if info.st_size > MAX_FILE_BYTES:
             raise InvalidIconError(f"{path.name}: file too large")
-        return path.read_bytes()
+        with path.open("rb") as handle:
+            data = handle.read(MAX_FILE_BYTES + 1)
     except OSError as error:
         raise InvalidIconError(f"{path.name}: {error.strerror}") from error
+    if len(data) > MAX_FILE_BYTES:
+        raise InvalidIconError(f"{path.name}: file too large")
+    return data
+
+
+def png_size(data: bytes) -> tuple[int, int]:
+    if len(data) < 33 or data[12:16] != b"IHDR" or struct.unpack(">I", data[8:12])[0] != 13:
+        raise InvalidIconError("invalid PNG header")
+    width, height = struct.unpack(">II", data[16:24])
+    if width == 0 or height == 0:
+        raise InvalidIconError("empty PNG")
+    if width > MAX_IMAGE_SIDE or height > MAX_IMAGE_SIDE:
+        raise InvalidIconError("PNG too large")
+    return width, height
+
+
+def check_svg_bytes(data: bytes) -> None:
+    if data.count(b"<") > MAX_SVG_TAGS:
+        raise InvalidIconError("SVG has too many elements")
 
 
 def is_png(data: bytes) -> bool:
@@ -27,6 +52,7 @@ def is_png(data: bytes) -> bool:
 
 
 def surface_from_svg(data: bytes, size: int) -> cairo.ImageSurface:
+    check_svg_bytes(data)
     try:
         handle = Rsvg.Handle.new_from_data(data)
     except GLib.Error as error:
@@ -42,6 +68,7 @@ def surface_from_svg(data: bytes, size: int) -> cairo.ImageSurface:
 
 
 def surface_from_png(data: bytes, size: int) -> cairo.ImageSurface:
+    png_size(data)
     try:
         source = cairo.ImageSurface.create_from_png(io.BytesIO(data))
     except (cairo.Error, OSError) as error:

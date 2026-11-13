@@ -1,3 +1,4 @@
+import base64
 import re
 import unittest
 import xml.etree.ElementTree as ET
@@ -35,6 +36,16 @@ class ComposeTests(WorkspaceTestCase):
     def glyph_group(self, svg: str) -> ET.Element:
         return self.parse(svg).findall(f"{{{SVG_NS}}}g")[-1]
 
+    def glyph_text(self, svg: str) -> str:
+        match = re.search(r"base64,([A-Za-z0-9+/=]+)", svg)
+        return base64.b64decode(match.group(1)).decode()
+
+    def glyph_root(self, svg: str) -> ET.Element:
+        return ET.fromstring(self.glyph_text(svg).encode())
+
+    def everything(self, svg: str) -> str:
+        return svg + self.glyph_text(svg)
+
     def translation(self, svg: str) -> tuple[float, float]:
         match = re.match(r"translate\(([-\d.e]+) ([-\d.e]+)\)", self.glyph_group(svg).get("transform"))
         return float(match.group(1)), float(match.group(2))
@@ -68,12 +79,11 @@ class ComposeTests(WorkspaceTestCase):
             '<stop offset="0" stop-color="#000"/></linearGradient></defs><rect width="16" height="16" fill="url(#a)"/></svg>'
         )
         svg = self.compose(folder=folder, glyph=glyph, tint=False)
-        ids = re.findall(r'\bid="([^"]+)"', svg)
-        self.assertEqual(len(ids), len(set(ids)))
-        self.assertIn("f-a", ids)
-        self.assertIn("g-a", ids)
-        self.assertIn("url(#f-a)", svg)
-        self.assertIn("url(#g-a)", svg)
+        self.assertEqual(re.findall(r'\bid="([^"]+)"', svg), ["a"])
+        self.assertIn("url(#a)", svg)
+        inner = self.glyph_text(svg)
+        self.assertEqual(re.findall(r'\bid="([^"]+)"', inner), ["a"])
+        self.assertIn("url(#a)", inner)
 
     def test_stroke_only_glyph_keeps_its_hollow_shape(self):
         glyph = (
@@ -81,7 +91,7 @@ class ComposeTests(WorkspaceTestCase):
             '<path d="M2 2h12v12H2z" fill="none" stroke="#000000" stroke-width="2"/></svg>'
         )
         svg = self.compose(glyph=glyph)
-        path = self.glyph_group(svg).find(f"{{{SVG_NS}}}path")
+        path = self.glyph_root(svg).find(f"{{{SVG_NS}}}path")
         self.assertEqual(path.get("fill"), "none")
         self.assertEqual(path.get("stroke"), RED)
 
@@ -90,7 +100,7 @@ class ComposeTests(WorkspaceTestCase):
             f'{SVG_OPEN} width="16" height="16" viewBox="0 0 16 16">'
             '<path d="M0 0h16v16H0z" style="fill:#000000;opacity:0.5;stroke:none"/></svg>'
         )
-        style = self.glyph_group(self.compose(glyph=glyph)).find(f"{{{SVG_NS}}}path").get("style")
+        style = self.glyph_root(self.compose(glyph=glyph)).find(f"{{{SVG_NS}}}path").get("style")
         self.assertIn(f"fill:{RED}", style)
         self.assertIn("opacity:0.5", style)
         self.assertIn("stroke:none", style)
@@ -100,11 +110,11 @@ class ComposeTests(WorkspaceTestCase):
             f'{SVG_OPEN} width="16" height="16" viewBox="0 0 16 16"><style>.a{{fill:#123456}}</style>'
             '<path class="a" d="M0 0h16v16H0z"/></svg>'
         )
-        self.assertNotIn("#123456", self.compose(glyph=glyph))
+        self.assertNotIn("#123456", self.everything(self.compose(glyph=glyph)))
 
     def test_without_tint_the_glyph_keeps_its_own_colors(self):
         svg = self.compose(glyph=glyph_svg("#123456"), tint=False)
-        group = self.glyph_group(svg)
+        group = self.glyph_root(svg)
         self.assertIsNone(group.get("fill"))
         self.assertEqual(group.find(f"{{{SVG_NS}}}path").get("fill"), "#123456")
 
@@ -115,17 +125,17 @@ class ComposeTests(WorkspaceTestCase):
             '<image href="https://example.org/x.png" width="16" height="16"/>'
             '<path id="p" d="M0 0h1v1z"/><use href="#p"/></svg>'
         )
-        svg = self.compose(glyph=glyph)
+        svg = self.everything(self.compose(glyph=glyph))
         self.assertNotIn("/etc/passwd", svg)
         self.assertNotIn("example.org", svg)
-        self.assertIn('href="#g-p"', svg)
+        self.assertIn('href="#p"', svg)
 
     def test_scripts_and_foreign_objects_are_removed(self):
         glyph = (
             f'{SVG_OPEN} width="16" height="16" viewBox="0 0 16 16"><script>alert(1)</script>'
             '<foreignObject width="1" height="1"/><path d="M0 0h16v16H0z"/></svg>'
         )
-        svg = self.compose(glyph=glyph)
+        svg = self.everything(self.compose(glyph=glyph))
         self.assertNotIn("script", svg)
         self.assertNotIn("foreignObject", svg)
 

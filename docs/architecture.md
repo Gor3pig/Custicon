@@ -45,9 +45,10 @@ Le nom du thème actif est lu par le portail `org.freedesktop.portal.Settings` 
 
 ## Composition
 
-Le SVG produit incorpore le dossier du thème (identifiants préfixés pour éviter les collisions), plus un groupe
-transformé qui place le pictogramme sur la face du dossier. Le résultat reste vectoriel. Si le thème ne fournit
-qu’un PNG, celui-ci est incorporé dans l’enveloppe SVG.
+Le SVG produit incorpore le dossier du thème, plus un groupe transformé qui place le pictogramme sur la face
+du dossier. Le pictogramme SVG est inséré comme un document séparé (image imbriquée) : ses identifiants et ses
+feuilles de style ne peuvent donc ni entrer en collision avec ceux du dossier ni les modifier. Le résultat reste
+vectoriel. Si le thème ne fournit qu’un PNG, celui-ci est incorporé dans l’enveloppe SVG.
 
 La couleur automatique est déduite d’un rendu du dossier : échantillon au centre de la face, puis luminosité
 × 0,74 et saturation × 1,12 (valeurs mesurées sur le couple face et pictogramme d’Adwaita).

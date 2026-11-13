@@ -1,3 +1,5 @@
+import re
+import base64
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -75,7 +77,9 @@ class ApplyTests(ServiceTestCase):
     def test_a_manual_color_is_used(self):
         entry = self.service.apply(self.make_folder(), Settings(glyph_name="star-symbolic", color="#ff8800"))
         self.assertEqual(entry.color, "#ff8800")
-        self.assertIn("#ff8800", self.store.icon_path(entry.digest).read_text())
+        text = self.store.icon_path(entry.digest).read_text()
+        inner = base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)", text).group(1)).decode()
+        self.assertIn("#ff8800", inner)
 
     def test_the_folder_content_is_never_modified(self):
         folder = self.make_folder()

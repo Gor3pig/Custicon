@@ -1,17 +1,28 @@
 import base64
+import math
 import re
-import struct
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
 from .color import is_hex_color
 from .errors import InvalidIconError
-from .layout import FACE_X, FACE_Y, GLYPH_SIZE, OUTPUT_SIZE
-from .render import is_png, read_icon_bytes
+from .layout import (
+    FACE_X,
+    FACE_Y,
+    GLYPH_SIZE,
+    MAX_COORDINATE,
+    MAX_STYLE_OFFSET,
+    MAX_STYLE_SIZE,
+    MAX_SVG_DEPTH,
+    MIN_DIMENSION,
+    OUTPUT_SIZE,
+)
+from .render import check_svg_bytes, is_png, png_size, read_icon_bytes
 
 SVG_NS = "http://www.w3.org/2000/svg"
 XLINK_NS = "http://www.w3.org/1999/xlink"
+XML_BASE = "{http://www.w3.org/XML/1998/namespace}base"
 ET.register_namespace("", SVG_NS)
 ET.register_namespace("xlink", XLINK_NS)
 
@@ -20,10 +31,14 @@ NO_PAINT = {"none", "transparent"}
 PAINT_PROPERTIES = ("fill", "stroke")
 FORBIDDEN_TAGS = {"script", "foreignObject"}
 SAFE_REFERENCES = ("#", "data:image/")
-LENGTH = re.compile(r"\s*([0-9]*\.?[0-9]+)")
-FOLDER_PREFIX = "f-"
-GLYPH_PREFIX = "g-"
-TINT_FILTER_ID = "g-tint"
+REFERENCE_ATTRIBUTES = ("href", "src")
+MASKING_TAGS = {"mask", "clipPath"}
+BOX_ATTRIBUTES = ("width", "height", "viewBox")
+LENGTH = re.compile(r"\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\s*([a-zA-Z%]*)\s*$")
+UNIT_FACTORS = {"": 1.0, "px": 1.0, "pt": 4 / 3, "pc": 16.0, "mm": 96 / 25.4, "cm": 96 / 2.54, "in": 96.0}
+EXTERNAL_URL = re.compile(r"url\(\s*(?!['\"]?\s*(?:#|data:image/))[^)]*\)", re.IGNORECASE)
+CSS_IMPORT = re.compile(r"@import[^;]*;?", re.IGNORECASE)
+TINT_FILTER_ID = "custicon-tint"
 
 Box = tuple[float, float, float, float]
 
@@ -46,58 +61,82 @@ def local_name(tag: str) -> str:
 
 
 def number(value: float) -> str:
-    return f"{value:.6g}"
+    return format(value, ".10g")
+
+
+def check_depth(root: ET.Element) -> None:
+    stack = [(root, 1)]
+    while stack:
+        element, depth = stack.pop()
+        if depth > MAX_SVG_DEPTH:
+            raise InvalidIconError("SVG is nested too deeply")
+        stack.extend((child, depth + 1) for child in element)
 
 
 def parse_svg(data: bytes) -> ET.Element:
+    check_svg_bytes(data)
     try:
         root = ET.fromstring(data)
-    except ET.ParseError as error:
+    except (ET.ParseError, LookupError, ValueError) as error:
         raise InvalidIconError(str(error)) from error
     if root.tag != svg_tag("svg"):
         raise InvalidIconError("not an SVG document")
+    check_depth(root)
     return root
+
+
+def serialize(root: ET.Element) -> str:
+    try:
+        return ET.tostring(root, encoding="unicode")
+    except RecursionError as error:
+        raise InvalidIconError("SVG is nested too deeply") from error
 
 
 def parse_length(value: str | None) -> float | None:
     match = LENGTH.match(value or "")
-    return float(match.group(1)) if match else None
+    if not match:
+        return None
+    factor = UNIT_FACTORS.get(match.group(2).lower())
+    if factor is None:
+        return None
+    return float(match.group(1)) * factor
 
 
 def box_of(root: ET.Element) -> Box:
     view_box = root.get("viewBox")
     if view_box:
+        parts = view_box.replace(",", " ").split()
+        if len(parts) != 4:
+            raise InvalidIconError("invalid viewBox")
         try:
-            x, y, width, height = (float(part) for part in view_box.replace(",", " ").split())
+            x, y, width, height = (float(part) for part in parts)
         except ValueError as error:
             raise InvalidIconError("invalid viewBox") from error
     else:
         x, y = 0.0, 0.0
         width, height = parse_length(root.get("width")), parse_length(root.get("height"))
-    if not width or not height or width <= 0 or height <= 0:
+    if width is None or height is None:
+        raise InvalidIconError("the icon has no usable size")
+    if not all(math.isfinite(value) for value in (x, y, width, height)):
+        raise InvalidIconError("the icon size is not finite")
+    if abs(x) > MAX_COORDINATE or abs(y) > MAX_COORDINATE:
+        raise InvalidIconError("the icon origin is out of range")
+    if not MIN_DIMENSION <= width <= MAX_COORDINATE or not MIN_DIMENSION <= height <= MAX_COORDINATE:
         raise InvalidIconError("the icon has no usable size")
     return x, y, width, height
 
 
-def png_size(data: bytes) -> tuple[int, int]:
-    if len(data) < 24:
-        raise InvalidIconError("truncated PNG")
-    width, height = struct.unpack(">II", data[16:24])
-    if width == 0 or height == 0:
-        raise InvalidIconError("empty PNG")
-    return width, height
-
-
-def image_element(data: bytes, width: int, height: int) -> ET.Element:
+def image_element(data: bytes, mime: str, width: float, height: float, x: float = 0.0, y: float = 0.0) -> ET.Element:
     encoded = base64.b64encode(data).decode()
-    return ET.Element(
-        svg_tag("image"),
-        {
-            "width": str(width),
-            "height": str(height),
-            f"{{{XLINK_NS}}}href": "data:image/png;base64," + encoded,
-        },
-    )
+    attributes = {
+        "width": number(width),
+        "height": number(height),
+        f"{{{XLINK_NS}}}href": f"data:{mime};base64,{encoded}",
+    }
+    if x or y:
+        attributes["x"] = number(x)
+        attributes["y"] = number(y)
+    return ET.Element(svg_tag("image"), attributes)
 
 
 def raster_root(data: bytes) -> ET.Element:
@@ -105,22 +144,16 @@ def raster_root(data: bytes) -> ET.Element:
     root = ET.Element(
         svg_tag("svg"), {"width": str(width), "height": str(height), "viewBox": f"0 0 {width} {height}"}
     )
-    root.append(image_element(data, width, height))
+    root.append(image_element(data, "image/png", width, height))
     return root
 
 
-def prefix_ids(root: ET.Element, prefix: str) -> None:
-    ids = {element.get("id") for element in root.iter() if element.get("id")}
-    for element in root.iter():
-        for key, value in list(element.attrib.items()):
-            if key == "id":
-                element.set(key, prefix + value)
-                continue
-            for old in ids:
-                value = value.replace(f"url(#{old})", f"url(#{prefix}{old})")
-                if value == f"#{old}":
-                    value = f"#{prefix}{old}"
-            element.set(key, value)
+def strip_external_urls(text: str) -> str:
+    return EXTERNAL_URL.sub("none", text)
+
+
+def strip_css(text: str) -> str:
+    return strip_external_urls(CSS_IMPORT.sub("", text))
 
 
 def sanitize(root: ET.Element) -> None:
@@ -130,8 +163,13 @@ def sanitize(root: ET.Element) -> None:
                 parent.remove(child)
     for element in root.iter():
         for key in list(element.attrib):
-            if local_name(key) == "href" and not element.get(key, "").startswith(SAFE_REFERENCES):
+            value = element.get(key, "")
+            if key == XML_BASE or (local_name(key) in REFERENCE_ATTRIBUTES and not value.startswith(SAFE_REFERENCES)):
                 del element.attrib[key]
+            elif "url(" in value.lower():
+                element.set(key, strip_external_urls(value))
+        if local_name(element.tag) == "style" and element.text:
+            element.text = strip_css(element.text)
 
 
 def recolor_style(style: str, color: str) -> str:
@@ -149,7 +187,13 @@ def recolor(root: ET.Element, color: str) -> None:
         for child in list(parent):
             if local_name(child.tag) == "style":
                 parent.remove(child)
+    protected = set()
     for element in root.iter():
+        if local_name(element.tag) in MASKING_TAGS:
+            protected.update(element.iter())
+    for element in root.iter():
+        if element in protected:
+            continue
         for name in PAINT_PROPERTIES:
             value = element.get(name)
             if value is not None and value.strip().lower() not in NO_PAINT:
@@ -159,13 +203,22 @@ def recolor(root: ET.Element, color: str) -> None:
             element.set("style", recolor_style(style, color))
 
 
-def tint_filter(color: str) -> ET.Element:
+def unique_id(wanted: str, taken: set[str]) -> str:
+    candidate = wanted
+    counter = 1
+    while candidate in taken:
+        counter += 1
+        candidate = f"{wanted}-{counter}"
+    return candidate
+
+
+def tint_filter(color: str, filter_id: str) -> ET.Element:
     defs = ET.Element(svg_tag("defs"))
     tint = ET.SubElement(
         defs,
         svg_tag("filter"),
         {
-            "id": TINT_FILTER_ID,
+            "id": filter_id,
             "x": "0",
             "y": "0",
             "width": "100%",
@@ -182,33 +235,45 @@ def load_folder(path: Path) -> ET.Element:
     data = read_icon_bytes(path)
     root = raster_root(data) if is_png(data) else parse_svg(data)
     sanitize(root)
-    prefix_ids(root, FOLDER_PREFIX)
     return root
 
 
-def load_glyph(path: Path, style: GlyphStyle) -> tuple[list[ET.Element], Box]:
+def load_glyph(path: Path, style: GlyphStyle, taken_ids: set[str]) -> tuple[list[ET.Element], Box]:
     data = read_icon_bytes(path)
     if is_png(data):
         width, height = png_size(data)
-        image = image_element(data, width, height)
+        image = image_element(data, "image/png", width, height)
         elements = [image]
         if style.tint:
-            image.set("filter", f"url(#{TINT_FILTER_ID})")
-            elements.insert(0, tint_filter(style.color))
+            filter_id = unique_id(TINT_FILTER_ID, taken_ids)
+            image.set("filter", f"url(#{filter_id})")
+            elements.insert(0, tint_filter(style.color, filter_id))
         return elements, (0.0, 0.0, float(width), float(height))
     root = parse_svg(data)
     sanitize(root)
-    prefix_ids(root, GLYPH_PREFIX)
     if style.tint:
         recolor(root, style.color)
-    return list(root), box_of(root)
+        root.set("fill", style.color)
+    x, y, width, height = box_of(root)
+    document = (XML_HEADER + serialize(root)).encode()
+    return [image_element(document, "image/svg+xml", width, height, x, y)], (x, y, width, height)
+
+
+def check_style(style: GlyphStyle) -> None:
+    if not is_hex_color(style.color):
+        raise InvalidIconError(f"invalid color {style.color!r}")
+    for value, limit in ((style.size, MAX_STYLE_SIZE), (style.offset_x, MAX_STYLE_OFFSET), (style.offset_y, MAX_STYLE_OFFSET)):
+        if not isinstance(value, (int, float)) or not math.isfinite(value) or abs(value) > limit:
+            raise InvalidIconError("the pictogram size or position is out of range")
+    if style.size <= 0:
+        raise InvalidIconError("the pictogram size must be positive")
 
 
 def compose(folder_file: Path, glyph_file: Path, style: GlyphStyle) -> str:
-    if not is_hex_color(style.color):
-        raise InvalidIconError(f"invalid color {style.color!r}")
+    check_style(style)
     folder = load_folder(folder_file)
-    glyph_elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(glyph_file, style)
+    taken_ids = {element.get("id") for element in folder.iter() if element.get("id")}
+    glyph_elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(glyph_file, style, taken_ids)
     folder_x, folder_y, folder_width, folder_height = box_of(folder)
 
     result = ET.Element(
@@ -219,19 +284,23 @@ def compose(folder_file: Path, glyph_file: Path, style: GlyphStyle) -> str:
             "viewBox": " ".join(number(v) for v in (folder_x, folder_y, folder_width, folder_height)),
         },
     )
+    for key, value in folder.attrib.items():
+        if key not in BOX_ATTRIBUTES:
+            result.set(key, value)
     result.extend(list(folder))
 
     scale = GLYPH_SIZE * style.size * folder_width / max(glyph_width, glyph_height)
     center_x = folder_x + (FACE_X + style.offset_x) * folder_width
     center_y = folder_y + (FACE_Y + style.offset_y) * folder_height
-    attributes = {
-        "transform": (
-            f"translate({number(center_x)} {number(center_y)}) scale({number(scale)}) "
-            f"translate({number(-(glyph_x + glyph_width / 2))} {number(-(glyph_y + glyph_height / 2))})"
-        )
-    }
-    if style.tint:
-        attributes["fill"] = style.color
-    group = ET.SubElement(result, svg_tag("g"), attributes)
+    group = ET.SubElement(
+        result,
+        svg_tag("g"),
+        {
+            "transform": (
+                f"translate({number(center_x)} {number(center_y)}) scale({number(scale)}) "
+                f"translate({number(-(glyph_x + glyph_width / 2))} {number(-(glyph_y + glyph_height / 2))})"
+            )
+        },
+    )
     group.extend(glyph_elements)
-    return XML_HEADER + ET.tostring(result, encoding="unicode") + "\n"
+    return XML_HEADER + serialize(result) + "\n"
