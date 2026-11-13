@@ -1,3 +1,4 @@
+import json
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
@@ -13,10 +14,11 @@ from .errors import (
     InvalidIconError,
     InvalidSettingsError,
     MetadataError,
+    StoreError,
 )
 from .metadata import read_custom_icon, write_custom_icon
 from .render import is_png, read_icon_bytes
-from .store import GLYPH_FILE_PATTERN, Entry, Store
+from .store import GLYPH_FILE_PATTERN, MAX_STYLE_NAME, MAX_STYLES, Entry, Store
 from .textglyph import MAX_CHARACTERS, text_to_svg
 from .themes import DEFAULT_THEME, IconTheme, active_icon_theme, system_accent_color
 
@@ -83,6 +85,12 @@ class Settings:
     def from_dict(cls, values: dict) -> "Settings":
         known = {name for name in cls.__dataclass_fields__}
         return cls(**{key: value for key, value in values.items() if key in known})
+
+
+@dataclass(frozen=True)
+class Style:
+    name: str
+    appearance: dict
 
 
 @dataclass(frozen=True)
@@ -205,14 +213,80 @@ class Service:
             self._store.remove(key)
             self._release(entry)
 
-    def remembered_appearance(self) -> dict:
-        stored = self._store.load_defaults() or {}
+    @staticmethod
+    def clean_appearance(stored: dict) -> dict | None:
         values = {name: stored[name] for name in APPEARANCE_FIELDS if name in stored}
         try:
             Settings(glyph_name="x", **values).validate()
         except InvalidSettingsError:
-            return {}
+            return None
         return values
+
+    def remembered_appearance(self) -> dict:
+        return self.clean_appearance(self._store.load_defaults() or {}) or {}
+
+    def styles(self) -> list[Style]:
+        styles = []
+        for item in self._store.load_styles():
+            appearance = self.clean_appearance(item["appearance"])
+            if appearance is not None:
+                styles.append(Style(item["name"], appearance))
+        return styles
+
+    def save_style(self, name: str, appearance: dict) -> None:
+        name = name.strip() if isinstance(name, str) else ""
+        if not 1 <= len(name) <= MAX_STYLE_NAME:
+            raise InvalidSettingsError(f"a style name has 1 to {MAX_STYLE_NAME} characters")
+        cleaned = self.clean_appearance(appearance)
+        if cleaned is None:
+            raise InvalidSettingsError("invalid appearance")
+        kept = [style for style in self.styles() if style.name.casefold() != name.casefold()]
+        if len(kept) >= MAX_STYLES:
+            raise InvalidSettingsError(f"at most {MAX_STYLES} styles can be saved")
+        self._store.save_styles([{"name": style.name, "appearance": style.appearance} for style in kept] + [{"name": name, "appearance": cleaned}])
+
+    def delete_style(self, name: str) -> None:
+        kept = [style for style in self.styles() if style.name != name]
+        self._store.save_styles([{"name": style.name, "appearance": style.appearance} for style in kept])
+
+    def export_styles(self, path: Path | str) -> int:
+        styles = [{"name": style.name, "appearance": style.appearance} for style in self.styles()]
+        try:
+            with open(path, "wb") as handle:
+                handle.write(self._store.dump_styles(styles))
+        except OSError as error:
+            raise StoreError(f"cannot write {Path(path).name}: {error.strerror}") from error
+        return len(styles)
+
+    def import_styles(self, path: Path | str) -> tuple[int, int]:
+        try:
+            data = read_icon_bytes(Path(path))
+            incoming = json.loads(data.decode("utf-8"))
+        except (InvalidIconError, UnicodeDecodeError, ValueError, RecursionError) as error:
+            raise StoreError("this is not a Custicon styles file") from error
+        if not isinstance(incoming, dict) or not isinstance(incoming.get("styles"), list):
+            raise StoreError("this is not a Custicon styles file")
+        merged = {style.name.casefold(): style for style in self.styles()}
+        imported = rejected = 0
+        for item in incoming["styles"]:
+            style = self._valid_style(item)
+            if style is None or (style.name.casefold() not in merged and len(merged) >= MAX_STYLES):
+                rejected += 1
+                continue
+            merged[style.name.casefold()] = style
+            imported += 1
+        if imported:
+            self._store.save_styles([{"name": style.name, "appearance": style.appearance} for style in merged.values()])
+        return imported, rejected
+
+    def _valid_style(self, item) -> Style | None:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str) or not isinstance(item.get("appearance"), dict):
+            return None
+        name = item["name"].strip()
+        if not 1 <= len(name) <= MAX_STYLE_NAME:
+            return None
+        appearance = self.clean_appearance(item["appearance"])
+        return None if appearance is None else Style(name, appearance)
 
     def remember_appearance(self, settings: Settings) -> None:
         try:

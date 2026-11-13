@@ -356,5 +356,28 @@ class TextGlyphDraftTests(unittest.TestCase):
         self.assertFalse(Draft.from_entry(entry).ready)
 
 
+class AppearanceSnapshotTests(unittest.TestCase):
+    def setUp(self):
+        self.draft = Draft(Path("/home/someone/Projects"), color="#112233", size=1.5, offset_x=0.1, offset_y=-0.2, tint=False)
+
+    def test_the_automatic_mode_has_no_color_and_no_accent(self):
+        values = self.draft.appearance()
+        self.assertEqual((values["color"], values["accent"]), (None, False))
+
+    def test_the_accent_mode_has_no_color(self):
+        values = replace(self.draft, color_mode="accent").appearance()
+        self.assertEqual((values["color"], values["accent"]), (None, True))
+
+    def test_the_custom_mode_keeps_its_color(self):
+        values = replace(self.draft, color_mode="custom").appearance()
+        self.assertEqual((values["color"], values["accent"]), ("#112233", False))
+
+    def test_the_geometry_and_tint_are_included_without_the_pictogram(self):
+        values = self.draft.appearance()
+        self.assertEqual((values["size"], values["offset_x"], values["offset_y"], values["tint"]), (1.5, 0.1, -0.2, False))
+        self.assertEqual(set(values), {"color", "accent", "size", "offset_x", "offset_y", "tint"})
+
+
 if __name__ == "__main__":
     unittest.main()
+

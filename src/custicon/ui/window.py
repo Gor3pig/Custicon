@@ -8,8 +8,9 @@ from gi.repository import Adw, Gio, GLib, Gtk
 
 from .. import environment
 from ..config import APP_ID, APP_NAME
+from ..store import MAX_STYLE_NAME
 from ..errors import CusticonError
-from ..i18n import _
+from ..i18n import _, ngettext
 from ..service import (
     RESET_FOLDER_MISSING,
     RESET_KEPT_USER_ICON,
@@ -109,7 +110,13 @@ class MainWindow(Adw.ApplicationWindow):
         self.reload()
 
     def _build_actions(self) -> None:
-        for name, callback in (("add-folder", self._choose_folder), ("regenerate", self._start_regeneration)):
+        actions = (
+            ("add-folder", self._choose_folder),
+            ("regenerate", self._start_regeneration),
+            ("export-styles", self._export_styles),
+            ("import-styles", self._import_styles),
+        )
+        for name, callback in actions:
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda *_args, cb=callback: cb())
             self.add_action(action)
@@ -117,6 +124,8 @@ class MainWindow(Adw.ApplicationWindow):
     def _primary_menu(self) -> Gio.Menu:
         menu = Gio.Menu()
         menu.append(_("Regenerate All Icons"), "win.regenerate")
+        menu.append(_("Export Styles…"), "win.export-styles")
+        menu.append(_("Import Styles…"), "win.import-styles")
         menu.append(_("About %s") % APP_NAME, "app.about")
         menu.append(_("Quit"), "app.quit")
         return menu
@@ -190,6 +199,9 @@ class MainWindow(Adw.ApplicationWindow):
         self.editor.on_choose_glyph = self._choose_glyph
         self.editor.on_browse_glyph = self._browse_glyph
         self.editor.on_banner_action = self._apply
+        self.editor.on_apply_style = self._apply_style
+        self.editor.on_delete_style = self._delete_style
+        self.editor.on_save_style = self._save_style
         view.set_content(self.editor)
         self.content_page = Adw.NavigationPage.new(view, APP_NAME)
         return self.content_page
@@ -305,6 +317,7 @@ class MainWindow(Adw.ApplicationWindow):
         remove_label = _("Forget This Folder") if status in FORGET_STATUSES else (None if existing else _("Cancel"))
         self.content_page.set_title(folder_name(draft.folder))
         self.editor.load(draft, existing, status, status_banner(status), banner_action(status), remove_label)
+        self._refresh_styles()
         self._schedule_preview()
 
     def _on_editor_change(self, draft: Draft) -> None:
@@ -520,6 +533,103 @@ class MainWindow(Adw.ApplicationWindow):
         dialog.set_default_response("close")
         dialog.set_close_response("close")
         dialog.present(self)
+
+    def _styles(self) -> list:
+        try:
+            return self._service.styles()
+        except CusticonError:
+            return []
+
+    def _refresh_styles(self) -> None:
+        self.editor.set_styles([style.name for style in self._styles()])
+
+    def _apply_style(self, name: str) -> None:
+        draft = self.editor.draft
+        style = next((style for style in self._styles() if style.name == name), None)
+        if draft is not None and style is not None:
+            self.editor.update_glyph(draft.with_appearance(style.appearance))
+
+    def _delete_style(self, name: str) -> None:
+        try:
+            self._service.delete_style(name)
+        except CusticonError as error:
+            self._alert(_("Could Not Delete the Style"), describe_error(error))
+            return
+        self._refresh_styles()
+        self.toast(_("Style “%s” deleted.") % name)
+
+    def _save_style(self) -> None:
+        draft = self.editor.draft
+        if draft is None:
+            return
+        entry = Gtk.Entry(max_length=MAX_STYLE_NAME, activates_default=True, placeholder_text=_("Style name"))
+        dialog = Adw.AlertDialog(heading=_("Save Style"), body=_("Give a name to the current appearance to reuse it for other folders."))
+        dialog.set_extra_child(entry)
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("save", _("Save"))
+        dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("save")
+        dialog.set_close_response("cancel")
+        appearance = draft.appearance()
+        dialog.choose(self, None, lambda d, result: self._style_named(d, result, entry.get_text(), appearance))
+
+    def _style_named(self, dialog, result, name: str, appearance: dict) -> None:
+        if dialog.choose_finish(result) != "save":
+            return
+        try:
+            self._service.save_style(name, appearance)
+        except CusticonError as error:
+            self._alert(_("Could Not Save the Style"), describe_error(error))
+            return
+        self._refresh_styles()
+        self.toast(_("Style “%s” saved.") % name.strip())
+
+    def _export_styles(self) -> None:
+        if not self._styles():
+            self.toast(_("There are no styles to export."))
+            return
+        dialog = Gtk.FileDialog(title=_("Export Styles"), initial_name="custicon-styles.json")
+        dialog.save(self, None, self._styles_export_chosen)
+
+    def _styles_export_chosen(self, dialog, result) -> None:
+        try:
+            gfile = dialog.save_finish(result)
+        except GLib.Error:
+            return
+        path = gfile.get_path()
+        if path is None:
+            self._alert(_("Could Not Export the Styles"), _("Choose a location on this computer."))
+            return
+        try:
+            count = self._service.export_styles(path)
+        except CusticonError as error:
+            self._alert(_("Could Not Export the Styles"), describe_error(error))
+            return
+        self.toast(ngettext("%d style exported.", "%d styles exported.", count) % count)
+
+    def _import_styles(self) -> None:
+        dialog = Gtk.FileDialog(title=_("Import Styles"))
+        dialog.open(self, None, self._styles_import_chosen)
+
+    def _styles_import_chosen(self, dialog, result) -> None:
+        try:
+            gfile = dialog.open_finish(result)
+        except GLib.Error:
+            return
+        path = gfile.get_path()
+        if path is None:
+            self._alert(_("Could Not Import the Styles"), _("Choose a file on this computer."))
+            return
+        try:
+            imported, rejected = self._service.import_styles(path)
+        except CusticonError as error:
+            self._alert(_("Could Not Import the Styles"), describe_error(error))
+            return
+        self._refresh_styles()
+        if rejected:
+            self.toast(_("%(imported)d imported, %(ignored)d ignored because they are not valid") % {"imported": imported, "ignored": rejected})
+        else:
+            self.toast(ngettext("%d style imported.", "%d styles imported.", imported) % imported)
 
     def _show_permission_help(self) -> None:
         dialog = Adw.AlertDialog(

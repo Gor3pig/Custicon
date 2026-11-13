@@ -68,6 +68,16 @@ class Draft:
     def has_default_appearance(self) -> bool:
         return self.auto_color and self.size == 1.0 and self.offset_x == 0.0 and self.offset_y == 0.0
 
+    def appearance(self) -> dict:
+        return {
+            "color": self.color if self.color_mode == "custom" else None,
+            "accent": self.color_mode == "accent",
+            "size": self.size,
+            "offset_x": self.offset_x,
+            "offset_y": self.offset_y,
+            "tint": self.tint,
+        }
+
     def to_settings(self) -> Settings:
         return Settings(
             glyph_name=self.glyph_name,

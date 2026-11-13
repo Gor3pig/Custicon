@@ -10,6 +10,10 @@ from .errors import StoreError
 
 REGISTRY_NAME = "registry.json"
 DEFAULTS_NAME = "defaults.json"
+STYLES_NAME = "styles.json"
+STYLES_VERSION = 1
+MAX_STYLES = 50
+MAX_STYLE_NAME = 40
 BACKUP_SUFFIX = ".bak"
 ICONS_DIR = "icons"
 GLYPHS_DIR = "glyphs"
@@ -39,6 +43,7 @@ class Store:
         self.glyphs_dir = self.root / GLYPHS_DIR
         self.registry_path = self.root / REGISTRY_NAME
         self.defaults_path = self.root / DEFAULTS_NAME
+        self.styles_path = self.root / STYLES_NAME
 
     def icon_path(self, digest: str) -> Path:
         return self.icons_dir / f"{digest}.svg"
@@ -106,6 +111,38 @@ class Store:
 
     def save_defaults(self, values: dict) -> None:
         self._write_atomic(self.defaults_path, json.dumps(values, indent=2).encode())
+
+    def load_styles(self) -> list[dict]:
+        try:
+            return self.parse_styles(self.styles_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, KeyError, TypeError, RecursionError):
+            return []
+
+    def save_styles(self, styles: list[dict]) -> None:
+        self._write_atomic(self.styles_path, self.dump_styles(styles))
+
+    @staticmethod
+    def dump_styles(styles: list[dict]) -> bytes:
+        document = {"version": STYLES_VERSION, "styles": styles}
+        return json.dumps(document, indent=2, ensure_ascii=False).encode()
+
+    @staticmethod
+    def parse_styles(text: str) -> list[dict]:
+        document = json.loads(text)
+        if not isinstance(document, dict) or document["version"] != STYLES_VERSION:
+            raise ValueError("unsupported styles file")
+        if not isinstance(document["styles"], list) or len(document["styles"]) > MAX_STYLES:
+            raise TypeError("invalid list of styles")
+        styles, names = [], set()
+        for item in document["styles"]:
+            name, appearance = item["name"], item["appearance"]
+            if not isinstance(name, str) or not 1 <= len(name) <= MAX_STYLE_NAME or name != name.strip():
+                raise ValueError("invalid style name")
+            if name.casefold() in names or not Store._is_flat_mapping(appearance):
+                raise ValueError("invalid style")
+            names.add(name.casefold())
+            styles.append({"name": name, "appearance": appearance})
+        return styles
 
     def prune(self) -> list[str]:
         backup = self.registry_path.with_name(REGISTRY_NAME + BACKUP_SUFFIX)

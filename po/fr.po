@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 22:20+0100\n"
+"POT-Creation-Date: 2026-11-13 22:27+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -68,6 +68,18 @@ msgstr "Position horizontale"
 
 msgid "Vertical Position"
 msgstr "Position verticale"
+
+msgid "No saved styles yet"
+msgstr "Aucun style enregistré"
+
+msgid "Save Current Appearance…"
+msgstr "Enregistrer l’apparence actuelle…"
+
+msgid "Styles"
+msgstr "Styles"
+
+msgid "Delete Style"
+msgstr "Supprimer le style"
 
 msgid ""
 "Nautilus does not refresh its icons by itself: after applying, press F5 in "
@@ -231,6 +243,12 @@ msgstr "Régénérer"
 msgid "Regenerate All Icons"
 msgstr "Régénérer toutes les icônes"
 
+msgid "Export Styles…"
+msgstr "Exporter les styles…"
+
+msgid "Import Styles…"
+msgstr "Importer des styles…"
+
 #, python-format
 msgid "About %s"
 msgstr "À propos de %s"
@@ -374,6 +392,69 @@ msgstr "Régénération terminée"
 
 msgid "Close"
 msgstr "Fermer"
+
+msgid "Could Not Delete the Style"
+msgstr "Impossible de supprimer le style"
+
+#, python-format
+msgid "Style “%s” deleted."
+msgstr "Style « %s » supprimé."
+
+msgid "Style name"
+msgstr "Nom du style"
+
+msgid "Save Style"
+msgstr "Enregistrer le style"
+
+msgid "Give a name to the current appearance to reuse it for other folders."
+msgstr "Donnez un nom à l’apparence actuelle pour la réutiliser sur d’autres dossiers."
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "Could Not Save the Style"
+msgstr "Impossible d’enregistrer le style"
+
+#, python-format
+msgid "Style “%s” saved."
+msgstr "Style « %s » enregistré."
+
+msgid "There are no styles to export."
+msgstr "Il n’y a aucun style à exporter."
+
+msgid "Export Styles"
+msgstr "Exporter les styles"
+
+msgid "Could Not Export the Styles"
+msgstr "Impossible d’exporter les styles"
+
+msgid "Choose a location on this computer."
+msgstr "Choisissez un emplacement sur cet ordinateur."
+
+#, python-format
+msgid "%d style exported."
+msgid_plural "%d styles exported."
+msgstr[0] "%d style exporté."
+msgstr[1] "%d styles exportés."
+
+msgid "Import Styles"
+msgstr "Importer des styles"
+
+msgid "Could Not Import the Styles"
+msgstr "Impossible d’importer les styles"
+
+msgid "Choose a file on this computer."
+msgstr "Choisissez un fichier sur cet ordinateur."
+
+#, python-format
+msgid "%(imported)d imported, %(ignored)d ignored because they are not valid"
+msgstr "%(imported)d importé(s), %(ignored)d ignoré(s) car non valides"
+
+#, python-format
+msgid "%d style imported."
+msgid_plural "%d styles imported."
+msgstr[0] "%d style importé."
+msgstr[1] "%d styles importés."
 
 msgid "Allow Access to Your Home Folder"
 msgstr "Autoriser l’accès à votre dossier personnel"

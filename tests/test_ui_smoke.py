@@ -1,3 +1,4 @@
+import json
 import os
 import time
 import unittest
@@ -541,6 +542,153 @@ class TextGlyphUiTests(WindowTestCase):
         self.window.reload(select=self.window._current_key)
         settle()
         self.assertEqual(self.editor.text_row.get_text(), "Z")
+
+
+class FakeSaveDialog:
+    def __init__(self, path):
+        self._file = Gio.File.new_for_path(path)
+
+    def save_finish(self, _result):
+        return self._file
+
+    def open_finish(self, _result):
+        return self._file
+
+
+class FakeAnswer:
+    def __init__(self, response):
+        self._response = response
+
+    def choose_finish(self, _result):
+        return self._response
+
+
+class StylesUiTests(WindowTestCase):
+    BLUE = {"color": "#3366cc", "accent": False, "size": 1.5, "offset_x": 0.1, "offset_y": -0.1, "tint": False}
+
+    def setUp(self):
+        super().setUp()
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.editor = self.window.editor
+
+    def rows(self):
+        names = []
+        child = self.editor.styles_list.get_first_child()
+        while child is not None:
+            names.append(child.get_child().get_first_child().get_label())
+            child = child.get_next_sibling()
+        return names
+
+    def save(self, name, appearance=None):
+        self.service.save_style(name, appearance or self.BLUE)
+        self.window._refresh_styles()
+
+    def test_the_styles_button_is_in_the_appearance_header(self):
+        self.assertTrue(self.editor.styles_button.get_visible())
+        self.assertEqual(self.editor.styles_button.get_label(), "Styles")
+
+    def test_saved_styles_are_listed_in_the_popover(self):
+        self.save("Blue")
+        self.save("Calm")
+        self.assertEqual(self.rows(), ["Blue", "Calm"])
+
+    def test_the_list_follows_the_service(self):
+        self.save("Blue")
+        self.window.reload()
+        settle()
+        self.assertEqual(self.rows(), ["Blue"])
+
+    def test_choosing_a_style_applies_its_appearance_and_keeps_the_pictogram(self):
+        self.save("Blue")
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.editor.styles_list.get_first_child().get_child().get_first_child().emit("clicked")
+        draft = self.editor.draft
+        self.assertEqual((draft.color_mode, draft.color, draft.size, draft.offset_x, draft.offset_y, draft.tint), ("custom", "#3366cc", 1.5, 0.1, -0.1, False))
+        self.assertEqual(draft.glyph_name, "star-symbolic")
+        self.assertAlmostEqual(self.editor.size_slider.adjustment.get_value(), 150)
+
+    def test_choosing_an_accent_style_selects_the_accent_mode(self):
+        self.save("Accent", {"color": None, "accent": True, "size": 1.0, "offset_x": 0.0, "offset_y": 0.0, "tint": True})
+        self.editor.styles_list.get_first_child().get_child().get_first_child().emit("clicked")
+        self.assertEqual(self.editor.draft.color_mode, "accent")
+        self.assertEqual(self.editor.color_row.get_selected(), 1)
+
+    def test_an_unknown_style_name_changes_nothing(self):
+        before = self.editor.draft
+        self.window._apply_style("nothing")
+        self.assertEqual(self.editor.draft, before)
+
+    def test_deleting_a_style_updates_the_list_and_the_store(self):
+        self.save("Blue")
+        self.save("Calm")
+        self.editor.styles_list.get_first_child().get_child().get_first_child().get_next_sibling().emit("clicked")
+        self.assertEqual(self.rows(), ["Calm"])
+        self.assertEqual([style.name for style in self.service.styles()], ["Calm"])
+
+    def test_naming_the_current_appearance_saves_it(self):
+        self.editor.size_slider.adjustment.set_value(150)
+        self.window._style_named(FakeAnswer("save"), None, "  Big  ", self.editor.draft.appearance())
+        self.assertEqual([style.name for style in self.service.styles()], ["Big"])
+        self.assertEqual(self.service.styles()[0].appearance["size"], 1.5)
+        self.assertEqual(self.rows(), ["Big"])
+
+    def test_cancelling_the_name_dialog_saves_nothing(self):
+        self.window._style_named(FakeAnswer("cancel"), None, "Big", self.editor.draft.appearance())
+        self.assertEqual(self.service.styles(), [])
+
+    def test_an_empty_name_is_reported(self):
+        self.window._style_named(FakeAnswer("save"), None, "   ", self.editor.draft.appearance())
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+        self.assertEqual(self.service.styles(), [])
+
+    def test_the_save_button_opens_the_naming_dialog(self):
+        self.editor.on_save_style()
+        settle()
+        dialog = self.window.get_visible_dialog()
+        self.assertIsNotNone(dialog)
+        self.assertEqual(dialog.get_extra_child().get_max_length(), 40)
+
+    def test_the_menu_offers_export_and_import(self):
+        self.assertIsNotNone(self.window.lookup_action("export-styles"))
+        self.assertIsNotNone(self.window.lookup_action("import-styles"))
+
+    def test_exporting_without_styles_only_informs(self):
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window._export_styles()
+        self.assertIn("no styles", toast.call_args.args[0])
+        self.assertIsNone(self.window.get_visible_dialog())
+
+    def test_exporting_writes_the_file_and_reports_the_count(self):
+        self.save("Blue")
+        target = self.root / "styles.json"
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window._styles_export_chosen(FakeSaveDialog(str(target)), None)
+        self.assertEqual(json.loads(target.read_text())["styles"][0]["name"], "Blue")
+        self.assertIn("1", toast.call_args.args[0])
+
+    def test_an_export_failure_is_reported(self):
+        self.save("Blue")
+        self.window._styles_export_chosen(FakeSaveDialog(str(self.root / "missing" / "styles.json")), None)
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_importing_adds_the_styles_and_reports_ignored_ones(self):
+        source = self.root / "in.json"
+        source.write_text(json.dumps({"version": 1, "styles": [{"name": "Blue", "appearance": self.BLUE}, {"name": "", "appearance": {}}]}))
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window._styles_import_chosen(FakeSaveDialog(str(source)), None)
+        self.assertEqual(self.rows(), ["Blue"])
+        self.assertIn("ignored", toast.call_args.args[0])
+
+    def test_importing_a_wrong_file_is_reported(self):
+        source = self.root / "in.json"
+        source.write_text("not json")
+        self.window._styles_import_chosen(FakeSaveDialog(str(source)), None)
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+        self.assertEqual(self.rows(), [])
 
 
 if __name__ == "__main__":

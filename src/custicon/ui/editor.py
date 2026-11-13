@@ -78,6 +78,9 @@ class Editor(Gtk.Box):
         self.on_choose_glyph = None
         self.on_browse_glyph = None
         self.on_banner_action = None
+        self.on_apply_style = None
+        self.on_delete_style = None
+        self.on_save_style = None
         self._draft: Draft | None = None
         self._loading = False
         self._existing = False
@@ -170,7 +173,10 @@ class Editor(Gtk.Box):
         self.reset_button = Gtk.Button(label=_("Reset to Defaults"), valign=Gtk.Align.CENTER)
         self.reset_button.add_css_class("flat")
         self.reset_button.connect("clicked", self._on_reset_appearance)
-        group.set_header_suffix(self.reset_button)
+        suffix = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6, valign=Gtk.Align.CENTER)
+        suffix.append(self._build_styles_button())
+        suffix.append(self.reset_button)
+        group.set_header_suffix(suffix)
 
         self.color_row = Adw.ComboRow(
             title=_("Color"),
@@ -192,6 +198,58 @@ class Editor(Gtk.Box):
         for slider in (self.size_slider, self.x_slider, self.y_slider):
             group.add(slider.row)
         return group
+
+    def _build_styles_button(self) -> Gtk.Widget:
+        self.styles_list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.styles_list.add_css_class("navigation-sidebar")
+        placeholder = Gtk.Label(label=_("No saved styles yet"), margin_top=12, margin_bottom=12)
+        placeholder.add_css_class("dim-label")
+        self.styles_list.set_placeholder(placeholder)
+        scrolled = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, propagate_natural_height=True, max_content_height=240, min_content_width=260)
+        scrolled.set_child(self.styles_list)
+        save = Gtk.Button(label=_("Save Current Appearance…"))
+        save.connect("clicked", self._on_save_style_clicked)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin_top=6, margin_bottom=6, margin_start=6, margin_end=6)
+        box.append(scrolled)
+        box.append(save)
+        self.styles_popover = Gtk.Popover(child=box)
+        self.styles_button = Gtk.MenuButton(label=_("Styles"), popover=self.styles_popover, valign=Gtk.Align.CENTER)
+        self.styles_button.add_css_class("flat")
+        return self.styles_button
+
+    def set_styles(self, names: list[str]) -> None:
+        child = self.styles_list.get_first_child()
+        while child is not None:
+            following = child.get_next_sibling()
+            self.styles_list.remove(child)
+            child = following
+        for name in names:
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            choose = Gtk.Button(label=name, hexpand=True, halign=Gtk.Align.FILL)
+            choose.add_css_class("flat")
+            choose.get_child().set_halign(Gtk.Align.START)
+            choose.connect("clicked", self._on_style_chosen, name)
+            delete = Gtk.Button(icon_name="user-trash-symbolic", tooltip_text=_("Delete Style"))
+            delete.add_css_class("flat")
+            delete.update_property([Gtk.AccessibleProperty.LABEL], [_("Delete Style")])
+            delete.connect("clicked", self._on_style_deleted, name)
+            row.append(choose)
+            row.append(delete)
+            self.styles_list.append(row)
+
+    def _on_style_chosen(self, _button, name: str) -> None:
+        self.styles_popover.popdown()
+        if self.on_apply_style:
+            self.on_apply_style(name)
+
+    def _on_style_deleted(self, _button, name: str) -> None:
+        if self.on_delete_style:
+            self.on_delete_style(name)
+
+    def _on_save_style_clicked(self, _button) -> None:
+        self.styles_popover.popdown()
+        if self.on_save_style:
+            self.on_save_style()
 
     def _build_action_bar(self) -> Gtk.Widget:
         bar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, margin_top=10, margin_bottom=12, margin_start=12, margin_end=12)

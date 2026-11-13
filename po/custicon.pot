@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 22:20+0100\n"
+"POT-Creation-Date: 2026-11-13 22:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,6 +74,18 @@ msgid "Horizontal Position"
 msgstr ""
 
 msgid "Vertical Position"
+msgstr ""
+
+msgid "No saved styles yet"
+msgstr ""
+
+msgid "Save Current Appearance…"
+msgstr ""
+
+msgid "Styles"
+msgstr ""
+
+msgid "Delete Style"
 msgstr ""
 
 msgid ""
@@ -231,6 +243,12 @@ msgstr ""
 msgid "Regenerate All Icons"
 msgstr ""
 
+msgid "Export Styles…"
+msgstr ""
+
+msgid "Import Styles…"
+msgstr ""
+
 #, python-format
 msgid "About %s"
 msgstr ""
@@ -363,6 +381,69 @@ msgstr ""
 
 msgid "Close"
 msgstr ""
+
+msgid "Could Not Delete the Style"
+msgstr ""
+
+#, python-format
+msgid "Style “%s” deleted."
+msgstr ""
+
+msgid "Style name"
+msgstr ""
+
+msgid "Save Style"
+msgstr ""
+
+msgid "Give a name to the current appearance to reuse it for other folders."
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Could Not Save the Style"
+msgstr ""
+
+#, python-format
+msgid "Style “%s” saved."
+msgstr ""
+
+msgid "There are no styles to export."
+msgstr ""
+
+msgid "Export Styles"
+msgstr ""
+
+msgid "Could Not Export the Styles"
+msgstr ""
+
+msgid "Choose a location on this computer."
+msgstr ""
+
+#, python-format
+msgid "%d style exported."
+msgid_plural "%d styles exported."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Import Styles"
+msgstr ""
+
+msgid "Could Not Import the Styles"
+msgstr ""
+
+msgid "Choose a file on this computer."
+msgstr ""
+
+#, python-format
+msgid "%(imported)d imported, %(ignored)d ignored because they are not valid"
+msgstr ""
+
+#, python-format
+msgid "%d style imported."
+msgid_plural "%d styles imported."
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Allow Access to Your Home Folder"
 msgstr ""
