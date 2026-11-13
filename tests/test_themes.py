@@ -146,6 +146,45 @@ class PortalThemeTests(unittest.TestCase):
         self.assertIsNone(name)
 
 
+class PortalAccentTests(unittest.TestCase):
+    def ask(self, reply=None, error=None):
+        bus = mock.Mock()
+        if error is not None:
+            bus.call_sync.side_effect = error
+        else:
+            bus.call_sync.return_value = reply
+        with mock.patch.object(themes.Gio, "bus_get_sync", return_value=bus):
+            return themes.portal_accent_color(), bus
+
+    def test_the_accent_is_read_as_a_hex_color(self):
+        color, bus = self.ask(portal_reply(GLib.Variant("(ddd)", (1.0, 0.0, 0.5))))
+        self.assertEqual(color, "#ff0080")
+        self.assertEqual(bus.call_sync.call_args.args[4].unpack(), ("org.freedesktop.appearance", "accent-color"))
+
+    def test_a_doubly_boxed_accent_is_unwrapped(self):
+        color, _bus = self.ask(portal_reply(GLib.Variant("v", GLib.Variant("(ddd)", (0.0, 1.0, 0.0)))))
+        self.assertEqual(color, "#00ff00")
+
+    def test_an_out_of_range_accent_means_no_accent(self):
+        for channels in ((-1.0, 0.0, 0.0), (0.0, 1.5, 0.0), (0.0, 0.0, float("nan"))):
+            color, _bus = self.ask(portal_reply(GLib.Variant("(ddd)", channels)))
+            self.assertIsNone(color, channels)
+
+    def test_a_reply_of_another_type_is_ignored(self):
+        color, _bus = self.ask(portal_reply(GLib.Variant("s", "blue")))
+        self.assertIsNone(color)
+
+    def test_a_portal_failure_gives_no_accent(self):
+        color, _bus = self.ask(error=GLib.Error("no portal"))
+        self.assertIsNone(color)
+
+    def test_the_system_accent_falls_back_to_the_default_blue(self):
+        with mock.patch.object(themes, "portal_accent_color", return_value=None):
+            self.assertEqual(themes.system_accent_color(), themes.DEFAULT_ACCENT)
+        with mock.patch.object(themes, "portal_accent_color", return_value="#112233"):
+            self.assertEqual(themes.system_accent_color(), "#112233")
+
+
 class SettingsThemeTests(unittest.TestCase):
     def test_without_the_schema_there_is_no_answer(self):
         source = mock.Mock()

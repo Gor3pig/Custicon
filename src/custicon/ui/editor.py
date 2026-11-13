@@ -14,6 +14,7 @@ from .format import display_path, folder_name, from_percent, percent_text, to_pe
 
 BIG_SIZE = 144
 SMALL_SIZES = (64, 48, 32)
+COLOR_MODES = ("auto", "accent", "custom")
 SLIDER_WIDTH = 150
 SLIDER_STEP = 0.5
 SLIDER_PAGE = 5
@@ -165,12 +166,16 @@ class Editor(Gtk.Box):
         self.reset_button.connect("clicked", self._on_reset_appearance)
         group.set_header_suffix(self.reset_button)
 
-        self.auto_row = Adw.SwitchRow(title=_("Automatic Color"), use_markup=False)
-        self.auto_row.connect("notify::active", self._on_auto_color)
+        self.color_row = Adw.ComboRow(
+            title=_("Color"),
+            model=Gtk.StringList.new([_("Automatic"), _("System Accent"), _("Custom")]),
+            use_markup=False,
+        )
+        self.color_row.connect("notify::selected", self._on_color_mode)
         self.swatch = Gtk.ColorDialogButton(dialog=Gtk.ColorDialog(with_alpha=False), valign=Gtk.Align.CENTER)
         self.swatch.connect("notify::rgba", self._on_color)
-        self.auto_row.add_prefix(self.swatch)
-        group.add(self.auto_row)
+        self.color_row.add_prefix(self.swatch)
+        group.add(self.color_row)
 
         self.size_slider = Slider(_("Size"), to_percent(MIN_SIZE), to_percent(MAX_SIZE), 100)
         self.size_slider.connect_changed(self._on_size)
@@ -242,9 +247,9 @@ class Editor(Gtk.Box):
         self.file_row.set_subtitle(Path(draft.glyph_file).name if draft.glyph_file else _("No file chosen"))
         self.tint_row.set_active(draft.tint)
         self.tint_row.set_sensitive(bool(draft.glyph_file))
-        self.auto_row.set_active(draft.auto_color)
+        self.color_row.set_selected(COLOR_MODES.index(draft.color_mode))
         self.swatch.set_rgba(rgba_from_hex(draft.color))
-        self.swatch.set_sensitive(not draft.auto_color)
+        self.swatch.set_sensitive(draft.color_mode == "custom")
         self.size_slider.set_value(to_percent(draft.size))
         self.x_slider.set_value(to_percent(draft.offset_x))
         self.y_slider.set_value(to_percent(draft.offset_y))
@@ -260,17 +265,23 @@ class Editor(Gtk.Box):
         self._refresh_actions()
         self._emit_change()
 
-    def set_auto_color_text(self, color: str | None) -> None:
-        if color:
-            self.auto_row.set_subtitle(_("A darker shade of the folder color (%s)") % color)
-            if self._draft and self._draft.auto_color:
-                self._loading = True
-                try:
-                    self.swatch.set_rgba(rgba_from_hex(color))
-                finally:
-                    self._loading = False
-        else:
-            self.auto_row.set_subtitle(_("A darker shade of the folder color"))
+    def set_computed_color(self, color: str | None) -> None:
+        mode = self._draft.color_mode if self._draft else "auto"
+        self.color_row.set_subtitle(self._color_subtitle(mode, color))
+        if color and mode != "custom":
+            self._loading = True
+            try:
+                self.swatch.set_rgba(rgba_from_hex(color))
+            finally:
+                self._loading = False
+
+    @staticmethod
+    def _color_subtitle(mode: str, color: str | None) -> str:
+        if mode == "accent":
+            return _("The accent color of your system (%s)") % color if color else _("The accent color of your system")
+        if mode == "auto":
+            return _("A darker shade of the folder color (%s)") % color if color else _("A darker shade of the folder color")
+        return ""
 
     def set_preview(self, big, smalls: list, note: str) -> None:
         self.big.set_paintable(big)
@@ -303,14 +314,15 @@ class Editor(Gtk.Box):
     def _on_tint(self, row, _param) -> None:
         self._update(tint=row.get_active())
 
-    def _on_auto_color(self, row, _param) -> None:
+    def _on_color_mode(self, row, _param) -> None:
         if self._loading or self._draft is None:
             return
-        self.swatch.set_sensitive(not row.get_active())
-        if row.get_active():
-            self._update(auto_color=True)
+        mode = COLOR_MODES[row.get_selected()]
+        self.swatch.set_sensitive(mode == "custom")
+        if mode == "custom":
+            self._update(color_mode=mode, color=hex_from_rgba(self.swatch.get_rgba()))
         else:
-            self._update(auto_color=False, color=hex_from_rgba(self.swatch.get_rgba()))
+            self._update(color_mode=mode)
 
     def _on_color(self, button, _param) -> None:
         self._update(color=hex_from_rgba(button.get_rgba()))

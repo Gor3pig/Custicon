@@ -17,13 +17,13 @@ from .errors import (
 from .metadata import read_custom_icon, write_custom_icon
 from .render import is_png, read_icon_bytes
 from .store import GLYPH_FILE_PATTERN, Entry, Store
-from .themes import DEFAULT_THEME, IconTheme, active_icon_theme
+from .themes import DEFAULT_THEME, IconTheme, active_icon_theme, system_accent_color
 
 MIN_SIZE = 0.2
 MAX_SIZE = 3.0
 MAX_OFFSET = 0.5
 
-APPEARANCE_FIELDS = ("color", "size", "offset_x", "offset_y", "tint")
+APPEARANCE_FIELDS = ("color", "accent", "size", "offset_x", "offset_y", "tint")
 
 STATUS_OK = "ok"
 STATUS_FOLDER_MISSING = "folder-missing"
@@ -46,14 +46,17 @@ class Settings:
     offset_x: float = 0.0
     offset_y: float = 0.0
     tint: bool = True
+    accent: bool = False
     glyph_copy: str | None = None
 
     def validate(self) -> None:
         for text in (self.glyph_name, self.glyph_file, self.color, self.glyph_copy):
             if text is not None and (not isinstance(text, str) or "\0" in text):
                 raise InvalidSettingsError("invalid text in the settings")
-        if not isinstance(self.tint, bool):
-            raise InvalidSettingsError("invalid tint setting")
+        if not isinstance(self.tint, bool) or not isinstance(self.accent, bool):
+            raise InvalidSettingsError("invalid tint or accent setting")
+        if self.accent and self.color is not None:
+            raise InvalidSettingsError("choose either the system accent or a color")
         for number in (self.size, self.offset_x, self.offset_y):
             if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(number):
                 raise InvalidSettingsError("sizes and offsets must be finite numbers")
@@ -106,10 +109,12 @@ class Service:
         store: Store,
         theme_name: Callable[[], str] = active_icon_theme,
         search_dirs: list[str] | None = None,
+        accent_color: Callable[[], str] = system_accent_color,
     ):
         self._store = store
         self._theme_name = theme_name
         self._search_dirs = search_dirs
+        self._accent_color = accent_color
         self._themes: dict[str, IconTheme] = {}
 
     @property
@@ -131,7 +136,7 @@ class Service:
         folder_file = theme.folder_file()
         if glyph_file is None:
             glyph_file = Path(settings.glyph_file) if settings.glyph_file else self._find_glyph(theme, settings.glyph_name)
-        color = settings.color or auto_glyph_color(folder_file)
+        color = settings.color or (self._accent_color() if settings.accent else auto_glyph_color(folder_file))
         style = GlyphStyle(
             color=color,
             size=settings.size,
@@ -210,6 +215,21 @@ class Service:
             self._store.save_defaults({name: getattr(settings, name) for name in APPEARANCE_FIELDS})
         except CusticonError:
             pass
+
+    def outdated(self) -> list[str]:
+        theme = self._theme_name()
+        accent = None
+        stale = []
+        for entry in self._store.all().values():
+            if self._status(entry) != STATUS_OK:
+                continue
+            if entry.theme != theme:
+                stale.append(entry.folder)
+            elif entry.settings.get("accent") is True:
+                accent = accent or self._accent_color()
+                if entry.color != accent:
+                    stale.append(entry.folder)
+        return stale
 
     def customized(self) -> list[Customized]:
         return [Customized(entry, self._status(entry)) for entry in self._store.all().values()]

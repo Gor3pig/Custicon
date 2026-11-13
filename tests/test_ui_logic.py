@@ -54,7 +54,7 @@ class DraftTests(unittest.TestCase):
         self.assertIsNone(settings.color)
 
     def test_manual_color_is_kept_in_the_settings(self):
-        settings = Draft(self.folder, glyph_name="a-symbolic", color="#ff0000", auto_color=False).to_settings()
+        settings = Draft(self.folder, glyph_name="a-symbolic", color="#ff0000", color_mode="custom").to_settings()
         self.assertEqual(settings.color, "#ff0000")
 
     def test_settings_carry_every_field(self):
@@ -65,18 +65,18 @@ class DraftTests(unittest.TestCase):
         )
 
     def test_default_appearance_resets_everything_but_the_pictogram(self):
-        draft = Draft(self.folder, glyph_name="a-symbolic", auto_color=False, size=2.0, offset_x=0.2, offset_y=0.3)
+        draft = Draft(self.folder, glyph_name="a-symbolic", color_mode="custom", size=2.0, offset_x=0.2, offset_y=0.3)
         reset = draft.with_default_appearance()
         self.assertTrue(reset.has_default_appearance())
         self.assertEqual(reset.glyph_name, "a-symbolic")
         self.assertFalse(draft.has_default_appearance())
 
     def test_each_appearance_field_breaks_the_default(self):
-        for changes in ({"auto_color": False}, {"size": 1.1}, {"offset_x": 0.01}, {"offset_y": -0.01}):
+        for changes in ({"color_mode": "custom"}, {"size": 1.1}, {"offset_x": 0.01}, {"offset_y": -0.01}):
             self.assertFalse(Draft(self.folder, **changes).has_default_appearance())
 
     def test_round_trip_through_an_entry(self):
-        draft = Draft(self.folder, glyph_name="a-symbolic", auto_color=False, color="#123456", size=1.2, offset_x=0.1, offset_y=-0.1, tint=False)
+        draft = Draft(self.folder, glyph_name="a-symbolic", color_mode="custom", color="#123456", size=1.2, offset_x=0.1, offset_y=-0.1, tint=False)
         entry = Entry(str(self.folder), "d", "Adwaita", "#123456", draft.to_settings().to_dict(), None)
         self.assertEqual(Draft.from_entry(entry), draft)
 
@@ -233,7 +233,7 @@ class AppearanceMemoryTests(unittest.TestCase):
         self.assertEqual((draft.color, draft.size, draft.offset_x, draft.offset_y, draft.tint), ("#ff8800", 1.5, 0.1, -0.1, False))
 
     def test_an_automatic_color_is_restored_as_automatic(self):
-        manual = replace(self.draft, auto_color=False, color="#112233")
+        manual = replace(self.draft, color_mode="custom", color="#112233")
         draft = manual.with_appearance({"color": None})
         self.assertTrue(draft.auto_color)
         self.assertEqual(draft.color, "#112233")
@@ -270,6 +270,50 @@ class FinePercentTests(unittest.TestCase):
         self.assertEqual(from_percent(12.5), 0.125)
         self.assertEqual(to_percent(from_percent(33.5)), 33.5)
         self.assertEqual(from_percent(33.333333), 0.3333)
+
+
+class ColorModeTests(unittest.TestCase):
+    def setUp(self):
+        self.draft = Draft(Path("/home/someone/Projects"), glyph_name="a-symbolic")
+
+    def test_the_default_mode_is_automatic(self):
+        self.assertEqual(self.draft.color_mode, "auto")
+        settings = self.draft.to_settings()
+        self.assertEqual((settings.color, settings.accent), (None, False))
+
+    def test_the_accent_mode_is_sent_as_an_accent_request_without_a_color(self):
+        settings = replace(self.draft, color_mode="accent", color="#112233").to_settings()
+        self.assertEqual((settings.color, settings.accent), (None, True))
+        settings.validate()
+
+    def test_the_custom_mode_sends_the_color_only(self):
+        settings = replace(self.draft, color_mode="custom", color="#112233").to_settings()
+        self.assertEqual((settings.color, settings.accent), ("#112233", False))
+
+    def test_an_entry_that_follows_the_accent_reopens_in_accent_mode(self):
+        entry = Entry("/f", "0" * 32, "Adwaita", "#ff0000", {"glyph_name": "a-symbolic", "accent": True}, None)
+        draft = Draft.from_entry(entry)
+        self.assertEqual(draft.color_mode, "accent")
+        self.assertEqual(draft.color, "#ff0000")
+
+    def test_a_damaged_accent_flag_falls_back_to_automatic(self):
+        entry = Entry("/f", "0" * 32, "Adwaita", "#ff0000", {"glyph_name": "a-symbolic", "accent": "yes"}, None)
+        self.assertEqual(Draft.from_entry(entry).color_mode, "auto")
+
+    def test_a_manual_color_wins_over_a_stray_accent_flag_when_reading_an_entry(self):
+        entry = Entry("/f", "0" * 32, "Adwaita", "#ff0000", {"glyph_name": "a-symbolic", "accent": True, "color": "#00ff00"}, None)
+        draft = Draft.from_entry(entry)
+        self.assertEqual((draft.color_mode, draft.color), ("custom", "#00ff00"))
+
+    def test_remembered_values_restore_each_mode(self):
+        self.assertEqual(self.draft.with_appearance({"color": None, "accent": True}).color_mode, "accent")
+        custom = self.draft.with_appearance({"color": "#ff8800", "accent": False})
+        self.assertEqual((custom.color_mode, custom.color), ("custom", "#ff8800"))
+        self.assertEqual(replace(self.draft, color_mode="accent").with_appearance({"color": None, "accent": False}).color_mode, "auto")
+
+    def test_resetting_the_appearance_goes_back_to_automatic(self):
+        self.assertEqual(replace(self.draft, color_mode="accent").with_default_appearance().color_mode, "auto")
+        self.assertFalse(replace(self.draft, color_mode="accent").has_default_appearance())
 
 
 if __name__ == "__main__":

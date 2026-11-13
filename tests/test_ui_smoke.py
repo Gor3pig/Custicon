@@ -261,27 +261,27 @@ class EditorBehaviourTests(WindowTestCase):
         self.assertEqual(self.editor.size_slider.label.get_text(), "150%")
 
     def test_turning_automatic_color_off_keeps_the_color(self):
-        self.editor.auto_row.set_active(False)
+        self.editor.color_row.set_selected(2)
         self.assertFalse(self.editor.draft.auto_color)
         self.assertTrue(self.editor.swatch.get_sensitive())
 
     def test_turning_automatic_color_off_keeps_the_displayed_color(self):
-        self.editor.set_auto_color_text("#aa5500")
+        self.editor.set_computed_color("#aa5500")
         shown = hex_from_rgba(self.editor.swatch.get_rgba())
         self.assertEqual(shown, "#aa5500")
-        self.editor.auto_row.set_active(False)
+        self.editor.color_row.set_selected(2)
         self.assertEqual(self.editor.draft.color, "#aa5500")
         self.assertEqual(hex_from_rgba(self.editor.swatch.get_rgba()), shown)
         self.assertEqual(self.editor.draft.to_settings().color, shown)
 
     def test_reset_returns_to_the_default_appearance(self):
         self.editor.size_slider.adjustment.set_value(200)
-        self.editor.auto_row.set_active(False)
+        self.editor.color_row.set_selected(2)
         self.assertTrue(self.editor.reset_button.get_sensitive())
         self.editor.reset_button.emit("clicked")
         self.assertTrue(self.editor.draft.has_default_appearance())
         self.assertEqual(self.editor.size_slider.adjustment.get_value(), 100)
-        self.assertTrue(self.editor.auto_row.get_active())
+        self.assertEqual(self.editor.color_row.get_selected(), 0)
         self.assertFalse(self.editor.reset_button.get_sensitive())
 
     def test_the_tint_switch_only_matters_for_files(self):
@@ -418,6 +418,75 @@ class PickerTests(WindowTestCase):
         settle(lambda: dialog._names == [])
         self.assertEqual(dialog._names, [])
         self.assertEqual(dialog.status.get_text(), "No pictogram found")
+
+
+class ColorModeUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.editor = self.window.editor
+
+    def test_the_color_row_offers_three_modes(self):
+        self.assertEqual(self.editor.color_row.get_model().get_n_items(), 3)
+        self.assertEqual(self.editor.color_row.get_selected(), 0)
+
+    def test_choosing_the_system_accent_updates_the_draft_and_locks_the_swatch(self):
+        self.editor.color_row.set_selected(1)
+        self.assertEqual(self.editor.draft.color_mode, "accent")
+        self.assertFalse(self.editor.swatch.get_sensitive())
+        self.assertTrue(self.editor.draft.to_settings().accent)
+
+    def test_the_computed_color_is_shown_for_the_accent_mode(self):
+        self.editor.color_row.set_selected(1)
+        self.editor.set_computed_color("#ff0000")
+        self.assertIn("#ff0000", self.editor.color_row.get_subtitle())
+        self.assertEqual(hex_from_rgba(self.editor.swatch.get_rgba()), "#ff0000")
+
+    def test_the_custom_mode_unlocks_the_swatch_and_keeps_its_color(self):
+        self.editor.set_computed_color("#aa5500")
+        self.editor.color_row.set_selected(2)
+        self.assertTrue(self.editor.swatch.get_sensitive())
+        self.assertEqual(self.editor.draft.color, "#aa5500")
+        self.editor.set_computed_color("#00ff00")
+        self.assertEqual(hex_from_rgba(self.editor.swatch.get_rgba()), "#aa5500")
+
+    def test_switching_back_to_automatic_unlocks_nothing(self):
+        self.editor.color_row.set_selected(2)
+        self.editor.color_row.set_selected(0)
+        self.assertEqual(self.editor.draft.color_mode, "auto")
+        self.assertFalse(self.editor.swatch.get_sensitive())
+
+
+class OutdatedBannerTests(WindowTestCase):
+    def test_the_banner_is_hidden_when_every_icon_is_up_to_date(self):
+        self.add_and_apply()
+        self.assertFalse(self.window.outdated_banner.get_revealed())
+
+    def test_a_theme_change_reveals_the_banner_and_regenerating_hides_it(self):
+        self.add_and_apply()
+        self.theme = "Green"
+        self.window._on_theme_changed()
+        settle()
+        self.assertTrue(self.window.outdated_banner.get_revealed())
+        self.window.outdated_banner.emit("button-clicked")
+        self.assertTrue(settle(lambda: self.window._regeneration is None))
+        settle()
+        self.assertFalse(self.window.outdated_banner.get_revealed())
+
+    def test_an_accent_color_change_is_noticed(self):
+        self.add_and_apply()
+        self.theme = "Green"
+        Adw.StyleManager.get_default().notify("accent-color")
+        settle()
+        self.assertTrue(self.window.outdated_banner.get_revealed())
+
+    def test_a_damaged_registry_does_not_break_the_banner(self):
+        self.add_and_apply()
+        self.service.store.registry_path.write_text("{broken")
+        self.service.store.registry_path.with_name("registry.json.bak").write_text("{broken")
+        self.window._update_outdated_banner()
+        self.assertFalse(self.window.outdated_banner.get_revealed())
 
 
 if __name__ == "__main__":
@@ -600,7 +669,7 @@ class MemoryAndLayoutTests(WindowTestCase):
         return folder
 
     def test_a_new_folder_starts_with_the_appearance_of_the_last_applied_one(self):
-        self.apply_with("first", auto_color=False, color="#ff8800", size=1.5, offset_x=0.1, offset_y=-0.1, tint=False)
+        self.apply_with("first", color_mode="custom", color="#ff8800", size=1.5, offset_x=0.1, offset_y=-0.1, tint=False)
         self.window.add_folder(self.make_folder("second"))
         settle()
         draft = self.window.editor.draft

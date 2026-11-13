@@ -81,8 +81,15 @@ class MainWindow(Adw.ApplicationWindow):
             revealed=not environment.home_access(),
         )
         self.permission_banner.connect("button-clicked", lambda *_args: self._show_permission_help())
+        self.outdated_banner = Adw.Banner(
+            title=_("Some icons no longer match your icon theme or accent color"),
+            button_label=_("Regenerate"),
+            revealed=False,
+        )
+        self.outdated_banner.connect("button-clicked", lambda *_args: self._start_regeneration())
         page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         page.append(self.permission_banner)
+        page.append(self.outdated_banner)
         page.append(self.stack)
         self.toasts.set_child(page)
         self.set_content(self.toasts)
@@ -98,6 +105,7 @@ class MainWindow(Adw.ApplicationWindow):
         settings = Gtk.Settings.get_default()
         if settings is not None:
             settings.connect("notify::gtk-icon-theme-name", self._on_theme_changed)
+        Adw.StyleManager.get_default().connect("notify::accent-color", self._on_theme_changed)
         self.reload()
 
     def _build_actions(self) -> None:
@@ -228,6 +236,14 @@ class MainWindow(Adw.ApplicationWindow):
             except CusticonError:
                 texture = self._plain_folder_texture(scale)
             self._add_row(entry.folder, folder_name(entry.folder), display_path(entry.folder), texture, status_label(item.status), False)
+        self._update_outdated_banner()
+
+    def _update_outdated_banner(self) -> None:
+        try:
+            stale = self._service.outdated()
+        except CusticonError:
+            stale = []
+        self.outdated_banner.set_revealed(bool(stale))
 
     def _customized(self) -> list:
         try:
@@ -313,11 +329,11 @@ class MainWindow(Adw.ApplicationWindow):
             if draft.ready:
                 built = self._service.build(draft.to_settings(), theme)
                 render = lambda size: texture_from_svg_text(built.svg, size * scale)
-                self.editor.set_auto_color_text(built.color)
+                self.editor.set_computed_color(built.color)
             else:
                 folder = self._service.folder_file(theme)
                 render = lambda size: texture_from_file(folder, size * scale)
-                self.editor.set_auto_color_text(None)
+                self.editor.set_computed_color(None)
             self.editor.set_preview(render(BIG_SIZE), [render(size) for size in SMALL_SIZES], note)
             self.editor.set_blocked(False)
         except CusticonError as error:
@@ -547,5 +563,6 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _on_theme_changed(self, *_args) -> None:
         self._service.refresh_themes()
+        self._update_outdated_banner()
         if self._rows:
             self._schedule_preview()

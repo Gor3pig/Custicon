@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 20:49+0100\n"
+"POT-Creation-Date: 2026-11-13 21:55+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -45,8 +45,17 @@ msgstr "Apparence"
 msgid "Reset to Defaults"
 msgstr "Rétablir les valeurs par défaut"
 
-msgid "Automatic Color"
-msgstr "Couleur automatique"
+msgid "Color"
+msgstr "Couleur"
+
+msgid "Automatic"
+msgstr "Automatique"
+
+msgid "System Accent"
+msgstr "Accent du système"
+
+msgid "Custom"
+msgstr "Personnalisée"
 
 msgid "Size"
 msgstr "Taille"
@@ -75,6 +84,13 @@ msgstr "Aucun pictogramme choisi"
 
 msgid "No file chosen"
 msgstr "Aucun fichier choisi"
+
+#, python-format
+msgid "The accent color of your system (%s)"
+msgstr "La couleur d’accent de votre système (%s)"
+
+msgid "The accent color of your system"
+msgstr "La couleur d’accent de votre système"
 
 #, python-format
 msgid "A darker shade of the folder color (%s)"
@@ -200,6 +216,12 @@ msgstr "Custicon ne voit pas votre dossier personnel"
 
 msgid "How to Fix"
 msgstr "Comment faire"
+
+msgid "Some icons no longer match your icon theme or accent color"
+msgstr "Certaines icônes ne correspondent plus à votre thème d’icônes ou à votre couleur d’accent"
+
+msgid "Regenerate"
+msgstr "Régénérer"
 
 msgid "Regenerate All Icons"
 msgstr "Régénérer toutes les icônes"
@@ -415,22 +437,27 @@ msgid ""
 "the folders you choose. It has no access to the network, and the content of "
 "a folder is never written."
 msgstr ""
-"Custicon n’a besoin que de lire votre dossier personnel, pour voir l’emplacement réel des dossiers que vous choisissez. Il n’a aucun accès au réseau, et le contenu d’un dossier n’est jamais écrit."
+"Custicon n’a besoin que de lire votre dossier personnel, pour voir "
+"l’emplacement réel des dossiers que vous choisissez. Il n’a aucun accès au "
+"réseau, et le contenu d’un dossier n’est jamais écrit."
 
 msgid "Finer controls, remembered settings and a more compact list."
-msgstr "Des réglages plus fins, des réglages retenus et une liste plus compacte."
+msgstr ""
+"Des réglages plus fins, des réglages retenus et une liste plus compacte."
 
 msgid ""
 "The size and position sliders move by half a percent and use the available "
 "width"
 msgstr ""
-"Les curseurs de taille et de position avancent par pas de 0,5 % et utilisent la largeur disponible"
+"Les curseurs de taille et de position avancent par pas de 0,5 % et utilisent "
+"la largeur disponible"
 
 msgid ""
 "The appearance you applied is proposed again for the next folders you add, "
 "and can still be changed"
 msgstr ""
-"L’apparence appliquée est proposée de nouveau pour les prochains dossiers ajoutés, et reste modifiable"
+"L’apparence appliquée est proposée de nouveau pour les prochains dossiers "
+"ajoutés, et reste modifiable"
 
 msgid "The list of customized folders uses smaller icons"
 msgstr "La liste des dossiers personnalisés utilise des icônes plus petites"
@@ -438,7 +465,8 @@ msgstr "La liste des dossiers personnalisés utilise des icônes plus petites"
 msgid ""
 "Custicon explains how to allow access to the home folder when it is missing"
 msgstr ""
-"Custicon explique comment autoriser l’accès au dossier personnel lorsqu’il manque"
+"Custicon explique comment autoriser l’accès au dossier personnel lorsqu’il "
+"manque"
 
 msgid "The first stable version of Custicon."
 msgstr "La première version stable de Custicon."
@@ -447,3 +475,6 @@ msgid "Put a pictogram on the real folder icon of your current icon theme"
 msgstr ""
 "Posez un pictogramme sur la vraie icône de dossier de votre thème d’icônes "
 "actuel"
+
+#~ msgid "Automatic Color"
+#~ msgstr "Couleur automatique"

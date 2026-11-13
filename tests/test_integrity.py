@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -9,7 +10,7 @@ from custicon import service as service_module
 from custicon import store as store_module
 from custicon.errors import FolderError, InvalidSettingsError, MetadataError, StoreError
 from custicon.metadata import read_custom_icon, write_custom_icon
-from custicon.service import RESET_RESTORED, RESET_UNKNOWN, RegenerationReport, Settings
+from custicon.service import RESET_RESTORED, RESET_UNKNOWN, RegenerationReport, Service, Settings
 from custicon.store import Entry, Store
 
 from .support import WorkspaceTestCase, glyph_svg
@@ -400,7 +401,7 @@ class RememberedAppearanceTests(ServiceTestCase):
         self.service.remember_appearance(Settings(glyph_name="star-symbolic", color="#ff8800", size=1.5, offset_x=0.1, offset_y=-0.2, tint=False))
         self.assertEqual(
             self.service.remembered_appearance(),
-            {"color": "#ff8800", "size": 1.5, "offset_x": 0.1, "offset_y": -0.2, "tint": False},
+            {"color": "#ff8800", "accent": False, "size": 1.5, "offset_x": 0.1, "offset_y": -0.2, "tint": False},
         )
         self.assertNotIn("glyph_name", self.store.load_defaults())
 
@@ -431,6 +432,64 @@ class RememberedAppearanceTests(ServiceTestCase):
         self.service.remember_appearance(Settings(glyph_name="star-symbolic", size=1.5))
         self.service.apply(self.make_folder(), Settings(glyph_name="heart-symbolic", size=0.5))
         self.assertEqual(self.service.remembered_appearance()["size"], 1.5)
+
+
+class AccentTests(ServiceTestCase):
+    def setUp(self):
+        super().setUp()
+        self.accent = "#ff0000"
+        self.service = Service(
+            self.store, theme_name=lambda: self.theme, search_dirs=[str(self.themes)], accent_color=lambda: self.accent
+        )
+
+    def test_the_accent_color_is_used_when_requested(self):
+        entry = self.service.apply(self.make_folder(), Settings(glyph_name="star-symbolic", accent=True))
+        self.assertEqual(entry.color, "#ff0000")
+        self.assertTrue(entry.settings["accent"])
+
+    def test_the_accent_and_a_manual_color_are_exclusive(self):
+        with self.assertRaises(InvalidSettingsError):
+            Settings(glyph_name="star-symbolic", accent=True, color="#00ff00").validate()
+
+    def test_a_non_boolean_accent_is_refused(self):
+        with self.assertRaises(InvalidSettingsError):
+            Settings(glyph_name="star-symbolic", accent="yes").validate()
+
+    def test_nothing_is_outdated_right_after_applying(self):
+        self.service.apply(self.make_folder(), Settings(glyph_name="star-symbolic", accent=True))
+        self.assertEqual(self.service.outdated(), [])
+
+    def test_a_changed_theme_makes_every_icon_outdated(self):
+        first, second = self.make_folder("a"), self.make_folder("b")
+        self.service.apply(first, STAR)
+        self.service.apply(second, STAR)
+        self.theme = "Green"
+        self.assertEqual(sorted(self.service.outdated()), sorted([str(first.resolve()), str(second.resolve())]))
+
+    def test_a_changed_accent_only_affects_icons_that_follow_it(self):
+        following, fixed = self.make_folder("a"), self.make_folder("b")
+        self.service.apply(following, Settings(glyph_name="star-symbolic", accent=True))
+        self.service.apply(fixed, STAR)
+        self.accent = "#00ff00"
+        self.assertEqual(self.service.outdated(), [str(following.resolve())])
+
+    def test_regeneration_follows_the_new_accent_and_clears_the_list(self):
+        folder = self.make_folder()
+        self.service.apply(folder, Settings(glyph_name="star-symbolic", accent=True))
+        self.accent = "#00ff00"
+        self.service.regenerate_all()
+        self.assertEqual(self.store.get(str(folder.resolve())).color, "#00ff00")
+        self.assertEqual(self.service.outdated(), [])
+
+    def test_folders_that_cannot_be_regenerated_are_not_reported(self):
+        gone = self.make_folder("gone")
+        changed = self.make_folder("changed")
+        self.service.apply(gone, STAR)
+        self.service.apply(changed, STAR)
+        shutil.rmtree(gone)
+        write_custom_icon(changed, USER_ICON)
+        self.theme = "Green"
+        self.assertEqual(self.service.outdated(), [])
 
 
 if __name__ == "__main__":

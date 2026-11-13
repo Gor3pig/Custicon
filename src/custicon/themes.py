@@ -6,6 +6,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gio, GLib, Gtk
 
+from .color import format_hex
 from .errors import IconNotFoundError
 
 FLATPAK_INFO = "/.flatpak-info"
@@ -16,6 +17,9 @@ PORTAL_SETTINGS = "org.freedesktop.portal.Settings"
 INTERFACE_SCHEMA = "org.gnome.desktop.interface"
 ICON_THEME_KEY = "icon-theme"
 DEFAULT_THEME = "Adwaita"
+APPEARANCE_NAMESPACE = "org.freedesktop.appearance"
+ACCENT_KEY = "accent-color"
+DEFAULT_ACCENT = "#3584e4"
 SYMBOLIC_SUFFIX = "-symbolic"
 LOOKUP_SIZE = 128
 GLYPH_LOOKUP_SIZE = 16
@@ -34,7 +38,7 @@ def host_icon_dirs() -> list[str]:
     return [d for d in dirs if os.path.isdir(d)]
 
 
-def portal_icon_theme() -> str | None:
+def read_portal_setting(namespace: str, key: str):
     try:
         bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         reply = bus.call_sync(
@@ -42,7 +46,7 @@ def portal_icon_theme() -> str | None:
             PORTAL_PATH,
             PORTAL_SETTINGS,
             "Read",
-            GLib.Variant("(ss)", (INTERFACE_SCHEMA, ICON_THEME_KEY)),
+            GLib.Variant("(ss)", (namespace, key)),
             GLib.VariantType("(v)"),
             Gio.DBusCallFlags.NONE,
             -1,
@@ -53,7 +57,28 @@ def portal_icon_theme() -> str | None:
     value = reply.get_child_value(0).get_variant()
     if value.get_type_string() == "v":
         value = value.get_variant()
+    return value
+
+
+def portal_icon_theme() -> str | None:
+    value = read_portal_setting(INTERFACE_SCHEMA, ICON_THEME_KEY)
+    if value is None:
+        return None
     return value.get_string() if value.get_type_string() == "s" else None
+
+
+def portal_accent_color() -> str | None:
+    value = read_portal_setting(APPEARANCE_NAMESPACE, ACCENT_KEY)
+    if value is None or value.get_type_string() != "(ddd)":
+        return None
+    channels = value.unpack()
+    if not all(0.0 <= channel <= 1.0 for channel in channels):
+        return None
+    return format_hex(channels)
+
+
+def system_accent_color() -> str:
+    return portal_accent_color() or DEFAULT_ACCENT
 
 
 def settings_icon_theme() -> str | None:

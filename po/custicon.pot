@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 20:49+0100\n"
+"POT-Creation-Date: 2026-11-13 21:55+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,7 +52,16 @@ msgstr ""
 msgid "Reset to Defaults"
 msgstr ""
 
-msgid "Automatic Color"
+msgid "Color"
+msgstr ""
+
+msgid "Automatic"
+msgstr ""
+
+msgid "System Accent"
+msgstr ""
+
+msgid "Custom"
 msgstr ""
 
 msgid "Size"
@@ -79,6 +88,13 @@ msgid "No pictogram chosen"
 msgstr ""
 
 msgid "No file chosen"
+msgstr ""
+
+#, python-format
+msgid "The accent color of your system (%s)"
+msgstr ""
+
+msgid "The accent color of your system"
 msgstr ""
 
 #, python-format
@@ -201,6 +217,12 @@ msgid "Custicon cannot see your home folder"
 msgstr ""
 
 msgid "How to Fix"
+msgstr ""
+
+msgid "Some icons no longer match your icon theme or accent color"
+msgstr ""
+
+msgid "Regenerate"
 msgstr ""
 
 msgid "Regenerate All Icons"
