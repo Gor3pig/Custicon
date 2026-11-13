@@ -1,6 +1,5 @@
 import shutil
 import sys
-import tempfile
 from pathlib import Path
 
 import gi
@@ -36,8 +35,10 @@ USER_ICON = "file:///usr/share/icons/Adwaita/scalable/places/folder-documents.sv
 class Demo:
     def __init__(self):
         base = Path(GLib.get_user_cache_dir()) / "custicon-capture"
-        base.mkdir(parents=True, exist_ok=True)
-        self.root = Path(tempfile.mkdtemp(dir=base))
+        shutil.rmtree(base, ignore_errors=True)
+        base.mkdir(parents=True)
+        self.root = base / "demo"
+        self.root.mkdir()
         self.service = Service(Store(self.root / "data"))
         self.folders: dict[str, Path] = {}
 
