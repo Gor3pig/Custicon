@@ -1,3 +1,4 @@
+import os
 import time
 import unittest
 
@@ -14,7 +15,7 @@ from custicon.store import Store
 from .support import WorkspaceTestCase, folder_svg, glyph_svg, make_theme
 
 USER_ICON = "file:///home/someone/my-icon.png"
-DISPLAY_AVAILABLE = Gtk.init_check()
+DISPLAY_AVAILABLE = os.environ.get("GDK_BACKEND") == "broadway" and Gtk.init_check()
 IDLE_SETTLE = 0.12
 
 
@@ -41,7 +42,7 @@ def settle(condition=None, timeout: float = 4.0) -> bool:
     return condition is None or condition()
 
 
-@unittest.skipUnless(DISPLAY_AVAILABLE, "no graphical display (run through Broadway)")
+@unittest.skipUnless(DISPLAY_AVAILABLE, "interface tests only run on a Broadway display (GDK_BACKEND=broadway)")
 class WindowTestCase(WorkspaceTestCase):
     def setUp(self):
         from custicon.ui.window import MainWindow

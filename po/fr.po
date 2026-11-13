@@ -1,6 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-13 16:37+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -12,6 +14,7 @@ msgstr ""
 msgid "Customize the icon of a folder in Nautilus."
 msgstr "Personnalisez l’icône d’un dossier dans Nautilus."
 
+#, python-format
 msgid "%d px"
 msgstr "%d px"
 
@@ -58,8 +61,8 @@ msgid ""
 "Nautilus does not refresh its icons by itself: after applying, press F5 in "
 "the Nautilus window."
 msgstr ""
-"Nautilus n’actualise pas ses icônes tout seul : après l’application, "
-"appuyez sur F5 dans la fenêtre de Nautilus."
+"Nautilus n’actualise pas ses icônes tout seul : après l’application, appuyez "
+"sur F5 dans la fenêtre de Nautilus."
 
 msgid "Remove Icon"
 msgstr "Retirer l’icône"
@@ -73,12 +76,14 @@ msgstr "Aucun pictogramme choisi"
 msgid "No file chosen"
 msgstr "Aucun fichier choisi"
 
+#, python-format
 msgid "A darker shade of the folder color (%s)"
 msgstr "Teinte plus foncée de la couleur du dossier (%s)"
 
 msgid "A darker shade of the folder color"
 msgstr "Teinte plus foncée de la couleur du dossier"
 
+#, python-format
 msgid "%d%%"
 msgstr "%d %%"
 
@@ -98,8 +103,8 @@ msgid ""
 "Nautilus could not be told about the new icon. Check that Custicon can "
 "access this folder."
 msgstr ""
-"Nautilus n’a pas pu être informé de la nouvelle icône. Vérifiez que "
-"Custicon peut accéder à ce dossier."
+"Nautilus n’a pas pu être informé de la nouvelle icône. Vérifiez que Custicon "
+"peut accéder à ce dossier."
 
 msgid "Custicon could not save its data."
 msgstr "Custicon n’a pas pu enregistrer ses données."
@@ -123,7 +128,8 @@ msgid "This folder no longer exists."
 msgstr "Ce dossier n’existe plus."
 
 msgid "This icon was replaced from Nautilus: Custicon no longer touches it."
-msgstr "Cette icône a été remplacée depuis Nautilus : Custicon n’y touche plus."
+msgstr ""
+"Cette icône a été remplacée depuis Nautilus : Custicon n’y touche plus."
 
 msgid "The icon file of this folder is missing."
 msgstr "Le fichier d’icône de ce dossier est manquant."
@@ -137,26 +143,31 @@ msgstr "Reprendre l’icône Custicon"
 msgid "Regenerate the Icon"
 msgstr "Régénérer l’icône"
 
+#, python-format
 msgid "%d icon updated"
 msgid_plural "%d icons updated"
 msgstr[0] "%d icône mise à jour"
 msgstr[1] "%d icônes mises à jour"
 
+#, python-format
 msgid "%d icon already up to date"
 msgid_plural "%d icons already up to date"
 msgstr[0] "%d icône déjà à jour"
 msgstr[1] "%d icônes déjà à jour"
 
+#, python-format
 msgid "%d folder skipped: icon changed from Nautilus"
 msgid_plural "%d folders skipped: icon changed from Nautilus"
 msgstr[0] "%d dossier ignoré : icône modifiée depuis Nautilus"
 msgstr[1] "%d dossiers ignorés : icône modifiée depuis Nautilus"
 
+#, python-format
 msgid "%d folder not found"
 msgid_plural "%d folders not found"
 msgstr[0] "%d dossier introuvable"
 msgstr[1] "%d dossiers introuvables"
 
+#, python-format
 msgid "%d folder could not be updated"
 msgid_plural "%d folders could not be updated"
 msgstr[0] "%d dossier n’a pas pu être mis à jour"
@@ -171,6 +182,7 @@ msgstr "Rechercher par nom, en anglais (exemple : camera, music)"
 msgid "Choose"
 msgstr "Choisir"
 
+#, python-format
 msgid "%d pictogram found"
 msgid_plural "%d pictograms found"
 msgstr[0] "%d pictogramme trouvé"
@@ -182,6 +194,7 @@ msgstr "Aucun pictogramme trouvé"
 msgid "Regenerate All Icons"
 msgstr "Régénérer toutes les icônes"
 
+#, python-format
 msgid "About %s"
 msgstr "À propos de %s"
 
@@ -216,6 +229,7 @@ msgstr "Dossiers personnalisés"
 msgid "Forget This Folder"
 msgstr "Oublier ce dossier"
 
+#, python-format
 msgid "Live preview with the folder icon of the current theme (%s)."
 msgstr "Aperçu en direct, avec l’icône de dossier du thème actif (%s)."
 
@@ -241,12 +255,15 @@ msgstr "Choisir un fichier de pictogramme"
 msgid "Could Not Apply the Icon"
 msgstr "Impossible d’appliquer l’icône"
 
+#, python-format
 msgid "Icon applied to “%s”. Press F5 in Nautilus to see it."
-msgstr "Icône appliquée à « %s ». Appuyez sur F5 dans Nautilus pour l’afficher."
+msgstr ""
+"Icône appliquée à « %s ». Appuyez sur F5 dans Nautilus pour l’afficher."
 
 msgid "Got It"
 msgstr "Compris"
 
+#, python-format
 msgid "Forget “%s”?"
 msgstr "Oublier « %s » ?"
 
@@ -258,6 +275,7 @@ msgstr ""
 msgid "Forget"
 msgstr "Oublier"
 
+#, python-format
 msgid "Remove the Icon of “%s”?"
 msgstr "Retirer l’icône de « %s » ?"
 
@@ -277,14 +295,19 @@ msgstr "Annuler"
 msgid "Could Not Remove the Icon"
 msgstr "Impossible de retirer l’icône"
 
+#, python-format
 msgid "“%s”: the icon you chose in Nautilus was kept."
 msgstr "« %s » : l’icône choisie dans Nautilus a été conservée."
 
+#, python-format
 msgid "“%s” was forgotten."
 msgstr "« %s » a été oublié."
 
+#, python-format
 msgid "Icon removed from “%s”. Press F5 in Nautilus to see it."
-msgstr "Icône retirée de « %s ». Appuyez sur F5 dans Nautilus pour voir le changement."
+msgstr ""
+"Icône retirée de « %s ». Appuyez sur F5 dans Nautilus pour voir le "
+"changement."
 
 msgid "There are no customized folders to regenerate."
 msgstr "Aucun dossier personnalisé à régénérer."
@@ -300,3 +323,42 @@ msgstr "Régénération terminée"
 
 msgid "Close"
 msgstr "Fermer"
+
+msgid "Custicon"
+msgstr "Custicon"
+
+msgid "Customize the icon of a folder in Nautilus"
+msgstr "Personnaliser l’icône d’un dossier dans Nautilus"
+
+msgid "folder;icon;customize;pictogram;nautilus;"
+msgstr "dossier;icône;personnaliser;pictogramme;nautilus;"
+
+msgid ""
+"Custicon adds a pictogram to the icon of a folder, like the Documents or "
+"Music folders have. The pictogram is placed on the real folder icon of your "
+"current icon theme, so the result follows your theme."
+msgstr "Custicon ajoute un pictogramme à l’icône d’un dossier, comme celui des dossiers Documents ou Musique. Le pictogramme est posé sur la vraie icône de dossier de votre thème d’icônes actuel : le résultat suit donc votre thème."
+
+msgid ""
+"Choose a pictogram from your icon theme, or use your own SVG or PNG file"
+msgstr "Choisissez un pictogramme dans votre thème d’icônes, ou utilisez votre propre fichier SVG ou PNG"
+
+msgid ""
+"Let the color be chosen automatically, or set the color, the size and the "
+"position yourself"
+msgstr "Laissez la couleur se choisir automatiquement, ou réglez vous-même la couleur, la taille et la position"
+
+msgid "See the result live before applying it"
+msgstr "Voyez le résultat en direct avant de l’appliquer"
+
+msgid "Remove an icon at any time: the folder gets back the icon it had before"
+msgstr "Retirez une icône à tout moment : le dossier retrouve l’icône qu’il avait avant"
+
+msgid "Regenerate every icon after a change of icon theme"
+msgstr "Régénérez toutes les icônes après un changement de thème d’icônes"
+
+msgid "The content of your folders is never modified"
+msgstr "Le contenu de vos dossiers n’est jamais modifié"
+
+msgid "First version."
+msgstr "Première version."

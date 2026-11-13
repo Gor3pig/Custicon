@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 16:01+0100\n"
+"POT-Creation-Date: 2026-11-13 16:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -314,4 +314,43 @@ msgid "Regeneration Complete"
 msgstr ""
 
 msgid "Close"
+msgstr ""
+
+msgid "Custicon"
+msgstr ""
+
+msgid "Customize the icon of a folder in Nautilus"
+msgstr ""
+
+msgid "folder;icon;customize;pictogram;nautilus;"
+msgstr ""
+
+msgid ""
+"Custicon adds a pictogram to the icon of a folder, like the Documents or "
+"Music folders have. The pictogram is placed on the real folder icon of your "
+"current icon theme, so the result follows your theme."
+msgstr ""
+
+msgid ""
+"Choose a pictogram from your icon theme, or use your own SVG or PNG file"
+msgstr ""
+
+msgid ""
+"Let the color be chosen automatically, or set the color, the size and the "
+"position yourself"
+msgstr ""
+
+msgid "See the result live before applying it"
+msgstr ""
+
+msgid "Remove an icon at any time: the folder gets back the icon it had before"
+msgstr ""
+
+msgid "Regenerate every icon after a change of icon theme"
+msgstr ""
+
+msgid "The content of your folders is never modified"
+msgstr ""
+
+msgid "First version."
 msgstr ""
