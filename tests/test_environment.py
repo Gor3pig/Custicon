@@ -1,0 +1,90 @@
+import os
+import unittest
+from pathlib import Path
+from unittest import mock
+
+from custicon import environment, metadata
+from custicon.errors import MetadataError
+
+from .support import WorkspaceTestCase
+
+HOME_SHARE = os.path.expanduser("~/.local/share")
+
+
+def clean_environment(**values):
+    cleaned = {key: value for key, value in os.environ.items() if key not in (environment.OWN_DATA_VARIABLE, environment.HOST_DATA_VARIABLE, "XDG_DATA_HOME")}
+    cleaned.update(values)
+    return mock.patch.dict(os.environ, cleaned, clear=True)
+
+
+class ShareHostMetadataTests(unittest.TestCase):
+    def test_nothing_changes_outside_the_sandbox(self):
+        with clean_environment(XDG_DATA_HOME="/data/own"), mock.patch.object(environment, "in_sandbox", return_value=False):
+            environment.share_host_metadata()
+            self.assertEqual(os.environ["XDG_DATA_HOME"], "/data/own")
+            self.assertNotIn(environment.OWN_DATA_VARIABLE, os.environ)
+            self.assertIsNone(environment.own_data_home())
+
+    def test_inside_the_sandbox_gvfs_is_pointed_at_the_host_folder(self):
+        with clean_environment(XDG_DATA_HOME="/home/someone/.var/app/x/data"), mock.patch.object(environment, "in_sandbox", return_value=True):
+            environment.share_host_metadata()
+            self.assertEqual(os.environ["XDG_DATA_HOME"], HOME_SHARE)
+            self.assertEqual(environment.own_data_home(), "/home/someone/.var/app/x/data")
+
+    def test_a_custom_host_data_folder_is_respected(self):
+        with clean_environment(XDG_DATA_HOME="/own", HOST_XDG_DATA_HOME="/custom/share"), mock.patch.object(environment, "in_sandbox", return_value=True):
+            environment.share_host_metadata()
+            self.assertEqual(os.environ["XDG_DATA_HOME"], "/custom/share")
+            self.assertEqual(environment.host_data_home(), "/custom/share")
+
+    def test_calling_twice_keeps_the_original_private_folder(self):
+        with clean_environment(XDG_DATA_HOME="/own"), mock.patch.object(environment, "in_sandbox", return_value=True):
+            environment.share_host_metadata()
+            environment.share_host_metadata()
+            self.assertEqual(environment.own_data_home(), "/own")
+            self.assertEqual(os.environ["XDG_DATA_HOME"], HOME_SHARE)
+
+    def test_a_missing_private_folder_falls_back_to_the_default(self):
+        with clean_environment(), mock.patch.object(environment, "in_sandbox", return_value=True):
+            environment.share_host_metadata()
+            self.assertEqual(environment.own_data_home(), HOME_SHARE)
+
+
+class GuardTests(WorkspaceTestCase):
+    def test_writing_is_refused_when_gvfs_would_use_the_private_folder(self):
+        folder = self.make_workspace() / "target"
+        folder.mkdir()
+        self.require_metadata(folder)
+        with clean_environment(), mock.patch.object(environment, "in_sandbox", return_value=True), mock.patch.object(
+            metadata.GLib, "get_user_data_dir", return_value="/home/someone/.var/app/x/data"
+        ):
+            with self.assertRaises(MetadataError):
+                metadata.write_custom_icon(folder, "file:///x.svg")
+        self.assertIsNone(metadata.read_custom_icon(folder))
+
+    def test_writing_works_when_gvfs_uses_the_host_folder(self):
+        folder = self.make_workspace() / "target"
+        folder.mkdir()
+        self.require_metadata(folder)
+        with clean_environment(), mock.patch.object(environment, "in_sandbox", return_value=True), mock.patch.object(
+            metadata.GLib, "get_user_data_dir", return_value=HOME_SHARE
+        ):
+            metadata.write_custom_icon(folder, "file:///x.svg")
+            self.assertEqual(metadata.read_custom_icon(folder), "file:///x.svg")
+            metadata.write_custom_icon(folder, None)
+
+    def test_the_guard_accepts_the_host_folder(self):
+        with clean_environment(), mock.patch.object(environment, "in_sandbox", return_value=True), mock.patch.object(
+            metadata.GLib, "get_user_data_dir", return_value=HOME_SHARE
+        ):
+            metadata.check_shared_metadata()
+
+    def test_the_guard_does_nothing_outside_the_sandbox(self):
+        with clean_environment(), mock.patch.object(environment, "in_sandbox", return_value=False), mock.patch.object(
+            metadata.GLib, "get_user_data_dir", return_value="/anything"
+        ):
+            metadata.check_shared_metadata()
+
+
+if __name__ == "__main__":
+    unittest.main()

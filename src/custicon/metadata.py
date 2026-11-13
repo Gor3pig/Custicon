@@ -2,6 +2,7 @@ from pathlib import Path
 
 from gi.repository import Gio, GLib
 
+from . import environment
 from .errors import MetadataError
 
 CUSTOM_ICON_KEY = "metadata::custom-icon"
@@ -16,7 +17,13 @@ def read_custom_icon(folder: Path) -> str | None:
     return info.get_attribute_string(CUSTOM_ICON_KEY) if info.has_attribute(CUSTOM_ICON_KEY) else None
 
 
+def check_shared_metadata() -> None:
+    if environment.in_sandbox() and GLib.get_user_data_dir() != environment.host_data_home():
+        raise MetadataError("gvfs would store the icon in the private folder of the application, where Nautilus cannot see it")
+
+
 def write_custom_icon(folder: Path, uri: str | None) -> None:
+    check_shared_metadata()
     target = Gio.File.new_for_path(str(folder))
     try:
         if uri is None:

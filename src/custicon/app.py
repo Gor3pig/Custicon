@@ -9,6 +9,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
+from . import environment
 from .config import APP_ID, APP_NAME, VERSION
 from .i18n import _
 from .service import Service
@@ -20,7 +21,7 @@ ICON_SIZES = ("16", "24", "32", "48", "64", "96", "128", "256", "512")
 
 
 def default_service() -> Service:
-    return Service(Store(Path(GLib.get_user_data_dir()) / "custicon"))
+    return Service(Store(Path(environment.own_data_home() or GLib.get_user_data_dir()) / "custicon"))
 
 
 def register_development_icons() -> None:
