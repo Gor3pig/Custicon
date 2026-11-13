@@ -238,8 +238,8 @@ def load_folder(path: Path) -> ET.Element:
     return root
 
 
-def load_glyph(path: Path, style: GlyphStyle, taken_ids: set[str]) -> tuple[list[ET.Element], Box]:
-    data = read_icon_bytes(path)
+def load_glyph(source: Path | bytes, style: GlyphStyle, taken_ids: set[str]) -> tuple[list[ET.Element], Box]:
+    data = source if isinstance(source, bytes) else read_icon_bytes(source)
     if is_png(data):
         width, height = png_size(data)
         image = image_element(data, "image/png", width, height)
@@ -269,11 +269,11 @@ def check_style(style: GlyphStyle) -> None:
         raise InvalidIconError("the pictogram size must be positive")
 
 
-def compose(folder_file: Path, glyph_file: Path, style: GlyphStyle) -> str:
+def compose(folder_file: Path, glyph: Path | bytes, style: GlyphStyle) -> str:
     check_style(style)
     folder = load_folder(folder_file)
     taken_ids = {element.get("id") for element in folder.iter() if element.get("id")}
-    glyph_elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(glyph_file, style, taken_ids)
+    glyph_elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(glyph, style, taken_ids)
     folder_x, folder_y, folder_width, folder_height = box_of(folder)
 
     result = ET.Element(

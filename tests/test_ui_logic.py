@@ -316,5 +316,45 @@ class ColorModeTests(unittest.TestCase):
         self.assertFalse(replace(self.draft, color_mode="accent").has_default_appearance())
 
 
+class TextGlyphDraftTests(unittest.TestCase):
+    def setUp(self):
+        self.draft = Draft(Path("/home/someone/Projects"))
+
+    def test_a_text_makes_the_draft_ready(self):
+        self.assertFalse(self.draft.ready)
+        self.assertTrue(self.draft.with_glyph_text("AB").ready)
+
+    def test_an_empty_text_is_not_a_pictogram(self):
+        draft = self.draft.with_glyph_text("AB").with_glyph_text("")
+        self.assertIsNone(draft.glyph_text)
+        self.assertFalse(draft.ready)
+
+    def test_choosing_a_text_clears_the_other_sources(self):
+        draft = Draft(self.draft.folder, glyph_name="a-symbolic").with_glyph_text("Z")
+        self.assertEqual((draft.glyph_name, draft.glyph_file, draft.glyph_text), (None, None, "Z"))
+        draft = Draft(self.draft.folder, glyph_file="/x.svg").with_glyph_text("Z")
+        self.assertEqual((draft.glyph_name, draft.glyph_file, draft.glyph_text), (None, None, "Z"))
+
+    def test_choosing_an_icon_or_a_file_clears_the_text(self):
+        draft = self.draft.with_glyph_text("Z")
+        self.assertIsNone(draft.with_glyph_name("a-symbolic").glyph_text)
+        self.assertIsNone(draft.with_glyph_file("/x.svg").glyph_text)
+
+    def test_the_text_is_sent_in_the_settings(self):
+        self.assertEqual(self.draft.with_glyph_text("Z").to_settings().glyph_text, "Z")
+
+    def test_an_entry_with_a_text_reopens_with_the_text(self):
+        entry = Entry("/f", "0" * 32, "Adwaita", "#ff0000", {"glyph_text": "Z", "color": "#ff0000"}, None)
+        draft = Draft.from_entry(entry)
+        self.assertEqual((draft.glyph_text, draft.glyph_name, draft.glyph_file), ("Z", None, None))
+
+    def test_a_damaged_entry_keeps_one_source_only(self):
+        entry = Entry("/f", "0" * 32, "Adwaita", "#ff0000", {"glyph_name": "a-symbolic", "glyph_text": "Z"}, None)
+        draft = Draft.from_entry(entry)
+        self.assertEqual((draft.glyph_name, draft.glyph_text), ("a-symbolic", None))
+        entry = Entry("/f", "0" * 32, "Adwaita", "#ff0000", {"glyph_text": ["Z"]}, None)
+        self.assertFalse(Draft.from_entry(entry).ready)
+
+
 if __name__ == "__main__":
     unittest.main()

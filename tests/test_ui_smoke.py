@@ -489,6 +489,60 @@ class OutdatedBannerTests(WindowTestCase):
         self.assertFalse(self.window.outdated_banner.get_revealed())
 
 
+class TextGlyphUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.editor = self.window.editor
+
+    def test_typing_a_text_selects_it_as_the_pictogram(self):
+        self.editor.text_row.set_text("Z")
+        self.assertEqual(self.editor.draft.glyph_text, "Z")
+        self.assertTrue(self.editor.apply_button.get_sensitive())
+        self.assertFalse(self.editor.tint_row.get_sensitive())
+
+    def test_the_text_is_limited_to_three_characters(self):
+        self.editor.text_row.set_text("ABCDE")
+        self.assertEqual(self.editor.text_row.get_text(), "ABC")
+        self.assertEqual(self.editor.draft.glyph_text, "ABC")
+
+    def test_clearing_the_text_disables_apply(self):
+        self.editor.text_row.set_text("Z")
+        self.editor.text_row.set_text("")
+        self.assertIsNone(self.editor.draft.glyph_text)
+        self.assertFalse(self.editor.apply_button.get_sensitive())
+
+    def test_choosing_a_system_icon_clears_the_text_field(self):
+        self.editor.text_row.set_text("Z")
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.assertEqual(self.editor.text_row.get_text(), "")
+        self.assertIsNone(self.editor.draft.glyph_text)
+
+    def test_typing_a_text_clears_the_other_sources_in_the_rows(self):
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.editor.text_row.set_text("Z")
+        self.assertEqual(self.editor.system_row.get_subtitle(), "No pictogram chosen")
+        self.assertIsNone(self.editor.draft.glyph_name)
+
+    def test_the_text_is_previewed_and_applied(self):
+        self.editor.text_row.set_text("Z")
+        settle(lambda: self.editor.big.get_paintable() is not None)
+        self.assertIsNotNone(self.editor.big.get_paintable())
+        self.window._apply()
+        settle()
+        entry = self.service.store.all()[str(self.window._current_key)]
+        self.assertEqual(entry.settings["glyph_text"], "Z")
+
+    def test_an_applied_text_reopens_in_the_field(self):
+        self.editor.text_row.set_text("Z")
+        self.window._apply()
+        settle()
+        self.window.reload(select=self.window._current_key)
+        settle()
+        self.assertEqual(self.editor.text_row.get_text(), "Z")
+
+
 if __name__ == "__main__":
     unittest.main()
 

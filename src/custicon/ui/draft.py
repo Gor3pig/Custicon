@@ -25,6 +25,7 @@ class Draft:
     folder: Path
     glyph_name: str | None = None
     glyph_file: str | None = None
+    glyph_text: str | None = None
     tint: bool = True
     color_mode: str = "auto"
     color: str = DEFAULT_COLOR
@@ -38,13 +39,16 @@ class Draft:
 
     @property
     def ready(self) -> bool:
-        return bool(self.glyph_name or self.glyph_file)
+        return bool(self.glyph_name or self.glyph_file or self.glyph_text)
 
     def with_glyph_name(self, name: str) -> "Draft":
-        return replace(self, glyph_name=name, glyph_file=None)
+        return replace(self, glyph_name=name, glyph_file=None, glyph_text=None)
 
     def with_glyph_file(self, path: Path | str) -> "Draft":
-        return replace(self, glyph_file=str(path), glyph_name=None)
+        return replace(self, glyph_file=str(path), glyph_name=None, glyph_text=None)
+
+    def with_glyph_text(self, text: str) -> "Draft":
+        return replace(self, glyph_text=text or None, glyph_name=None, glyph_file=None)
 
     def with_appearance(self, values: dict) -> "Draft":
         changes = {name: values[name] for name in ("size", "offset_x", "offset_y", "tint") if name in values}
@@ -68,6 +72,7 @@ class Draft:
         return Settings(
             glyph_name=self.glyph_name,
             glyph_file=self.glyph_file,
+            glyph_text=self.glyph_text,
             color=self.color if self.color_mode == "custom" else None,
             accent=self.color_mode == "accent",
             size=self.size,
@@ -81,12 +86,14 @@ class Draft:
         settings = Settings.from_dict(entry.settings)
         glyph_name = clean_text(settings.glyph_name)
         glyph_file = None if glyph_name else clean_text(settings.glyph_file)
+        glyph_text = None if glyph_name or glyph_file else clean_text(settings.glyph_text)
         color = settings.color if is_hex_color(settings.color) else None
         accent = settings.accent is True and color is None
         return cls(
             folder=Path(entry.folder),
             glyph_name=glyph_name,
             glyph_file=glyph_file,
+            glyph_text=glyph_text,
             tint=settings.tint if isinstance(settings.tint, bool) else True,
             color_mode="accent" if accent else ("auto" if color is None else "custom"),
             color=color or (entry.color if is_hex_color(entry.color) else DEFAULT_COLOR),

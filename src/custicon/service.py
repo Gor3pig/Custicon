@@ -17,6 +17,7 @@ from .errors import (
 from .metadata import read_custom_icon, write_custom_icon
 from .render import is_png, read_icon_bytes
 from .store import GLYPH_FILE_PATTERN, Entry, Store
+from .textglyph import MAX_CHARACTERS, text_to_svg
 from .themes import DEFAULT_THEME, IconTheme, active_icon_theme, system_accent_color
 
 MIN_SIZE = 0.2
@@ -41,6 +42,7 @@ RESET_UNKNOWN = "unknown"
 class Settings:
     glyph_name: str | None = None
     glyph_file: str | None = None
+    glyph_text: str | None = None
     color: str | None = None
     size: float = 1.0
     offset_x: float = 0.0
@@ -50,7 +52,7 @@ class Settings:
     glyph_copy: str | None = None
 
     def validate(self) -> None:
-        for text in (self.glyph_name, self.glyph_file, self.color, self.glyph_copy):
+        for text in (self.glyph_name, self.glyph_file, self.glyph_text, self.color, self.glyph_copy):
             if text is not None and (not isinstance(text, str) or "\0" in text):
                 raise InvalidSettingsError("invalid text in the settings")
         if not isinstance(self.tint, bool) or not isinstance(self.accent, bool):
@@ -60,8 +62,10 @@ class Settings:
         for number in (self.size, self.offset_x, self.offset_y):
             if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(number):
                 raise InvalidSettingsError("sizes and offsets must be finite numbers")
-        if bool(self.glyph_name) == bool(self.glyph_file):
-            raise InvalidSettingsError("choose either a symbolic icon name or a file")
+        if sum(bool(source) for source in (self.glyph_name, self.glyph_file, self.glyph_text)) != 1:
+            raise InvalidSettingsError("choose either a symbolic icon name, a file or a text")
+        if self.glyph_text is not None and len(self.glyph_text) > MAX_CHARACTERS:
+            raise InvalidSettingsError(f"use at most {MAX_CHARACTERS} characters")
         if self.glyph_copy is not None and GLYPH_FILE_PATTERN.fullmatch(self.glyph_copy) is None:
             raise InvalidSettingsError("invalid stored pictogram")
         if self.color is not None and not is_hex_color(self.color):
@@ -135,14 +139,14 @@ class Service:
         theme = self._theme(name)
         folder_file = theme.folder_file()
         if glyph_file is None:
-            glyph_file = Path(settings.glyph_file) if settings.glyph_file else self._find_glyph(theme, settings.glyph_name)
+            glyph_file = self._glyph_source(theme, settings)
         color = settings.color or (self._accent_color() if settings.accent else auto_glyph_color(folder_file))
         style = GlyphStyle(
             color=color,
             size=settings.size,
             offset_x=settings.offset_x,
             offset_y=settings.offset_y,
-            tint=settings.tint,
+            tint=settings.tint if settings.glyph_file else True,
         )
         return BuiltIcon(compose(folder_file, glyph_file, style), color, name, folder_file)
 
@@ -311,12 +315,22 @@ class Service:
                 return key, entry
         return resolved, None
 
-    def _keep_glyph(self, settings: Settings, existing: Entry | None) -> tuple[Path | None, str | None]:
-        if not settings.glyph_file:
+    def _glyph_source(self, theme: IconTheme, settings: Settings) -> Path | bytes:
+        if settings.glyph_file:
+            return Path(settings.glyph_file)
+        if settings.glyph_text:
+            return text_to_svg(settings.glyph_text).encode()
+        return self._find_glyph(theme, settings.glyph_name)
+
+    def _keep_glyph(self, settings: Settings, existing: Entry | None) -> tuple[Path | bytes | None, str | None]:
+        if not settings.glyph_file and not settings.glyph_text:
             return None, None
         stored = self._store.glyph_path(settings.glyph_copy)
         if stored is not None and stored.is_file():
             return stored, settings.glyph_copy
+        if settings.glyph_text:
+            name = self._store.save_glyph(text_to_svg(settings.glyph_text).encode(), ".svg")
+            return self._store.glyph_path(name), name
         try:
             data = read_icon_bytes(Path(settings.glyph_file))
         except InvalidIconError:

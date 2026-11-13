@@ -9,12 +9,14 @@ from gi.repository import Adw, Gdk, Gtk
 
 from ..i18n import _
 from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
+from ..textglyph import MAX_CHARACTERS
 from .draft import Draft
 from .format import display_path, folder_name, from_percent, percent_text, to_percent
 
 BIG_SIZE = 144
 SMALL_SIZES = (64, 48, 32)
 COLOR_MODES = ("auto", "accent", "custom")
+MAX_TEXT_LENGTH = MAX_CHARACTERS
 SLIDER_WIDTH = 150
 SLIDER_STEP = 0.5
 SLIDER_PAGE = 5
@@ -154,6 +156,10 @@ class Editor(Gtk.Box):
         self.file_row.set_activatable_widget(browse)
         group.add(self.file_row)
 
+        self.text_row = Adw.EntryRow(title=_("Letters or Symbols"))
+        self.text_row.connect("changed", self._on_text_changed)
+        group.add(self.text_row)
+
         self.tint_row = Adw.SwitchRow(title=_("Tint the Pictogram"), subtitle=_("For a file: applies the chosen color"), use_markup=False)
         self.tint_row.connect("notify::active", self._on_tint)
         group.add(self.tint_row)
@@ -245,6 +251,8 @@ class Editor(Gtk.Box):
     def _show_widgets(self, draft: Draft) -> None:
         self.system_row.set_subtitle(draft.glyph_name or _("No pictogram chosen"))
         self.file_row.set_subtitle(Path(draft.glyph_file).name if draft.glyph_file else _("No file chosen"))
+        if self.text_row.get_text() != (draft.glyph_text or ""):
+            self.text_row.set_text(draft.glyph_text or "")
         self.tint_row.set_active(draft.tint)
         self.tint_row.set_sensitive(bool(draft.glyph_file))
         self.color_row.set_selected(COLOR_MODES.index(draft.color_mode))
@@ -309,6 +317,24 @@ class Editor(Gtk.Box):
         if self._loading or self._draft is None:
             return
         self._draft = replace(self._draft, **changes)
+        self._emit_change()
+
+    def _on_text_changed(self, row) -> None:
+        if self._loading or self._draft is None:
+            return
+        text = row.get_text()
+        if len(text) > MAX_TEXT_LENGTH:
+            text = text[:MAX_TEXT_LENGTH]
+            row.set_text(text)
+            return
+        self._loading = True
+        try:
+            self._draft = self._draft.with_glyph_text(text)
+            self.system_row.set_subtitle(_("No pictogram chosen"))
+            self.file_row.set_subtitle(_("No file chosen"))
+            self.tint_row.set_sensitive(False)
+        finally:
+            self._loading = False
         self._emit_change()
 
     def _on_tint(self, row, _param) -> None:

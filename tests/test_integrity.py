@@ -1,5 +1,7 @@
+import base64
 import json
 import os
+import re
 import shutil
 import unittest
 from pathlib import Path
@@ -17,6 +19,10 @@ from .support import WorkspaceTestCase, glyph_svg
 from .test_service import STAR, USER_ICON, ServiceTestCase
 
 GOOD = "0123456789abcdef" * 2
+
+
+def inner_svg(svg: str) -> str:
+    return base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)", svg).group(1)).decode()
 
 
 def document(**changes) -> str:
@@ -490,6 +496,88 @@ class AccentTests(ServiceTestCase):
         write_custom_icon(changed, USER_ICON)
         self.theme = "Green"
         self.assertEqual(self.service.outdated(), [])
+
+
+class TextGlyphServiceTests(ServiceTestCase):
+    def test_a_text_and_another_source_cannot_be_combined(self):
+        with self.assertRaises(InvalidSettingsError):
+            Settings(glyph_name="star-symbolic", glyph_text="A").validate()
+        with self.assertRaises(InvalidSettingsError):
+            Settings(glyph_file="/x.svg", glyph_text="A").validate()
+        with self.assertRaises(InvalidSettingsError):
+            Settings().validate()
+
+    def test_a_text_alone_is_valid_and_an_empty_text_is_not_a_source(self):
+        Settings(glyph_text="AB").validate()
+        Settings(glyph_name="star-symbolic", glyph_text="").validate()
+        with self.assertRaises(InvalidSettingsError):
+            Settings(glyph_text="").validate()
+
+    def test_a_text_that_is_too_long_is_refused(self):
+        with self.assertRaises(InvalidSettingsError):
+            Settings(glyph_text="ABCD").validate()
+
+    def test_the_text_is_applied_and_stored_as_a_pictogram_copy(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, Settings(glyph_text="Z", color="#ff8800"))
+        self.assertEqual(entry.settings["glyph_text"], "Z")
+        copy = self.store.glyph_path(entry.settings["glyph_copy"])
+        self.assertTrue(copy.exists())
+        self.assertEqual(copy.suffix, ".svg")
+        self.assertEqual(read_custom_icon(folder), self.store.icon_uri(entry.digest))
+
+    def test_the_preview_works_without_storing_anything(self):
+        built = self.service.build(Settings(glyph_text="Z", color="#ff8800"))
+        self.assertIn("<image", built.svg)
+        self.assertFalse(self.store.glyphs_dir.exists())
+
+    def test_regeneration_does_not_need_the_font_again(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, Settings(glyph_text="Z", color="#ff8800"))
+        with mock.patch.object(service_module, "text_to_svg", side_effect=AssertionError("font used")):
+            report = self.service.regenerate_all()
+        self.assertEqual(report.failed, {})
+        self.assertEqual(report.unchanged, [entry.folder])
+
+    def test_an_unsupported_text_is_refused_without_side_effects(self):
+        folder = self.make_folder()
+        with mock.patch.object(service_module, "text_to_svg", side_effect=service_module.InvalidIconError("no shape")):
+            with self.assertRaises(service_module.InvalidIconError):
+                self.service.apply(folder, Settings(glyph_text="Z"))
+        self.assertEqual(self.store.all(), {})
+        self.assertIsNone(read_custom_icon(folder))
+
+    def test_changing_the_text_releases_the_old_copy(self):
+        folder = self.make_folder()
+        first = self.service.apply(folder, Settings(glyph_text="A", color="#ff8800"))
+        second = self.service.apply(folder, Settings(glyph_text="B", color="#ff8800"))
+        self.assertFalse(self.store.glyph_path(first.settings["glyph_copy"]).exists())
+        self.assertTrue(self.store.glyph_path(second.settings["glyph_copy"]).exists())
+
+    def test_the_copy_is_shared_and_removed_with_the_last_folder(self):
+        first, second = self.make_folder("a"), self.make_folder("b")
+        entry = self.service.apply(first, Settings(glyph_text="A", color="#ff8800"))
+        self.service.apply(second, Settings(glyph_text="A", color="#ff8800"))
+        copy = self.store.glyph_path(entry.settings["glyph_copy"])
+        self.service.reset(first)
+        self.assertTrue(copy.exists())
+        self.service.reset(second)
+        self.assertFalse(copy.exists())
+
+    def test_a_text_is_always_tinted(self):
+        built = self.service.build(Settings(glyph_text="Z", color="#ff8800", tint=False))
+        self.assertIn("#ff8800", inner_svg(built.svg))
+
+    def test_a_theme_icon_is_always_tinted(self):
+        built = self.service.build(Settings(glyph_name="star-symbolic", color="#ff8800", tint=False))
+        self.assertIn("#ff8800", inner_svg(built.svg))
+
+    def test_a_file_keeps_its_own_colors_when_tinting_is_off(self):
+        path = self.root / "mine.svg"
+        path.write_text(glyph_svg("#123456"))
+        built = self.service.build(Settings(glyph_file=str(path), color="#ff8800", tint=False))
+        self.assertIn("#123456", inner_svg(built.svg))
+        self.assertNotIn("#ff8800", inner_svg(built.svg))
 
 
 if __name__ == "__main__":

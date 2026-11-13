@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 21:55+0100\n"
+"POT-Creation-Date: 2026-11-13 22:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,6 +38,9 @@ msgid "SVG or PNG File"
 msgstr ""
 
 msgid "Browse…"
+msgstr ""
+
+msgid "Letters or Symbols"
 msgstr ""
 
 msgid "Tint the Pictogram"
