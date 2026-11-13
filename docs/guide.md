@@ -64,6 +64,16 @@ Le groupe **Apparence** règle le rendu. L’aperçu en haut de l’éditeur mon
 - **Position horizontale** et **Position verticale** : de -50 % à +50 %, depuis le centre de la face du dossier.
 - **Rétablir les valeurs par défaut** remet la couleur automatique, la taille et la position d’origine.
 
+Les curseurs avancent par pas de 0,5 % (flèches du clavier ; Page précédente et Page suivante par pas de 5 %).
+Ils s’élargissent avec la fenêtre, ce qui rend le réglage à la souris plus précis.
+
+### Réglages retenus pour les prochains dossiers
+
+À chaque **Appliquer**, Custicon retient l’apparence choisie : couleur (automatique ou non), teinte,
+taille et positions. Le prochain dossier que vous ajoutez démarre avec ces réglages, que vous pouvez
+modifier librement. Le pictogramme n’est jamais retenu, et les dossiers déjà personnalisés ne changent pas.
+**Rétablir les valeurs par défaut** revient toujours aux valeurs d’origine de Custicon.
+
 ## Appliquer et voir le résultat
 
 Appuyez sur **Appliquer**. Un message confirme l’opération.
@@ -126,6 +136,16 @@ Si votre thème ne fournit qu’un PNG, le résultat est en bitmap et peut para�
 **Où sont rangées les images générées ?**
 Dans l’espace de données de l’application (`~/.var/app/io.github.gor3pig.Custicon/data/custicon/`).
 Une désinstallation avec suppression des données les efface : retirez d’abord les icônes.
+
+**Pourquoi Custicon demande-t-il l’accès à mon dossier personnel ?**
+Pour que Nautilus voie l’icône, Custicon doit connaître le vrai chemin du dossier. Il ne demande que la
+**lecture** du dossier personnel : le contenu de vos dossiers ne peut pas être modifié par l’application,
+et elle n’a aucun accès au réseau. L’icône est enregistrée par le service GVfs de votre session, hors du bac à sable.
+Le magasin d’applications signale cette permission, car elle concerne tous vos fichiers en lecture.
+
+**Custicon indique qu’il ne voit pas mon dossier personnel.**
+L’accès a été retiré ou n’a pas été accordé. Autorisez-le dans les Paramètres (Applications, puis Custicon),
+ou lancez dans un terminal `flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon`, puis relancez Custicon.
 
 **Pourquoi ne peut-on choisir que les dossiers du dossier personnel ?**
 Pour que Nautilus voie l’icône, Custicon doit écrire sur le vrai chemin du dossier. Les disques

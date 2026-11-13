@@ -121,6 +121,11 @@ dossiers et lire vos thèmes d’icônes) et la communication avec le service de
 l’icône hors du bac à sable. Le contenu de vos dossiers ne peut donc pas être modifié par Custicon.
 Il n’a pas accès au réseau. Le détail est dans [docs/architecture.md](docs/architecture.md).
 
+Le magasin d’applications signale cette permission, car elle concerne tous vos fichiers en lecture. Elle est
+nécessaire : sans le vrai chemin du dossier, GVfs enregistre l’icône dans un arbre que Nautilus ne lit pas.
+Si l’accès manque, Custicon l’indique et donne la commande
+`flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon`.
+
 ## Utilisation
 
 Le [guide d’utilisation](docs/guide.md) décrit chaque étape. En résumé :
