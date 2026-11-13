@@ -140,8 +140,9 @@ des fichiers de l’application, traductions) :
 ./check.sh
 ```
 
-Il demande Python 3, PyGObject, GTK4, Libadwaita, librsvg, `gettext`, `desktop-file-validate`
-et `appstreamcli`. Les tests de l’interface utilisent `gtk4-broadwayd`, fourni avec GTK4.
+Il demande Python 3, PyGObject, GTK4, Libadwaita, librsvg, GVfs, `gettext`, `desktop-file-validate`
+et `appstreamcli`. Les tests de l’interface utilisent `gtk4-broadwayd`, fourni avec GTK4, et un bus de session
+(`dbus-run-session` est utilisé s’il n’y en a pas).
 
 Le projet est développé sous Fedora avec GNOME 50.
 
