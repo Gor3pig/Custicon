@@ -1,4 +1,5 @@
 import locale
+import unicodedata
 from pathlib import Path
 
 from ..i18n import _
@@ -39,6 +40,11 @@ def from_percent(value: float) -> float:
 def is_portal_path(path: Path | str) -> bool:
     text = str(path)
     return text.startswith("/run/user/") and "/doc/" in text
+
+
+def normalize_text(text: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(character for character in decomposed if not unicodedata.combining(character)).casefold()
 
 
 def is_text_path(path: str) -> bool:

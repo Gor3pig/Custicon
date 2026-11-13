@@ -107,6 +107,20 @@ class Customized:
     status: str
 
 
+@dataclass(frozen=True)
+class Snapshot:
+    entry: Entry
+    glyph: bytes | None
+
+
+@dataclass
+class ResetReport:
+    restored: list[str] = field(default_factory=list)
+    kept: list[str] = field(default_factory=list)
+    missing: list[str] = field(default_factory=list)
+    failed: dict[str, str] = field(default_factory=dict)
+
+
 @dataclass
 class RegenerationReport:
     updated: list[str] = field(default_factory=list)
@@ -206,6 +220,74 @@ class Service:
         self._store.remove(key)
         self._release(entry)
         return outcome
+
+    def reset_all(self) -> ResetReport:
+        report = ResetReport()
+        for entry in list(self._store.all().values()):
+            try:
+                outcome = self.reset(entry.folder)
+            except (CusticonError, OSError) as error:
+                report.failed[entry.folder] = str(error)
+                continue
+            if outcome == RESET_RESTORED:
+                report.restored.append(entry.folder)
+            elif outcome == RESET_KEPT_USER_ICON:
+                report.kept.append(entry.folder)
+            else:
+                report.missing.append(entry.folder)
+        return report
+
+    def snapshot(self, key: str) -> Snapshot | None:
+        entry = self._store.get(key)
+        if entry is None:
+            return None
+        glyph = None
+        copy = self._store.glyph_path(entry.settings.get("glyph_copy"))
+        if copy is not None and copy.is_file():
+            try:
+                glyph = read_icon_bytes(copy)
+            except InvalidIconError:
+                glyph = None
+        return Snapshot(entry, glyph)
+
+    def restore(self, snapshot: Snapshot) -> Entry:
+        entry = snapshot.entry
+        copy = entry.settings.get("glyph_copy")
+        if snapshot.glyph is not None and isinstance(copy, str):
+            self._store.save_glyph(snapshot.glyph, Path(copy).suffix)
+        return self.apply(Path(entry.folder), Settings.from_dict(entry.settings))
+
+    def relocate(self, old: str, folder: Path | str) -> Entry:
+        entry = self._store.get(old)
+        if entry is None:
+            raise FolderError("this folder is not in the list")
+        if Path(old).is_dir():
+            raise FolderError("this folder still exists")
+        target = self._checked_folder(folder)
+        key = str(target)
+        if self._store.get(key) is not None:
+            raise FolderError("this folder is already customized")
+        current = read_custom_icon(target)
+        uri = self._store.icon_uri(entry.digest)
+        previous = entry.previous if self._store.owns_uri(current) else current
+        moved = replace(entry, folder=key, previous=previous)
+        self._store.put(moved)
+        try:
+            if current != uri:
+                write_custom_icon(target, uri)
+        except CusticonError:
+            self._store.remove(key)
+            raise
+        self._store.remove(old)
+        return moved
+
+    def cleanup(self) -> list[str]:
+        try:
+            removed = self._store.prune()
+        except CusticonError:
+            removed = []
+        self._store.remove_temporary_files()
+        return removed
 
     def forget(self, folder: Path | str) -> None:
         key, entry = self._locate(folder)

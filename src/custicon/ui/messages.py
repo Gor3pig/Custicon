@@ -14,6 +14,7 @@ from ..service import (
     STATUS_ICON_FILE_MISSING,
     STATUS_UNREADABLE,
     RegenerationReport,
+    ResetReport,
 )
 
 
@@ -54,7 +55,25 @@ def banner_action(status: str) -> str | None:
     return {
         STATUS_ICON_CHANGED: _("Take Back the Custicon Icon"),
         STATUS_ICON_FILE_MISSING: _("Regenerate the Icon"),
+        STATUS_FOLDER_MISSING: _("Find the Folder…"),
     }.get(status)
+
+
+def reset_report_lines(report: ResetReport) -> list[str]:
+    lines = []
+    if report.restored:
+        count = len(report.restored)
+        lines.append(ngettext("%d icon removed", "%d icons removed", count) % count)
+    if report.kept:
+        count = len(report.kept)
+        lines.append(ngettext("%d icon kept because you changed it from Nautilus", "%d icons kept because you changed them from Nautilus", count) % count)
+    if report.missing:
+        count = len(report.missing)
+        lines.append(ngettext("%d folder not found and forgotten", "%d folders not found and forgotten", count) % count)
+    if report.failed:
+        count = len(report.failed)
+        lines.append(ngettext("%d icon could not be removed", "%d icons could not be removed", count) % count)
+    return lines
 
 
 def report_lines(report: RegenerationReport) -> list[str]:

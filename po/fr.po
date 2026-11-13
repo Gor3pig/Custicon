@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 22:27+0100\n"
+"POT-Creation-Date: 2026-11-13 22:44+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -178,6 +178,33 @@ msgstr "Reprendre l’icône Custicon"
 msgid "Regenerate the Icon"
 msgstr "Régénérer l’icône"
 
+msgid "Find the Folder…"
+msgstr "Retrouver le dossier…"
+
+#, python-format
+msgid "%d icon removed"
+msgid_plural "%d icons removed"
+msgstr[0] "%d icône retirée"
+msgstr[1] "%d icônes retirées"
+
+#, python-format
+msgid "%d icon kept because you changed it from Nautilus"
+msgid_plural "%d icons kept because you changed them from Nautilus"
+msgstr[0] "%d icône conservée car vous l’avez changée depuis Nautilus"
+msgstr[1] "%d icônes conservées car vous les avez changées depuis Nautilus"
+
+#, python-format
+msgid "%d folder not found and forgotten"
+msgid_plural "%d folders not found and forgotten"
+msgstr[0] "%d dossier introuvable et oublié"
+msgstr[1] "%d dossiers introuvables et oubliés"
+
+#, python-format
+msgid "%d icon could not be removed"
+msgid_plural "%d icons could not be removed"
+msgstr[0] "%d icône n’a pas pu être retirée"
+msgstr[1] "%d icônes n’ont pas pu être retirées"
+
 #, python-format
 msgid "%d icon updated"
 msgid_plural "%d icons updated"
@@ -249,6 +276,9 @@ msgstr "Exporter les styles…"
 msgid "Import Styles…"
 msgstr "Importer des styles…"
 
+msgid "Remove All Icons…"
+msgstr "Retirer toutes les icônes…"
+
 #, python-format
 msgid "About %s"
 msgstr "À propos de %s"
@@ -281,6 +311,18 @@ msgstr "Choisir un dossier…"
 msgid "Customized Folders"
 msgstr "Dossiers personnalisés"
 
+msgid "Search folders"
+msgstr "Rechercher des dossiers"
+
+msgid "Search Folders (Ctrl+F)"
+msgstr "Rechercher des dossiers (Ctrl+F)"
+
+msgid "Search Folders"
+msgstr "Rechercher des dossiers"
+
+msgid "No folder matches your search"
+msgstr "Aucun dossier ne correspond à votre recherche"
+
 msgid "Could Not Read the Saved Data"
 msgstr "Impossible de lire les données enregistrées"
 
@@ -294,8 +336,38 @@ msgstr "Annuler"
 msgid "Live preview with the folder icon of the current theme (%s)."
 msgstr "Aperçu en direct, avec l’icône de dossier du thème actif (%s)."
 
-msgid "Choose a Folder"
-msgstr "Choisir un dossier"
+msgid "Find the Folder"
+msgstr "Retrouver le dossier"
+
+msgid "Could Not Find the Folder"
+msgstr "Impossible de retrouver le dossier"
+
+#, python-format
+msgid "“%s” is back in the list. Press F5 in Nautilus to see its icon."
+msgstr "« %s » est de retour dans la liste. Appuyez sur F5 dans Nautilus pour voir son icône."
+
+msgid "There are no customized folders."
+msgstr "Il n’y a aucun dossier personnalisé."
+
+msgid "Remove All Icons?"
+msgstr "Retirer toutes les icônes ?"
+
+msgid ""
+"Every customized folder gets back the icon it had before Custicon. The "
+"content of the folders is not modified."
+msgstr "Chaque dossier personnalisé retrouve l’icône qu’il avait avant Custicon. Le contenu des dossiers n’est pas modifié."
+
+msgid "Remove All"
+msgstr "Tout retirer"
+
+msgid "Could Not Remove the Icons"
+msgstr "Impossible de retirer les icônes"
+
+msgid "Press F5 in Nautilus to see the changes."
+msgstr "Appuyez sur F5 dans Nautilus pour voir les changements."
+
+msgid "Icons Removed"
+msgstr "Icônes retirées"
 
 msgid "Folder Not Accessible"
 msgstr "Dossier inaccessible"
@@ -313,6 +385,9 @@ msgstr "Nom non pris en charge"
 msgid "This name is not valid UTF-8 text, so Custicon cannot use it."
 msgstr ""
 "Ce nom n’est pas un texte UTF-8 valide : Custicon ne peut pas l’utiliser."
+
+msgid "Choose a Folder"
+msgstr "Choisir un dossier"
 
 msgid "SVG and PNG images"
 msgstr "Images SVG et PNG"
@@ -378,14 +453,21 @@ msgstr ""
 "Icône retirée de « %s ». Appuyez sur F5 dans Nautilus pour voir le "
 "changement."
 
+msgid "Undo"
+msgstr "Annuler"
+
+msgid "Could Not Restore the Icon"
+msgstr "Impossible de rétablir l’icône"
+
+#, python-format
+msgid "Icon restored on “%s”. Press F5 in Nautilus to see it."
+msgstr "Icône rétablie sur « %s ». Appuyez sur F5 dans Nautilus pour la voir."
+
 msgid "There are no customized folders to regenerate."
 msgstr "Aucun dossier personnalisé à régénérer."
 
 msgid "Nothing needed to be updated."
 msgstr "Rien n’avait besoin d’être mis à jour."
-
-msgid "Press F5 in Nautilus to see the changes."
-msgstr "Appuyez sur F5 dans Nautilus pour voir les changements."
 
 msgid "Regeneration Complete"
 msgstr "Régénération terminée"
@@ -407,7 +489,9 @@ msgid "Save Style"
 msgstr "Enregistrer le style"
 
 msgid "Give a name to the current appearance to reuse it for other folders."
-msgstr "Donnez un nom à l’apparence actuelle pour la réutiliser sur d’autres dossiers."
+msgstr ""
+"Donnez un nom à l’apparence actuelle pour la réutiliser sur d’autres "
+"dossiers."
 
 msgid "Save"
 msgstr "Enregistrer"

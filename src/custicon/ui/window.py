@@ -4,7 +4,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, GLib, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk
 
 from .. import environment
 from ..config import APP_ID, APP_NAME
@@ -24,8 +24,8 @@ from ..service import (
 )
 from .draft import Draft
 from .editor import BIG_SIZE, SMALL_SIZES, Editor
-from .format import display_path, folder_name, is_portal_path, is_text_path
-from .messages import banner_action, describe_error, report_lines, status_banner, status_label
+from .format import display_path, folder_name, is_portal_path, is_text_path, normalize_text
+from .messages import banner_action, describe_error, report_lines, reset_report_lines, status_banner, status_label
 from .picker import PickerDialog
 from .textures import texture_from_file, texture_from_svg_text
 
@@ -39,6 +39,7 @@ class FolderRow(Gtk.ListBoxRow):
     def __init__(self, key: str, name: str, subtitle: str, texture, warning: str | None, pending: bool):
         super().__init__()
         self.key = key
+        self.search_text = normalize_text(f"{name} {subtitle}")
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, margin_top=4, margin_bottom=4, margin_start=6, margin_end=6)
         picture = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN, can_shrink=False)
         picture.set_size_request(ROW_ICON_SIZE, ROW_ICON_SIZE)
@@ -106,6 +107,7 @@ class MainWindow(Adw.ApplicationWindow):
         settings = Gtk.Settings.get_default()
         if settings is not None:
             settings.connect("notify::gtk-icon-theme-name", self._on_theme_changed)
+        self._service.cleanup()
         Adw.StyleManager.get_default().connect("notify::accent-color", self._on_theme_changed)
         self.reload()
 
@@ -115,6 +117,8 @@ class MainWindow(Adw.ApplicationWindow):
             ("regenerate", self._start_regeneration),
             ("export-styles", self._export_styles),
             ("import-styles", self._import_styles),
+            ("reset-all", self._confirm_reset_all),
+            ("search", self._start_search),
         )
         for name, callback in actions:
             action = Gio.SimpleAction.new(name, None)
@@ -126,6 +130,7 @@ class MainWindow(Adw.ApplicationWindow):
         menu.append(_("Regenerate All Icons"), "win.regenerate")
         menu.append(_("Export Styles…"), "win.export-styles")
         menu.append(_("Import Styles…"), "win.import-styles")
+        menu.append(_("Remove All Icons…"), "win.reset-all")
         menu.append(_("About %s") % APP_NAME, "app.about")
         menu.append(_("Quit"), "app.quit")
         return menu
@@ -175,10 +180,24 @@ class MainWindow(Adw.ApplicationWindow):
         heading.add_css_class("heading")
         heading.add_css_class("dim-label")
         box.append(heading)
+        self.search_entry = Gtk.SearchEntry(placeholder_text=_("Search folders"))
+        self.search_entry.connect("search-changed", lambda *_args: self.list.invalidate_filter())
+        self.search_bar = Gtk.SearchBar(child=self.search_entry)
+        self.search_bar.connect_entry(self.search_entry)
+        self.search_bar.connect("notify::search-mode-enabled", self._on_search_mode_changed)
+        box.append(self.search_bar)
+        toggle = Gtk.ToggleButton(icon_name="system-search-symbolic", tooltip_text=_("Search Folders (Ctrl+F)"))
+        toggle.update_property([Gtk.AccessibleProperty.LABEL], [_("Search Folders")])
+        toggle.bind_property("active", self.search_bar, "search-mode-enabled", GObject.BindingFlags.BIDIRECTIONAL)
+        sidebar_header.pack_end(toggle)
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.SINGLE)
         self.list.add_css_class("navigation-sidebar")
         self.list.connect("row-selected", self._on_row_selected)
         self.list.connect("row-activated", self._on_row_activated)
+        self.list.set_filter_func(self._row_matches)
+        no_match = Gtk.Label(label=_("No folder matches your search"), margin_top=18, margin_bottom=18)
+        no_match.add_css_class("dim-label")
+        self.list.set_placeholder(no_match)
         scrolled = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
         scrolled.set_child(self.list)
         box.append(scrolled)
@@ -198,7 +217,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.editor.on_remove = self._confirm_remove
         self.editor.on_choose_glyph = self._choose_glyph
         self.editor.on_browse_glyph = self._browse_glyph
-        self.editor.on_banner_action = self._apply
+        self.editor.on_banner_action = self._on_banner_action
         self.editor.on_apply_style = self._apply_style
         self.editor.on_delete_style = self._delete_style
         self.editor.on_save_style = self._save_style
@@ -354,6 +373,90 @@ class MainWindow(Adw.ApplicationWindow):
             self.editor.set_blocked(True)
         return False
 
+    def _start_search(self) -> None:
+        self.search_bar.set_search_mode(True)
+        self.search_entry.grab_focus()
+
+    def _on_search_mode_changed(self, *_args) -> None:
+        if not self.search_bar.get_search_mode():
+            self.search_entry.set_text("")
+            self.list.invalidate_filter()
+
+    def _row_matches(self, row) -> bool:
+        query = normalize_text(self.search_entry.get_text().strip())
+        return not query or query in row.search_text
+
+    def _on_banner_action(self) -> None:
+        entry = self._entry(self._current_key) if self._current_key else None
+        if entry is not None and self._service.entry_status(entry) == STATUS_FOLDER_MISSING:
+            self._choose_new_location()
+        else:
+            self._apply()
+
+    def _choose_new_location(self) -> None:
+        dialog = Gtk.FileDialog(title=_("Find the Folder"))
+        old = self._current_key
+        dialog.select_folder(self, None, lambda d, result: self._new_location_chosen(d, result, old))
+
+    def _new_location_chosen(self, dialog, result, old: str) -> None:
+        try:
+            gfile = dialog.select_folder_finish(result)
+        except GLib.Error:
+            return
+        path = self._real_path(gfile)
+        if path is None:
+            return
+        try:
+            entry = self._service.relocate(old, path)
+        except CusticonError as error:
+            self._alert(_("Could Not Find the Folder"), describe_error(error))
+            return
+        self.toast(_("“%s” is back in the list. Press F5 in Nautilus to see its icon.") % folder_name(entry.folder))
+        self.reload(select=entry.folder)
+
+    def _confirm_reset_all(self) -> None:
+        if not self._rows:
+            self.toast(_("There are no customized folders."))
+            return
+        dialog = Adw.AlertDialog(
+            heading=_("Remove All Icons?"),
+            body=_("Every customized folder gets back the icon it had before Custicon. The content of the folders is not modified."),
+        )
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("remove", _("Remove All"))
+        dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.choose(self, None, self._reset_all_confirmed)
+
+    def _reset_all_confirmed(self, dialog, result) -> None:
+        if dialog.choose_finish(result) != "remove":
+            return
+        try:
+            report = self._service.reset_all()
+        except CusticonError as error:
+            self._alert(_("Could Not Remove the Icons"), describe_error(error))
+            return
+        self._pending = None
+        self.reload()
+        body = "\n".join(reset_report_lines(report))
+        if report.restored:
+            body += "\n\n" + _("Press F5 in Nautilus to see the changes.")
+        self._alert(_("Icons Removed"), body)
+
+    def _real_path(self, gfile) -> str | None:
+        path = gfile.get_path()
+        if path is None or is_portal_path(path):
+            if not environment.home_access():
+                self._show_permission_help()
+                return None
+            self._alert(_("Folder Not Accessible"), _("Custicon needs the real location of the folder. Choose a folder inside your home folder."))
+            return None
+        if not is_text_path(path):
+            self._alert(_("Name Not Supported"), _("This name is not valid UTF-8 text, so Custicon cannot use it."))
+            return None
+        return path
+
     def _choose_folder(self) -> None:
         dialog = Gtk.FileDialog(title=_("Choose a Folder"))
         dialog.select_folder(self, None, self._folder_chosen)
@@ -363,17 +466,9 @@ class MainWindow(Adw.ApplicationWindow):
             gfile = dialog.select_folder_finish(result)
         except GLib.Error:
             return
-        path = gfile.get_path()
-        if path is None or is_portal_path(path):
-            if not environment.home_access():
-                self._show_permission_help()
-                return
-            self._alert(_("Folder Not Accessible"), _("Custicon needs the real location of the folder. Choose a folder inside your home folder."))
-            return
-        if not is_text_path(path):
-            self._alert(_("Name Not Supported"), _("This name is not valid UTF-8 text, so Custicon cannot use it."))
-            return
-        self.add_folder(Path(path))
+        path = self._real_path(gfile)
+        if path is not None:
+            self.add_folder(Path(path))
 
     def add_folder(self, path: Path) -> None:
         try:
@@ -464,6 +559,10 @@ class MainWindow(Adw.ApplicationWindow):
 
     def remove(self, key: str, name: str) -> None:
         try:
+            snapshot = self._service.snapshot(key)
+        except CusticonError:
+            snapshot = None
+        try:
             outcome = self._service.reset(key)
         except CusticonError as error:
             self._alert(_("Could Not Remove the Icon"), describe_error(error))
@@ -475,8 +574,18 @@ class MainWindow(Adw.ApplicationWindow):
         elif outcome == RESET_FOLDER_MISSING:
             self.toast(_("“%s” was forgotten.") % name)
         else:
-            self.toast(_("Icon removed from “%s”. Press F5 in Nautilus to see it.") % name)
+            undo = (lambda: self._undo_removal(snapshot)) if snapshot is not None else None
+            self.toast(_("Icon removed from “%s”. Press F5 in Nautilus to see it.") % name, _("Undo") if undo else None, undo)
         self.reload()
+
+    def _undo_removal(self, snapshot) -> None:
+        try:
+            entry = self._service.restore(snapshot)
+        except CusticonError as error:
+            self._alert(_("Could Not Restore the Icon"), describe_error(error))
+            return
+        self.toast(_("Icon restored on “%s”. Press F5 in Nautilus to see it.") % folder_name(entry.folder))
+        self.reload(select=entry.folder)
 
     def _start_regeneration(self) -> None:
         if self._regeneration is not None:
@@ -652,10 +761,12 @@ class MainWindow(Adw.ApplicationWindow):
         dialog.set_close_response("close")
         dialog.present(self)
 
-    def toast(self, title: str, button: str | None = None) -> None:
+    def toast(self, title: str, button: str | None = None, on_button=None) -> None:
         toast = Adw.Toast(title=title, timeout=TOAST_SECONDS, use_markup=False)
         if button:
             toast.set_button_label(button)
+            if on_button is not None:
+                toast.connect("button-clicked", lambda *_args: on_button())
         self.toasts.add_toast(toast)
 
     def has_unsaved_changes(self) -> bool:

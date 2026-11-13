@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 22:27+0100\n"
+"POT-Creation-Date: 2026-11-13 22:44+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -180,6 +180,33 @@ msgstr ""
 msgid "Regenerate the Icon"
 msgstr ""
 
+msgid "Find the Folder…"
+msgstr ""
+
+#, python-format
+msgid "%d icon removed"
+msgid_plural "%d icons removed"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%d icon kept because you changed it from Nautilus"
+msgid_plural "%d icons kept because you changed them from Nautilus"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%d folder not found and forgotten"
+msgid_plural "%d folders not found and forgotten"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%d icon could not be removed"
+msgid_plural "%d icons could not be removed"
+msgstr[0] ""
+msgstr[1] ""
+
 #, python-format
 msgid "%d icon updated"
 msgid_plural "%d icons updated"
@@ -249,6 +276,9 @@ msgstr ""
 msgid "Import Styles…"
 msgstr ""
 
+msgid "Remove All Icons…"
+msgstr ""
+
 #, python-format
 msgid "About %s"
 msgstr ""
@@ -279,6 +309,18 @@ msgstr ""
 msgid "Customized Folders"
 msgstr ""
 
+msgid "Search folders"
+msgstr ""
+
+msgid "Search Folders (Ctrl+F)"
+msgstr ""
+
+msgid "Search Folders"
+msgstr ""
+
+msgid "No folder matches your search"
+msgstr ""
+
 msgid "Could Not Read the Saved Data"
 msgstr ""
 
@@ -292,7 +334,37 @@ msgstr ""
 msgid "Live preview with the folder icon of the current theme (%s)."
 msgstr ""
 
-msgid "Choose a Folder"
+msgid "Find the Folder"
+msgstr ""
+
+msgid "Could Not Find the Folder"
+msgstr ""
+
+#, python-format
+msgid "“%s” is back in the list. Press F5 in Nautilus to see its icon."
+msgstr ""
+
+msgid "There are no customized folders."
+msgstr ""
+
+msgid "Remove All Icons?"
+msgstr ""
+
+msgid ""
+"Every customized folder gets back the icon it had before Custicon. The "
+"content of the folders is not modified."
+msgstr ""
+
+msgid "Remove All"
+msgstr ""
+
+msgid "Could Not Remove the Icons"
+msgstr ""
+
+msgid "Press F5 in Nautilus to see the changes."
+msgstr ""
+
+msgid "Icons Removed"
 msgstr ""
 
 msgid "Folder Not Accessible"
@@ -307,6 +379,9 @@ msgid "Name Not Supported"
 msgstr ""
 
 msgid "This name is not valid UTF-8 text, so Custicon cannot use it."
+msgstr ""
+
+msgid "Choose a Folder"
 msgstr ""
 
 msgid "SVG and PNG images"
@@ -367,13 +442,20 @@ msgstr ""
 msgid "Icon removed from “%s”. Press F5 in Nautilus to see it."
 msgstr ""
 
+msgid "Undo"
+msgstr ""
+
+msgid "Could Not Restore the Icon"
+msgstr ""
+
+#, python-format
+msgid "Icon restored on “%s”. Press F5 in Nautilus to see it."
+msgstr ""
+
 msgid "There are no customized folders to regenerate."
 msgstr ""
 
 msgid "Nothing needed to be updated."
-msgstr ""
-
-msgid "Press F5 in Nautilus to see the changes."
 msgstr ""
 
 msgid "Regeneration Complete"

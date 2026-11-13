@@ -52,6 +52,7 @@ class Application(Adw.Application):
         self._add_action("about", self._on_about)
         self.set_accels_for_action("win.add-folder", ["<Control>o"])
         self.set_accels_for_action("win.regenerate", ["<Control>r"])
+        self.set_accels_for_action("win.search", ["<Control>f"])
 
     def do_activate(self) -> None:
         window = self.props.active_window

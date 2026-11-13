@@ -15,7 +15,7 @@ from gi.repository import Adw, Gio, GLib, Gtk
 from custicon.ui.editor import hex_from_rgba
 from custicon.metadata import read_custom_icon, write_custom_icon
 from custicon.service import Service, Settings
-from custicon.errors import StoreError
+from custicon.errors import MetadataError, StoreError
 from custicon.store import Entry, Store
 from custicon.ui import window as window_module
 from custicon.ui.draft import Draft
@@ -689,6 +689,233 @@ class StylesUiTests(WindowTestCase):
         settle()
         self.assertIsNotNone(self.window.get_visible_dialog())
         self.assertEqual(self.rows(), [])
+
+
+class ListSearchTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        for name in ("Musique", "Éléphant", "projects"):
+            self.add_and_apply(name)
+        self.window._start_search()
+        settle()
+
+    def visible(self):
+        return sorted(row.key.rsplit("/", 1)[-1] for row in self.window._rows.values() if row.get_child_visible())
+
+    def type(self, text):
+        self.window.search_entry.set_text(text)
+        settle(lambda: False, timeout=0.4)
+
+    def test_every_folder_is_listed_without_a_query(self):
+        self.assertEqual(self.visible(), ["Musique", "projects", "Éléphant"])
+
+    def test_the_query_filters_by_name(self):
+        self.type("mus")
+        self.assertEqual(self.visible(), ["Musique"])
+
+    def test_accents_and_case_do_not_matter(self):
+        self.type("ELEPHANT")
+        self.assertEqual(self.visible(), ["Éléphant"])
+
+    def test_the_path_is_searched_too(self):
+        self.type("folders")
+        self.assertEqual(len(self.visible()), 3)
+
+    def test_a_query_without_result_hides_every_row(self):
+        self.type("zzz")
+        self.assertEqual(self.visible(), [])
+
+    def test_leaving_the_search_restores_the_list(self):
+        self.type("mus")
+        self.window.search_bar.set_search_mode(False)
+        settle()
+        self.assertEqual(self.window.search_entry.get_text(), "")
+        self.assertEqual(len(self.visible()), 3)
+
+    def test_the_shortcut_action_opens_the_search_bar(self):
+        self.window.search_bar.set_search_mode(False)
+        settle()
+        self.window.lookup_action("search").activate(None)
+        settle()
+        self.assertTrue(self.window.search_bar.get_search_mode())
+
+    def test_the_header_toggle_is_linked_to_the_search_bar(self):
+        self.window.search_bar.set_search_mode(False)
+        self.assertTrue(self.window.search_bar.get_search_mode() is False)
+        self.window._start_search()
+        self.assertTrue(self.window.search_bar.get_search_mode())
+
+
+class LocateFolderTests(WindowTestCase):
+    def moved(self):
+        folder = self.add_and_apply("docs")
+        old = str(folder.resolve())
+        target = self.workspace / "renamed"
+        folder.rename(target)
+        self.created.append(target)
+        self.window.reload(select=old)
+        settle()
+        return old, target
+
+    def test_a_missing_folder_offers_to_find_it(self):
+        old, _target = self.moved()
+        self.assertTrue(self.window.editor.banner.get_revealed())
+        self.assertEqual(self.window.editor.banner.get_button_label(), "Find the Folder…")
+
+    def test_the_banner_button_opens_the_folder_chooser_for_a_missing_folder(self):
+        old, _target = self.moved()
+        with mock.patch.object(self.window, "_choose_new_location") as choose, mock.patch.object(self.window, "_apply") as apply:
+            self.window._on_banner_action()
+        choose.assert_called_once()
+        apply.assert_not_called()
+
+    def test_the_banner_button_applies_again_for_other_states(self):
+        folder = self.add_and_apply("docs")
+        write_custom_icon(folder, USER_ICON)
+        self.window.reload(select=str(folder.resolve()))
+        settle()
+        with mock.patch.object(self.window, "_choose_new_location") as choose, mock.patch.object(self.window, "_apply") as apply:
+            self.window._on_banner_action()
+        apply.assert_called_once()
+        choose.assert_not_called()
+
+    def test_choosing_the_new_place_reattaches_the_icon(self):
+        old, target = self.moved()
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window._new_location_chosen(FakeFolderDialog(str(target)), None, old)
+        settle()
+        self.assertIsNone(self.service.store.get(old))
+        entry = self.service.store.get(str(target.resolve()))
+        self.assertEqual(read_custom_icon(target), self.service.store.icon_uri(entry.digest))
+        self.assertEqual(self.window._current_key, entry.folder)
+        self.assertIn("renamed", toast.call_args.args[0])
+
+    def test_a_refused_folder_is_reported_and_nothing_changes(self):
+        old, _target = self.moved()
+        taken = self.add_and_apply("taken")
+        self.window._new_location_chosen(FakeFolderDialog(str(taken)), None, old)
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+        self.window.get_visible_dialog().force_close()
+        settle()
+        self.window._new_location_chosen(FakeFolderDialog(str(self.workspace / "missing")), None, old)
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+        self.assertIsNotNone(self.service.store.get(old))
+
+    def test_a_portal_path_without_access_opens_the_permission_help(self):
+        old, _target = self.moved()
+        with mock.patch.object(window_module.environment, "home_access", return_value=False):
+            self.window._new_location_chosen(FakeFolderDialog("/run/user/1000/doc/abcd1234/x"), None, old)
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog().get_extra_child())
+
+
+class ResetAllUiTests(WindowTestCase):
+    def test_without_folders_it_only_informs(self):
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window._confirm_reset_all()
+        self.assertIn("no customized", toast.call_args.args[0])
+        self.assertIsNone(self.window.get_visible_dialog())
+
+    def test_it_asks_for_confirmation(self):
+        self.add_and_apply()
+        self.window._confirm_reset_all()
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+        self.assertEqual(len(self.service.store.all()), 1)
+
+    def test_cancelling_removes_nothing(self):
+        self.add_and_apply()
+        self.window._reset_all_confirmed(FakeAnswer("cancel"), None)
+        self.assertEqual(len(self.service.store.all()), 1)
+
+    def test_confirming_removes_every_icon_and_shows_a_report(self):
+        first, second = self.add_and_apply("a"), self.add_and_apply("b")
+        self.window._reset_all_confirmed(FakeAnswer("remove"), None)
+        settle()
+        self.assertEqual(self.service.store.all(), {})
+        self.assertIsNone(read_custom_icon(first))
+        self.assertIsNone(read_custom_icon(second))
+        self.assertEqual(self.window.stack.get_visible_child_name(), "empty")
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_a_pending_folder_is_dropped(self):
+        self.add_and_apply()
+        self.window.add_folder(self.make_folder("new"))
+        self.window._reset_all_confirmed(FakeAnswer("remove"), None)
+        self.assertIsNone(self.window._pending)
+
+    def test_a_registry_error_is_reported(self):
+        self.add_and_apply()
+        with mock.patch.object(self.service, "reset_all", side_effect=StoreError("unreadable")):
+            self.window._reset_all_confirmed(FakeAnswer("remove"), None)
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_the_menu_offers_the_action(self):
+        self.assertIsNotNone(self.window.lookup_action("reset-all"))
+
+
+class UndoRemovalTests(WindowTestCase):
+    def test_removing_offers_to_undo_and_undoing_restores_the_icon(self):
+        folder = self.add_and_apply()
+        key = str(folder.resolve())
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.remove(key, "docs")
+        title, button, callback = toast.call_args.args
+        self.assertEqual(button, "Undo")
+        self.assertIsNone(read_custom_icon(folder))
+        callback()
+        settle()
+        entry = self.service.store.get(key)
+        self.assertEqual(read_custom_icon(folder), self.service.store.icon_uri(entry.digest))
+        self.assertEqual(self.window._current_key, key)
+
+    def test_no_undo_is_offered_when_the_icon_was_changed_from_nautilus(self):
+        folder = self.add_and_apply()
+        write_custom_icon(folder, USER_ICON)
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.remove(str(folder.resolve()), "docs")
+        self.assertEqual(len(toast.call_args.args), 1)
+
+    def test_a_failed_undo_is_reported(self):
+        folder = self.add_and_apply()
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.remove(str(folder.resolve()), "docs")
+        callback = toast.call_args.args[2]
+        with mock.patch.object(self.service, "restore", side_effect=MetadataError("no daemon")):
+            callback()
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_the_toast_button_calls_the_callback(self):
+        calls = []
+        with mock.patch.object(self.window.toasts, "add_toast") as add:
+            self.window.toast("Hello", "Undo", lambda: calls.append(1))
+        toast = add.call_args.args[0]
+        self.assertEqual(toast.get_button_label(), "Undo")
+        toast.emit("button-clicked")
+        self.assertEqual(calls, [1])
+
+    def test_a_toast_without_a_callback_has_no_handler(self):
+        with mock.patch.object(self.window.toasts, "add_toast") as add:
+            self.window.toast("Hello", "Got It")
+        add.call_args.args[0].emit("button-clicked")
+
+
+class StartupCleanupTests(WindowTestCase):
+    def test_orphan_images_are_removed_when_the_window_opens(self):
+        from custicon.ui.window import MainWindow
+
+        self.add_and_apply()
+        orphan = self.service.store.save_icon("<svg>orphan</svg>")
+        stray = self.service.store.icons_dir / "partial.svg.tmp"
+        stray.write_text("x")
+        window = MainWindow(shared_application(), self.service)
+        self.addCleanup(window.destroy)
+        self.assertFalse(self.service.store.icon_path(orphan).exists())
+        self.assertFalse(stray.exists())
 
 
 if __name__ == "__main__":

@@ -20,12 +20,13 @@ from custicon.service import (
     STATUS_OK,
     STATUS_UNREADABLE,
     RegenerationReport,
+    ResetReport,
     Settings,
 )
 from custicon.store import Entry
 from custicon.ui.draft import DEFAULT_COLOR, Draft
-from custicon.ui.format import display_path, folder_name, from_percent, is_portal_path, is_text_path, percent_text, to_percent
-from custicon.ui.messages import banner_action, describe_error, report_lines, status_banner, status_label
+from custicon.ui.format import normalize_text, display_path, folder_name, from_percent, is_portal_path, is_text_path, percent_text, to_percent
+from custicon.ui.messages import banner_action, describe_error, report_lines, reset_report_lines, status_banner, status_label
 
 
 class DraftTests(unittest.TestCase):
@@ -189,7 +190,7 @@ class MessageTests(unittest.TestCase):
     def test_banner_actions_only_exist_where_they_help(self):
         self.assertTrue(banner_action(STATUS_ICON_CHANGED))
         self.assertTrue(banner_action(STATUS_ICON_FILE_MISSING))
-        self.assertIsNone(banner_action(STATUS_FOLDER_MISSING))
+        self.assertEqual(banner_action(STATUS_FOLDER_MISSING), "Find the Folder…")
         self.assertIsNone(banner_action(STATUS_OK))
 
     def test_an_empty_report_has_no_lines(self):
@@ -378,6 +379,30 @@ class AppearanceSnapshotTests(unittest.TestCase):
         self.assertEqual(set(values), {"color", "accent", "size", "offset_x", "offset_y", "tint"})
 
 
+class SearchTextTests(unittest.TestCase):
+    def test_accents_and_case_are_ignored(self):
+        self.assertEqual(normalize_text("Éléphant"), "elephant")
+        self.assertEqual(normalize_text("ÇA va"), "ca va")
+        self.assertEqual(normalize_text("Straße"), "strasse")
+
+    def test_plain_text_is_only_lowercased(self):
+        self.assertEqual(normalize_text("Projects/2024"), "projects/2024")
+        self.assertEqual(normalize_text(""), "")
+
+
+class ResetReportTests(unittest.TestCase):
+    def test_an_empty_report_has_no_lines(self):
+        self.assertEqual(reset_report_lines(ResetReport()), [])
+
+    def test_each_outcome_is_counted(self):
+        report = ResetReport(restored=["a", "b"], kept=["c"], missing=["d"], failed={"e": "x", "f": "y", "g": "z"})
+        lines = reset_report_lines(report)
+        self.assertEqual(len(lines), 4)
+        self.assertIn("2 icons removed", lines[0])
+        self.assertIn("1 icon kept", lines[1])
+        self.assertIn("1 folder not found", lines[2])
+        self.assertIn("3 icons could not", lines[3])
+
+
 if __name__ == "__main__":
     unittest.main()
-

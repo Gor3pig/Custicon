@@ -92,6 +92,12 @@ class Store:
             self._save(entries)
         return removed
 
+    def remove_temporary_files(self) -> None:
+        for directory in (self.root, self.icons_dir, self.glyphs_dir):
+            if directory.is_dir():
+                for file in directory.glob("*.tmp"):
+                    self._unlink(file)
+
     def release(self, digest: str) -> None:
         self._release(self.icon_path(digest), lambda entry: entry.digest == digest)
 
