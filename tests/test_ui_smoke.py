@@ -1,6 +1,7 @@
 import os
 import time
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest import mock
 
@@ -13,8 +14,11 @@ from gi.repository import Adw, Gio, GLib, Gtk
 from custicon.ui.editor import hex_from_rgba
 from custicon.metadata import read_custom_icon, write_custom_icon
 from custicon.service import Service, Settings
+from custicon.errors import StoreError
 from custicon.store import Entry, Store
+from custicon.ui import window as window_module
 from custicon.ui.draft import Draft
+from custicon.ui.format import percent_text
 
 from .support import WorkspaceTestCase, folder_svg, glyph_svg, make_theme
 
@@ -581,3 +585,113 @@ class ResilienceTests(WindowTestCase):
         self.window.reload(select=str(folder))
         settle()
         self.assertEqual(self.window.editor.draft.size, 1.0)
+
+
+class MemoryAndLayoutTests(WindowTestCase):
+    def apply_with(self, name: str, **changes):
+        folder = self.make_folder(name)
+        self.window.add_folder(folder)
+        settle()
+        draft = self.window.editor.draft.with_glyph_name("star-symbolic")
+        self.window.editor.update_glyph(replace(draft, **changes))
+        settle()
+        self.window._apply()
+        settle()
+        return folder
+
+    def test_a_new_folder_starts_with_the_appearance_of_the_last_applied_one(self):
+        self.apply_with("first", auto_color=False, color="#ff8800", size=1.5, offset_x=0.1, offset_y=-0.1, tint=False)
+        self.window.add_folder(self.make_folder("second"))
+        settle()
+        draft = self.window.editor.draft
+        self.assertEqual((draft.auto_color, draft.color, draft.size, draft.offset_x, draft.offset_y, draft.tint), (False, "#ff8800", 1.5, 0.1, -0.1, False))
+        self.assertFalse(draft.ready)
+
+    def test_remembered_settings_can_still_be_changed(self):
+        self.apply_with("first", size=1.5)
+        self.window.add_folder(self.make_folder("second"))
+        settle()
+        self.window.editor.size_slider.adjustment.set_value(80)
+        self.assertAlmostEqual(self.window.editor.draft.size, 0.8)
+
+    def test_an_already_customized_folder_keeps_its_own_settings(self):
+        first = self.apply_with("first", size=1.5)
+        self.apply_with("second", size=0.5)
+        self.window.add_folder(first)
+        settle()
+        self.assertEqual(self.window.editor.draft.size, 1.5)
+        self.assertEqual(self.service.store.get(str(first)).settings["size"], 1.5)
+
+    def test_regeneration_does_not_change_the_memory(self):
+        self.apply_with("first", size=1.5)
+        self.apply_with("second", size=0.5)
+        remembered = self.service.remembered_appearance()
+        self.theme = "Green"
+        self.window._start_regeneration()
+        settle(lambda: self.window._regeneration is None)
+        self.assertEqual(self.service.remembered_appearance(), remembered)
+
+    def test_a_failed_apply_does_not_change_the_memory(self):
+        self.window.add_folder(self.make_folder("broken"))
+        settle()
+        self.window.editor.update_glyph(replace(self.window.editor.draft.with_glyph_name("star-symbolic"), size=2.0))
+        with mock.patch.object(self.service, "apply", side_effect=StoreError("disk full")):
+            self.window._apply()
+        self.assertEqual(self.service.remembered_appearance(), {})
+
+    def test_the_sliders_move_by_half_a_percent(self):
+        slider = self.window.editor.size_slider
+        self.assertEqual(slider.adjustment.get_step_increment(), 0.5)
+        self.assertEqual(slider.scale.get_digits(), 1)
+        self.assertTrue(slider.scale.get_hexpand())
+
+    def test_slider_values_snap_to_half_percents(self):
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.window.editor.size_slider.adjustment.set_value(100.3)
+        self.assertAlmostEqual(self.window.editor.draft.size, 1.005)
+        self.assertEqual(self.window.editor.size_slider.label.get_text(), percent_text(1.005))
+
+    def test_the_folder_list_uses_compact_icons(self):
+        folder = self.add_and_apply()
+        picture = self.window._rows[str(folder)].get_child().get_first_child()
+        self.assertEqual(picture.get_size_request(), (32, 32))
+
+
+class PermissionHelpTests(WindowTestCase):
+    def make_window(self, access: bool):
+        from custicon.ui.window import MainWindow
+
+        with mock.patch.object(window_module.environment, "home_access", return_value=access):
+            window = MainWindow(shared_application(), self.service)
+        self.addCleanup(window.destroy)
+        settle()
+        return window
+
+    def test_the_banner_is_hidden_when_the_home_folder_is_visible(self):
+        self.assertFalse(self.make_window(True).permission_banner.get_revealed())
+
+    def test_the_banner_is_shown_when_the_home_folder_is_not_visible(self):
+        self.assertTrue(self.make_window(False).permission_banner.get_revealed())
+
+    def test_the_banner_button_explains_the_fix_with_the_exact_command(self):
+        window = self.make_window(False)
+        window.permission_banner.emit("button-clicked")
+        settle()
+        dialog = window.get_visible_dialog()
+        self.assertIsNotNone(dialog)
+        self.assertEqual(dialog.get_extra_child().get_label(), "flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon")
+
+    def test_a_portal_path_without_access_opens_the_same_help(self):
+        window = self.make_window(False)
+        with mock.patch.object(window_module.environment, "home_access", return_value=False):
+            window._folder_chosen(FakeFolderDialog("/run/user/1000/doc/abcd1234/Projects"), None)
+        settle()
+        self.assertIsNotNone(window.get_visible_dialog().get_extra_child())
+        self.assertIsNone(window._pending)
+
+    def test_a_portal_path_with_access_keeps_the_plain_alert(self):
+        with mock.patch.object(window_module.environment, "home_access", return_value=True):
+            self.window._folder_chosen(FakeFolderDialog("/run/user/1000/doc/abcd1234/Projects"), None)
+        settle()
+        self.assertIsNone(self.window.get_visible_dialog().get_extra_child())

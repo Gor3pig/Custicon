@@ -1,5 +1,7 @@
+import locale
 import os
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 from custicon.errors import (
@@ -216,6 +218,58 @@ class MessageTests(unittest.TestCase):
                 "1 folder could not be updated",
             ],
         )
+
+
+class AppearanceMemoryTests(unittest.TestCase):
+    def setUp(self):
+        self.draft = Draft(Path("/home/someone/Projects"), glyph_name="a-symbolic")
+
+    def test_nothing_changes_without_remembered_values(self):
+        self.assertEqual(self.draft.with_appearance({}), self.draft)
+
+    def test_a_manual_color_is_restored_as_manual(self):
+        draft = self.draft.with_appearance({"color": "#ff8800", "size": 1.5, "offset_x": 0.1, "offset_y": -0.1, "tint": False})
+        self.assertFalse(draft.auto_color)
+        self.assertEqual((draft.color, draft.size, draft.offset_x, draft.offset_y, draft.tint), ("#ff8800", 1.5, 0.1, -0.1, False))
+
+    def test_an_automatic_color_is_restored_as_automatic(self):
+        manual = replace(self.draft, auto_color=False, color="#112233")
+        draft = manual.with_appearance({"color": None})
+        self.assertTrue(draft.auto_color)
+        self.assertEqual(draft.color, "#112233")
+
+    def test_the_pictogram_is_never_touched(self):
+        draft = self.draft.with_appearance({"size": 2.0})
+        self.assertEqual((draft.glyph_name, draft.glyph_file), ("a-symbolic", None))
+
+
+class FinePercentTests(unittest.TestCase):
+    def setUp(self):
+        saved = locale.setlocale(locale.LC_NUMERIC)
+        self.addCleanup(locale.setlocale, locale.LC_NUMERIC, saved)
+        locale.setlocale(locale.LC_NUMERIC, "C")
+
+    def test_the_decimal_separator_follows_the_locale(self):
+        try:
+            locale.setlocale(locale.LC_NUMERIC, "fr_FR.UTF-8")
+        except locale.Error:
+            self.skipTest("the French locale is not installed")
+        self.assertEqual(percent_text(0.125), "12,5%")
+
+    def test_half_percent_steps_are_shown(self):
+        self.assertEqual(percent_text(0.125), "12.5%")
+        self.assertEqual(percent_text(1.005), "100.5%")
+        self.assertEqual(percent_text(-0.005), "-0.5%")
+
+    def test_whole_percentages_stay_whole(self):
+        self.assertEqual(percent_text(1.5), "150%")
+        self.assertEqual(percent_text(0.0), "0%")
+
+    def test_conversion_does_not_accumulate_float_noise(self):
+        self.assertEqual(from_percent(100.5), 1.005)
+        self.assertEqual(from_percent(12.5), 0.125)
+        self.assertEqual(to_percent(from_percent(33.5)), 33.5)
+        self.assertEqual(from_percent(33.333333), 0.3333)
 
 
 if __name__ == "__main__":

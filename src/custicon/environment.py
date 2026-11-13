@@ -1,9 +1,12 @@
+import configparser
 import os
 
 FLATPAK_INFO = "/.flatpak-info"
 OWN_DATA_VARIABLE = "CUSTICON_DATA_HOME"
 HOST_DATA_VARIABLE = "HOST_XDG_DATA_HOME"
 DEFAULT_DATA_HOME = "~/.local/share"
+HOME_ACCESS = {"home", "host"}
+FLATPAK_COMMAND = "flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon"
 
 
 def in_sandbox() -> bool:
@@ -26,3 +29,17 @@ def share_host_metadata() -> None:
 
 def own_data_home() -> str | None:
     return os.environ.get(OWN_DATA_VARIABLE)
+
+
+def home_access() -> bool:
+    if not in_sandbox():
+        return True
+    parser = configparser.ConfigParser(interpolation=None, strict=False)
+    try:
+        parser.read(FLATPAK_INFO, encoding="utf-8")
+        entries = parser.get("Context", "filesystems", fallback=None)
+    except (OSError, ValueError, configparser.Error):
+        return True
+    if entries is None:
+        return False
+    return any(entry.strip().partition(":")[0] in HOME_ACCESS for entry in entries.split(";"))

@@ -9,6 +9,7 @@ from pathlib import Path
 from .errors import StoreError
 
 REGISTRY_NAME = "registry.json"
+DEFAULTS_NAME = "defaults.json"
 BACKUP_SUFFIX = ".bak"
 ICONS_DIR = "icons"
 GLYPHS_DIR = "glyphs"
@@ -37,6 +38,7 @@ class Store:
         self.icons_dir = self.root / ICONS_DIR
         self.glyphs_dir = self.root / GLYPHS_DIR
         self.registry_path = self.root / REGISTRY_NAME
+        self.defaults_path = self.root / DEFAULTS_NAME
 
     def icon_path(self, digest: str) -> Path:
         return self.icons_dir / f"{digest}.svg"
@@ -92,6 +94,18 @@ class Store:
         path = self.glyph_path(name)
         if path is not None:
             self._release(path, lambda entry: entry.settings.get("glyph_copy") == name)
+
+    def load_defaults(self) -> dict | None:
+        try:
+            values = json.loads(self.defaults_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, RecursionError):
+            return None
+        if not Store._is_flat_mapping(values):
+            return None
+        return values
+
+    def save_defaults(self, values: dict) -> None:
+        self._write_atomic(self.defaults_path, json.dumps(values, indent=2).encode())
 
     def prune(self) -> list[str]:
         backup = self.registry_path.with_name(REGISTRY_NAME + BACKUP_SUFFIX)
@@ -182,10 +196,14 @@ class Store:
             raise ValueError("the folder must be an absolute path")
         if DIGEST_PATTERN.fullmatch(entry.digest) is None:
             raise ValueError("invalid digest")
-        if not isinstance(entry.settings, dict) or not all(
-            isinstance(key, str) and isinstance(value, SCALAR_TYPES) for key, value in entry.settings.items()
-        ):
+        if not Store._is_flat_mapping(entry.settings):
             raise TypeError("settings must be a flat mapping")
+
+    @staticmethod
+    def _is_flat_mapping(values) -> bool:
+        return isinstance(values, dict) and all(
+            isinstance(key, str) and isinstance(value, SCALAR_TYPES) for key, value in values.items()
+        )
 
     def _save(self, entries: dict[str, Entry]) -> None:
         document = {

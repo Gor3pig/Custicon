@@ -1,3 +1,4 @@
+import locale
 from pathlib import Path
 
 from ..i18n import _
@@ -21,7 +22,10 @@ def folder_name(path: Path | str) -> str:
 
 
 def percent_text(value: float) -> str:
-    return _("%d%%") % round(value * PERCENT_STEP)
+    percent = round(value * PERCENT_STEP, 1)
+    if percent == int(percent):
+        return _("%d%%") % percent
+    return _("%s%%") % locale.format_string("%g", percent)
 
 
 def to_percent(value: float) -> float:
@@ -29,7 +33,7 @@ def to_percent(value: float) -> float:
 
 
 def from_percent(value: float) -> float:
-    return value / PERCENT_STEP
+    return round(value / PERCENT_STEP, 4)
 
 
 def is_portal_path(path: Path | str) -> bool:

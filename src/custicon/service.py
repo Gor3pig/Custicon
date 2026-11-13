@@ -23,6 +23,8 @@ MIN_SIZE = 0.2
 MAX_SIZE = 3.0
 MAX_OFFSET = 0.5
 
+APPEARANCE_FIELDS = ("color", "size", "offset_x", "offset_y", "tint")
+
 STATUS_OK = "ok"
 STATUS_FOLDER_MISSING = "folder-missing"
 STATUS_ICON_CHANGED = "icon-changed"
@@ -193,6 +195,21 @@ class Service:
         if entry is not None:
             self._store.remove(key)
             self._release(entry)
+
+    def remembered_appearance(self) -> dict:
+        stored = self._store.load_defaults() or {}
+        values = {name: stored[name] for name in APPEARANCE_FIELDS if name in stored}
+        try:
+            Settings(glyph_name="x", **values).validate()
+        except InvalidSettingsError:
+            return {}
+        return values
+
+    def remember_appearance(self, settings: Settings) -> None:
+        try:
+            self._store.save_defaults({name: getattr(settings, name) for name in APPEARANCE_FIELDS})
+        except CusticonError:
+            pass
 
     def customized(self) -> list[Customized]:
         return [Customized(entry, self._status(entry)) for entry in self._store.all().values()]

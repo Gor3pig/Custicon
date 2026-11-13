@@ -392,5 +392,46 @@ class GlyphCopyTests(ServiceTestCase):
         self.assertFalse(self.store.glyph_path(first.settings["glyph_copy"]).exists())
 
 
+class RememberedAppearanceTests(ServiceTestCase):
+    def test_a_fresh_store_remembers_nothing(self):
+        self.assertEqual(self.service.remembered_appearance(), {})
+
+    def test_the_appearance_is_remembered_without_the_pictogram(self):
+        self.service.remember_appearance(Settings(glyph_name="star-symbolic", color="#ff8800", size=1.5, offset_x=0.1, offset_y=-0.2, tint=False))
+        self.assertEqual(
+            self.service.remembered_appearance(),
+            {"color": "#ff8800", "size": 1.5, "offset_x": 0.1, "offset_y": -0.2, "tint": False},
+        )
+        self.assertNotIn("glyph_name", self.store.load_defaults())
+
+    def test_an_automatic_color_is_remembered_as_automatic(self):
+        self.service.remember_appearance(STAR)
+        self.assertIn("color", self.service.remembered_appearance())
+        self.assertIsNone(self.service.remembered_appearance()["color"])
+
+    def test_damaged_values_fall_back_to_the_factory_appearance(self):
+        for values in ({"size": 99}, {"size": "big"}, {"color": "red"}, {"offset_x": 5}, {"tint": "yes"}):
+            self.store.save_defaults(values)
+            self.assertEqual(self.service.remembered_appearance(), {}, str(values))
+
+    def test_a_non_finite_number_falls_back_to_the_factory_appearance(self):
+        self.store.save_defaults({"size": 1.0})
+        self.store.defaults_path.write_text('{"size": NaN}')
+        self.assertEqual(self.service.remembered_appearance(), {})
+
+    def test_unknown_keys_are_ignored(self):
+        self.store.save_defaults({"size": 1.2, "glyph_name": "x", "folder": "/etc"})
+        self.assertEqual(self.service.remembered_appearance(), {"size": 1.2})
+
+    def test_a_write_failure_does_not_break_the_caller(self):
+        with mock.patch.object(Store, "save_defaults", side_effect=StoreError("disk full")):
+            self.service.remember_appearance(STAR)
+
+    def test_applying_an_icon_alone_does_not_change_the_memory(self):
+        self.service.remember_appearance(Settings(glyph_name="star-symbolic", size=1.5))
+        self.service.apply(self.make_folder(), Settings(glyph_name="heart-symbolic", size=0.5))
+        self.assertEqual(self.service.remembered_appearance()["size"], 1.5)
+
+
 if __name__ == "__main__":
     unittest.main()

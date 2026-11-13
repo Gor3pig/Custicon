@@ -6,6 +6,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk
 
+from .. import environment
 from ..config import APP_ID, APP_NAME
 from ..errors import CusticonError
 from ..i18n import _
@@ -27,7 +28,7 @@ from .messages import banner_action, describe_error, report_lines, status_banner
 from .picker import PickerDialog
 from .textures import texture_from_file, texture_from_svg_text
 
-ROW_ICON_SIZE = 48
+ROW_ICON_SIZE = 32
 PREVIEW_DELAY_MS = 50
 TOAST_SECONDS = 8
 FORGET_STATUSES = (STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED)
@@ -37,7 +38,7 @@ class FolderRow(Gtk.ListBoxRow):
     def __init__(self, key: str, name: str, subtitle: str, texture, warning: str | None, pending: bool):
         super().__init__()
         self.key = key
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12, margin_top=6, margin_bottom=6, margin_start=6, margin_end=6)
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, margin_top=4, margin_bottom=4, margin_start=6, margin_end=6)
         picture = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN, can_shrink=False)
         picture.set_size_request(ROW_ICON_SIZE, ROW_ICON_SIZE)
         if texture is not None:
@@ -73,8 +74,17 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._build_actions()
         self.toasts = Adw.ToastOverlay()
-        self.stack = Gtk.Stack()
-        self.toasts.set_child(self.stack)
+        self.stack = Gtk.Stack(vexpand=True)
+        self.permission_banner = Adw.Banner(
+            title=_("Custicon cannot see your home folder"),
+            button_label=_("How to Fix"),
+            revealed=not environment.home_access(),
+        )
+        self.permission_banner.connect("button-clicked", lambda *_args: self._show_permission_help())
+        page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        page.append(self.permission_banner)
+        page.append(self.stack)
+        self.toasts.set_child(page)
         self.set_content(self.toasts)
         self.stack.add_named(self._build_empty_page(), "empty")
         self.stack.add_named(self._build_main_page(), "main")
@@ -326,6 +336,9 @@ class MainWindow(Adw.ApplicationWindow):
             return
         path = gfile.get_path()
         if path is None or is_portal_path(path):
+            if not environment.home_access():
+                self._show_permission_help()
+                return
             self._alert(_("Folder Not Accessible"), _("Custicon needs the real location of the folder. Choose a folder inside your home folder."))
             return
         if not is_text_path(path):
@@ -340,7 +353,7 @@ class MainWindow(Adw.ApplicationWindow):
             self._alert(_("Folder Not Accessible"), _("Custicon needs the real location of the folder. Choose a folder inside your home folder."))
             return
         if self._entry(key) is None:
-            self._pending = Draft(folder=Path(key))
+            self._pending = Draft(folder=Path(key)).with_appearance(self._service.remembered_appearance())
         self.reload(select=key)
         self.split.set_show_content(True)
 
@@ -383,6 +396,7 @@ class MainWindow(Adw.ApplicationWindow):
         except CusticonError as error:
             self._alert(_("Could Not Apply the Icon"), describe_error(error))
             return
+        self._service.remember_appearance(draft.to_settings())
         if self._pending is not None and str(self._pending.folder) == entry.folder:
             self._pending = None
         self.toast(_("Icon applied to “%s”. Press F5 in Nautilus to see it.") % folder_name(entry.folder), _("Got It"))
@@ -488,6 +502,21 @@ class MainWindow(Adw.ApplicationWindow):
         dialog = Adw.AlertDialog(heading=_("Regeneration Complete"), body=body)
         dialog.add_response("close", _("Close"))
         dialog.set_default_response("close")
+        dialog.set_close_response("close")
+        dialog.present(self)
+
+    def _show_permission_help(self) -> None:
+        dialog = Adw.AlertDialog(
+            heading=_("Allow Access to Your Home Folder"),
+            body=_(
+                "Custicon needs to see the real location of your folders. It only reads them: the content of a folder is never modified.\n\n"
+                "Allow access to the home folder in the Settings (Applications, then Custicon), or run this command in a terminal, then restart Custicon:"
+            ),
+        )
+        command = Gtk.Label(label=environment.FLATPAK_COMMAND, selectable=True, wrap=True, xalign=0.0, margin_top=6)
+        command.add_css_class("monospace")
+        dialog.set_extra_child(command)
+        dialog.add_response("close", _("Close"))
         dialog.set_close_response("close")
         dialog.present(self)
 

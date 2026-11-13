@@ -42,6 +42,13 @@ class Draft:
     def with_glyph_file(self, path: Path | str) -> "Draft":
         return replace(self, glyph_file=str(path), glyph_name=None)
 
+    def with_appearance(self, values: dict) -> "Draft":
+        changes = {name: values[name] for name in ("size", "offset_x", "offset_y", "tint") if name in values}
+        if "color" in values:
+            changes["auto_color"] = values["color"] is None
+            changes["color"] = values["color"] or self.color
+        return replace(self, **changes)
+
     def with_default_appearance(self) -> "Draft":
         return replace(self, auto_color=True, size=1.0, offset_x=0.0, offset_y=0.0)
 

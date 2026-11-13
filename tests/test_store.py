@@ -148,5 +148,34 @@ class StoreTests(WorkspaceTestCase):
             Store(blocker / "inside").save_icon("<svg/>")
 
 
+class DefaultsTests(WorkspaceTestCase):
+    def setUp(self):
+        self.root = self.make_workspace() / "data"
+        self.store = Store(self.root)
+
+    def test_nothing_is_stored_by_default(self):
+        self.assertIsNone(self.store.load_defaults())
+
+    def test_values_survive_a_new_store_instance(self):
+        self.store.save_defaults({"size": 1.5, "color": None, "tint": False})
+        self.assertEqual(Store(self.root).load_defaults(), {"size": 1.5, "color": None, "tint": False})
+
+    def test_unusable_files_are_ignored(self):
+        self.root.mkdir(parents=True)
+        for text in ("{broken", "[1]", '{"a": [1]}', '{"a": {"b": 1}}', "[" * 100000, ""):
+            self.store.defaults_path.write_text(text)
+            self.assertIsNone(self.store.load_defaults(), text[:20])
+
+    def test_saving_leaves_no_temporary_file(self):
+        self.store.save_defaults({"size": 1.0})
+        self.assertFalse([path for path in self.root.rglob("*") if path.name.endswith(".tmp")])
+
+    def test_an_unwritable_location_is_a_store_error(self):
+        blocker = self.root.parent / "blocker"
+        blocker.write_text("a file")
+        with self.assertRaises(StoreError):
+            Store(blocker / "inside").save_defaults({"size": 1.0})
+
+
 if __name__ == "__main__":
     unittest.main()

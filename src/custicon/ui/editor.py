@@ -15,6 +15,9 @@ from .format import display_path, folder_name, from_percent, percent_text, to_pe
 BIG_SIZE = 144
 SMALL_SIZES = (64, 48, 32)
 SLIDER_WIDTH = 150
+SLIDER_STEP = 0.5
+SLIDER_PAGE = 5
+SLIDER_DIGITS = 1
 
 
 def hex_from_rgba(color: Gdk.RGBA) -> str:
@@ -30,15 +33,17 @@ def rgba_from_hex(value: str) -> Gdk.RGBA:
 class Slider:
     def __init__(self, title: str, lower: float, upper: float, value: float, marks: tuple[float, ...] = ()):
         self.row = Adw.ActionRow(title=title, use_markup=False)
-        self.adjustment = Gtk.Adjustment(value=value, lower=lower, upper=upper, step_increment=1, page_increment=10)
+        self.adjustment = Gtk.Adjustment(value=value, lower=lower, upper=upper, step_increment=SLIDER_STEP, page_increment=SLIDER_PAGE)
         self.scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, adjustment=self.adjustment)
         self.scale.set_size_request(SLIDER_WIDTH, -1)
         self.scale.set_valign(Gtk.Align.CENTER)
+        self.scale.set_hexpand(True)
+        self.scale.set_digits(SLIDER_DIGITS)
         self.scale.set_draw_value(False)
         self.scale.update_property([Gtk.AccessibleProperty.LABEL], [title])
         for mark in marks:
             self.scale.add_mark(mark, Gtk.PositionType.BOTTOM, None)
-        self.label = Gtk.Label(xalign=1.0, width_chars=5)
+        self.label = Gtk.Label(xalign=1.0, width_chars=7)
         self.label.add_css_class("dim-label")
         self.label.add_css_class("numeric")
         self.row.add_suffix(self.scale)
@@ -50,8 +55,13 @@ class Slider:
 
     def connect_changed(self, callback) -> None:
         def handler(adjustment):
-            self.label.set_text(percent_text(from_percent(adjustment.get_value())))
-            callback(adjustment.get_value())
+            value = adjustment.get_value()
+            snapped = round(value / SLIDER_STEP) * SLIDER_STEP
+            if snapped != value:
+                adjustment.set_value(snapped)
+                return
+            self.label.set_text(percent_text(from_percent(value)))
+            callback(value)
 
         self.adjustment.connect("value-changed", handler)
 

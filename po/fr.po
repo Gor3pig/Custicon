@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 19:08+0100\n"
+"POT-Creation-Date: 2026-11-13 20:49+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -86,6 +86,10 @@ msgstr "Teinte plus foncée de la couleur du dossier"
 #, python-format
 msgid "%d%%"
 msgstr "%d %%"
+
+#, python-format
+msgid "%s%%"
+msgstr "%s %%"
 
 msgid "An icon that is needed was not found in your icon theme."
 msgstr "Une icône nécessaire est introuvable dans votre thème d’icônes."
@@ -191,6 +195,12 @@ msgstr[1] "%d pictogrammes trouvés"
 msgid "No pictogram found"
 msgstr "Aucun pictogramme trouvé"
 
+msgid "Custicon cannot see your home folder"
+msgstr "Custicon ne voit pas votre dossier personnel"
+
+msgid "How to Fix"
+msgstr "Comment faire"
+
 msgid "Regenerate All Icons"
 msgstr "Régénérer toutes les icônes"
 
@@ -256,7 +266,8 @@ msgid "Name Not Supported"
 msgstr "Nom non pris en charge"
 
 msgid "This name is not valid UTF-8 text, so Custicon cannot use it."
-msgstr "Ce nom n’est pas un texte UTF-8 valide : Custicon ne peut pas l’utiliser."
+msgstr ""
+"Ce nom n’est pas un texte UTF-8 valide : Custicon ne peut pas l’utiliser."
 
 msgid "SVG and PNG images"
 msgstr "Images SVG et PNG"
@@ -337,6 +348,23 @@ msgstr "Régénération terminée"
 msgid "Close"
 msgstr "Fermer"
 
+msgid "Allow Access to Your Home Folder"
+msgstr "Autoriser l’accès à votre dossier personnel"
+
+msgid ""
+"Custicon needs to see the real location of your folders. It only reads them: "
+"the content of a folder is never modified.\n"
+"\n"
+"Allow access to the home folder in the Settings (Applications, then "
+"Custicon), or run this command in a terminal, then restart Custicon:"
+msgstr ""
+"Custicon doit voir l’emplacement réel de vos dossiers. Il ne fait que les "
+"lire : le contenu d’un dossier n’est jamais modifié.\n"
+"\n"
+"Autorisez l’accès au dossier personnel dans les Paramètres (Applications, "
+"puis Custicon), ou lancez cette commande dans un terminal, puis relancez "
+"Custicon :"
+
 msgid "Custicon"
 msgstr "Custicon"
 
@@ -381,6 +409,36 @@ msgstr "Régénérez toutes les icônes après un changement de thème d’icôn
 
 msgid "The content of your folders is never modified"
 msgstr "Le contenu de vos dossiers n’est jamais modifié"
+
+msgid ""
+"Custicon only needs to read your home folder, to see the real location of "
+"the folders you choose. It has no access to the network, and the content of "
+"a folder is never written."
+msgstr ""
+"Custicon n’a besoin que de lire votre dossier personnel, pour voir l’emplacement réel des dossiers que vous choisissez. Il n’a aucun accès au réseau, et le contenu d’un dossier n’est jamais écrit."
+
+msgid "Finer controls, remembered settings and a more compact list."
+msgstr "Des réglages plus fins, des réglages retenus et une liste plus compacte."
+
+msgid ""
+"The size and position sliders move by half a percent and use the available "
+"width"
+msgstr ""
+"Les curseurs de taille et de position avancent par pas de 0,5 % et utilisent la largeur disponible"
+
+msgid ""
+"The appearance you applied is proposed again for the next folders you add, "
+"and can still be changed"
+msgstr ""
+"L’apparence appliquée est proposée de nouveau pour les prochains dossiers ajoutés, et reste modifiable"
+
+msgid "The list of customized folders uses smaller icons"
+msgstr "La liste des dossiers personnalisés utilise des icônes plus petites"
+
+msgid ""
+"Custicon explains how to allow access to the home folder when it is missing"
+msgstr ""
+"Custicon explique comment autoriser l’accès au dossier personnel lorsqu’il manque"
 
 msgid "The first stable version of Custicon."
 msgstr "La première version stable de Custicon."

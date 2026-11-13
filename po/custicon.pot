@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 19:08+0100\n"
+"POT-Creation-Date: 2026-11-13 20:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -90,6 +90,10 @@ msgstr ""
 
 #, python-format
 msgid "%d%%"
+msgstr ""
+
+#, python-format
+msgid "%s%%"
 msgstr ""
 
 msgid "An icon that is needed was not found in your icon theme."
@@ -191,6 +195,12 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid "No pictogram found"
+msgstr ""
+
+msgid "Custicon cannot see your home folder"
+msgstr ""
+
+msgid "How to Fix"
 msgstr ""
 
 msgid "Regenerate All Icons"
@@ -329,6 +339,17 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
+msgid "Allow Access to Your Home Folder"
+msgstr ""
+
+msgid ""
+"Custicon needs to see the real location of your folders. It only reads them: "
+"the content of a folder is never modified.\n"
+"\n"
+"Allow access to the home folder in the Settings (Applications, then "
+"Custicon), or run this command in a terminal, then restart Custicon:"
+msgstr ""
+
 msgid "Custicon"
 msgstr ""
 
@@ -363,6 +384,32 @@ msgid "Regenerate every icon after a change of icon theme"
 msgstr ""
 
 msgid "The content of your folders is never modified"
+msgstr ""
+
+msgid ""
+"Custicon only needs to read your home folder, to see the real location of "
+"the folders you choose. It has no access to the network, and the content of "
+"a folder is never written."
+msgstr ""
+
+msgid "Finer controls, remembered settings and a more compact list."
+msgstr ""
+
+msgid ""
+"The size and position sliders move by half a percent and use the available "
+"width"
+msgstr ""
+
+msgid ""
+"The appearance you applied is proposed again for the next folders you add, "
+"and can still be changed"
+msgstr ""
+
+msgid "The list of customized folders uses smaller icons"
+msgstr ""
+
+msgid ""
+"Custicon explains how to allow access to the home folder when it is missing"
 msgstr ""
 
 msgid "The first stable version of Custicon."

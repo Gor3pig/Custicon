@@ -86,5 +86,31 @@ class GuardTests(WorkspaceTestCase):
             metadata.check_shared_metadata()
 
 
+class HomeAccessTests(WorkspaceTestCase):
+    def access(self, filesystems):
+        info = self.make_workspace() / "flatpak-info"
+        info.write_text("[Application]\nname=x\n\n[Context]\n" + (f"filesystems={filesystems}\n" if filesystems is not None else ""))
+        with mock.patch.object(environment, "FLATPAK_INFO", str(info)):
+            return environment.home_access()
+
+    def test_outside_the_sandbox_the_home_folder_is_always_visible(self):
+        with mock.patch.object(environment, "in_sandbox", return_value=False):
+            self.assertTrue(environment.home_access())
+
+    def test_home_and_host_grant_access_in_either_mode(self):
+        for value in ("home;", "home:ro;", "home:rw;", "host;", "xdg-download;home:ro;", "!home;home:ro;"):
+            self.assertTrue(self.access(value), value)
+
+    def test_other_folders_do_not_grant_access_to_the_home_folder(self):
+        for value in ("xdg-download;", "xdg-documents:ro;", "!home;", "/srv;", "host-os;", "", None):
+            self.assertFalse(self.access(value), repr(value))
+
+    def test_an_unreadable_description_does_not_raise_an_alarm(self):
+        info = self.make_workspace() / "flatpak-info"
+        info.write_bytes(b"\xff\xfe[Context\n")
+        with mock.patch.object(environment, "FLATPAK_INFO", str(info)):
+            self.assertTrue(environment.home_access())
+
+
 if __name__ == "__main__":
     unittest.main()
