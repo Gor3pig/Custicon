@@ -25,6 +25,15 @@ maintient le dépôt.
 Pages sert le site (`data/website/`, en anglais et en français), le dépôt signé (`repo/`), `custicon.flatpakref`, `custicon.flatpakrepo`, `custicon.gpg` et l’icône.
 Un changement sous `data/website/` relance aussi la publication.
 
+## Un déploiement par exécution, vérifié
+
+GitHub ignore un second déploiement Pages d’un **même commit** : si un push puis une release portent sur le même commit,
+la release ne remplaçait pas le dépôt et les utilisateurs restaient sur l’ancienne version (constaté avec les 1.4.0 et 1.4.2).
+Le workflow n’utilise donc plus `actions/deploy-pages` : il appelle l’API Pages avec une `pages_build_version` propre à
+chaque exécution (commit, numéro d’exécution et de tentative), puis une dernière étape **échoue** si le dépôt réellement servi
+n’est pas celui qu’il vient de construire. Une exécution verte signifie donc que la nouvelle version est en ligne.
+`./check.sh` refuse un retour à `deploy-pages` ou la suppression de la vérification.
+
 ## Le dépôt Flatpak et sa clé
 
 - Le dépôt ne contient que la **dernière release** (`build-aux/flatpak-repo.sh`).

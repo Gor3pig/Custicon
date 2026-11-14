@@ -87,4 +87,43 @@ jobs:
 
       - name: Publish on GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
+        run: |
+          set -euo pipefail
+          artifact=$(gh api "repos/$GH_REPO/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | select(.name == "github-pages") | .id')
+          test -n "$artifact"
+          token=$(curl -sS --fail -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://github.com/$GITHUB_REPOSITORY_OWNER" | jq -r .value)
+          version="$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          answer=$(gh api -X POST "repos/$GH_REPO/pages/deployments" -F artifact_id="$artifact" -f environment=github-pages -f pages_build_version="$version" -f oidc_token="$token")
+          identifier=$(jq -r .id <<<"$answer")
+          echo "page_url=$(jq -r .page_url <<<"$answer")" >> "$GITHUB_OUTPUT"
+          for attempt in $(seq 1 60); do
+            status=$(gh api "repos/$GH_REPO/pages/deployments/$identifier" --jq .status)
+            echo "deployment $identifier: $status"
+            case "$status" in
+              succeed) exit 0 ;;
+              deployment_cancelled | deployment_failed | deployment_content_failed | deployment_attempt_error | deployment_lost) exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "The deployment did not finish in time"
+          exit 1
+
+      - name: Check that the published repository is the one just built
+        env:
+          SITE: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          ref=repo/refs/heads/app/io.github.gor3pig.Custicon/x86_64/master
+          expected=$(cat "_site/$ref")
+          test -n "$expected"
+          for attempt in $(seq 1 40); do
+            served=$(curl -sS -H 'Cache-Control: no-cache' "${SITE%/}/$ref?check=$GITHUB_RUN_ID-$attempt" || true)
+            if [ "$served" = "$expected" ]; then
+              echo "The published repository is at $expected"
+              exit 0
+            fi
+            echo "served: ${served:0:16} expected: ${expected:0:16}"
+            sleep 15
+          done
+          echo "The published repository does not match the release that was just built"
+          exit 1

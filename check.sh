@@ -113,6 +113,14 @@ flatpak_repository_files_match() {
         printf 'release.yml: the bundle is not signed, so it must not embed the repository address or key\n'
         failed=1
     fi
+    if grep -q "actions/deploy-pages" .github/workflows/pages.yml || ! grep -q "pages_build_version" .github/workflows/pages.yml; then
+        printf 'pages.yml: every deployment needs its own pages_build_version, otherwise a second deployment of the same commit is ignored\n'
+        failed=1
+    fi
+    if ! grep -q "Check that the published repository is the one just built" .github/workflows/pages.yml; then
+        printf 'pages.yml: the workflow must check that the published repository is the one it just built\n'
+        failed=1
+    fi
     fingerprint=$(gpg --show-keys --with-colons build-aux/custicon.gpg | sed -n 's/^fpr:::::::::\([0-9A-F]*\):$/\1/p' | head -n 1)
     if [ -z "$fingerprint" ] || ! grep -qxF "  SIGNING_KEY_ID: $fingerprint" .github/workflows/pages.yml; then
         printf 'pages.yml: SIGNING_KEY_ID must be the fingerprint of build-aux/custicon.gpg (%s)\n' "$fingerprint"
