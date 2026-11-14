@@ -40,11 +40,14 @@ FORGET_STATUSES = (STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED)
 
 
 class FolderRow(Gtk.ListBoxRow):
-    def __init__(self, key: str, name: str, subtitle: str, texture, warning: str | None, pending: bool):
+    def __init__(self, key: str, name: str, subtitle: str, texture, warning: str | None, pending: bool, choosing: bool = False):
         super().__init__()
         self.key = key
         self.search_text = normalize_text(f"{name} {subtitle}")
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, margin_top=4, margin_bottom=4, margin_start=6, margin_end=6)
+        self.check = Gtk.CheckButton(valign=Gtk.Align.CENTER, visible=choosing)
+        self.check.update_property([Gtk.AccessibleProperty.LABEL], [name])
+        box.append(self.check)
         picture = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN, can_shrink=False)
         picture.set_size_request(ROW_ICON_SIZE, ROW_ICON_SIZE)
         if texture is not None:
@@ -71,6 +74,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._service = service
         self._pending: Draft | None = None
         self._batch: list[Path] | None = None
+        self._choosing = False
         self._current_key: str | None = None
         self._reloading = False
         self._preview_source = 0
@@ -199,6 +203,10 @@ class MainWindow(Adw.ApplicationWindow):
         toggle.update_property([Gtk.AccessibleProperty.LABEL], [_("Search Folders")])
         toggle.bind_property("active", self.search_bar, "search-mode-enabled", GObject.BindingFlags.BIDIRECTIONAL)
         sidebar_header.pack_end(toggle)
+        self.choose_toggle = Gtk.ToggleButton(icon_name="selection-mode-symbolic", tooltip_text=_("Select Several Folders"))
+        self.choose_toggle.update_property([Gtk.AccessibleProperty.LABEL], [_("Select Several Folders")])
+        self.choose_toggle.connect("toggled", self._on_choosing_toggled)
+        sidebar_header.pack_end(self.choose_toggle)
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.SINGLE)
         self.list.add_css_class("navigation-sidebar")
         self.list.connect("row-selected", self._on_row_selected)
@@ -302,7 +310,8 @@ class MainWindow(Adw.ApplicationWindow):
             self._alert(_("Could Not Read the Saved Data"), describe_error(error))
 
     def _add_row(self, key, name, subtitle, texture, warning, pending) -> None:
-        row = FolderRow(key, name, subtitle, texture, warning, pending)
+        row = FolderRow(key, name, subtitle, texture, warning, pending, self._choosing)
+        row.check.connect("toggled", self._on_row_checked)
         self._rows[key] = row
         self.list.append(row)
 
@@ -312,14 +321,48 @@ class MainWindow(Adw.ApplicationWindow):
         except CusticonError:
             return None
 
+    def _on_choosing_toggled(self, button) -> None:
+        self._choosing = button.get_active()
+        self.list.set_selection_mode(Gtk.SelectionMode.NONE if self._choosing else Gtk.SelectionMode.SINGLE)
+        for row in self._rows.values():
+            row.check.set_visible(self._choosing)
+            self._set_checked(row, self._choosing and row.key == self._current_key and not self._batch)
+        if not self._choosing:
+            current = self._current_key
+            self._batch = None
+            self.reload(select=current)
+
+    def _set_checked(self, row, active: bool) -> None:
+        self._reloading = True
+        try:
+            row.check.set_active(active)
+        finally:
+            self._reloading = False
+
+    def _checked_keys(self) -> list[str]:
+        return [key for key, row in self._rows.items() if row.check.get_active()]
+
+    def _on_row_checked(self, _check) -> None:
+        if self._reloading or not self._choosing:
+            return
+        keys = self._checked_keys()
+        if len(keys) >= 2:
+            self._show_batch([Path(key) for key in keys])
+        elif len(keys) == 1:
+            self._show_key(keys[0])
+            self.split.set_show_content(True)
+
     def _on_row_selected(self, _list, row) -> None:
-        if self._reloading or row is None:
+        if self._reloading or row is None or self._choosing:
             return
         self._show_key(row.key)
         self.split.set_show_content(True)
 
     def _on_row_activated(self, _list, row) -> None:
         if self._reloading or row is None:
+            return
+        if self._choosing:
+            row.check.set_active(not row.check.get_active())
             return
         if row.key != self._current_key:
             self._show_key(row.key)
@@ -534,6 +577,7 @@ class MainWindow(Adw.ApplicationWindow):
             if resolved:
                 self.add_folder(resolved[0])
             return
+        self._choosing_off()
         self._batch = resolved
         self._pending = None
         self._current_key = None
@@ -543,15 +587,25 @@ class MainWindow(Adw.ApplicationWindow):
             self.list.unselect_all()
         finally:
             self._reloading = False
-        names = [folder_name(folder) for folder in resolved]
-        draft = Draft(folder=resolved[0]).with_appearance(self._service.remembered_appearance())
-        self.content_page.set_title(ngettext("%d folder", "%d folders", len(resolved)) % len(resolved))
+        self._show_batch(resolved)
+        self.editor.choose_button.grab_focus()
+
+    def _choosing_off(self) -> None:
+        if self._choosing:
+            self._batch = None
+            self.choose_toggle.set_active(False)
+
+    def _show_batch(self, folders: list[Path]) -> None:
+        self._batch = folders
+        self._current_key = None
+        names = [folder_name(folder) for folder in folders]
+        draft = Draft(folder=folders[0]).with_appearance(self._service.remembered_appearance())
+        self.content_page.set_title(ngettext("%d folder", "%d folders", len(folders)) % len(folders))
         self.editor.load(draft, False, STATUS_OK)
         self.editor.show_batch(names)
         self.editor.set_suggestions([])
         self._refresh_styles()
         self._schedule_preview()
-        self.editor.choose_button.grab_focus()
         self.split.set_show_content(True)
 
     def _on_files_dropped(self, _target, value, _x, _y) -> bool:
@@ -570,6 +624,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.open_files([model.get_item(index) for index in range(model.get_n_items())])
 
     def add_folder(self, path: Path) -> None:
+        self._choosing_off()
         try:
             key = str(path.resolve())
         except (OSError, RuntimeError):
@@ -628,6 +683,7 @@ class MainWindow(Adw.ApplicationWindow):
         if report.applied:
             self._service.remember_appearance(draft.to_settings())
         self._batch = None
+        self._choosing_off()
         self.reload(select=report.applied[0] if report.applied else None)
         if report.failed:
             lines = [ngettext("%d folder customized", "%d folders customized", len(report.applied)) % len(report.applied)]

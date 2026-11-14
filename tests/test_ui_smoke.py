@@ -1267,6 +1267,86 @@ class BatchUiTests(WindowTestCase):
         self.assertEqual(self.editor.suggestion_names, [])
 
 
+class ChoosingUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.names = ["a", "b", "c"]
+        for name in self.names:
+            self.add_and_apply(name)
+        self.window.reload(select=str((self.workspace / "a").resolve()))
+        settle()
+        self.editor = self.window.editor
+        self.keys = [str((self.workspace / name).resolve()) for name in self.names]
+
+    def row(self, name):
+        return self.window._rows[str((self.workspace / name).resolve())]
+
+    def test_the_checks_are_hidden_until_the_mode_is_turned_on(self):
+        self.assertFalse(self.row("a").check.get_visible())
+        self.window.choose_toggle.set_active(True)
+        self.assertTrue(all(row.check.get_visible() for row in self.window._rows.values()))
+
+    def test_the_current_folder_is_checked_first(self):
+        self.window.choose_toggle.set_active(True)
+        self.assertEqual(self.window._checked_keys(), [self.keys[0]])
+        self.assertIsNone(self.window._batch)
+
+    def test_checking_a_second_folder_opens_a_batch(self):
+        self.window.choose_toggle.set_active(True)
+        self.row("b").check.set_active(True)
+        self.assertEqual(self.window._batch, [Path(self.keys[0]), Path(self.keys[1])])
+        self.assertEqual(self.editor.name_label.get_text(), "2 folders")
+
+    def test_clicking_a_row_toggles_its_check(self):
+        self.window.choose_toggle.set_active(True)
+        self.window._on_row_activated(self.window.list, self.row("c"))
+        self.assertTrue(self.row("c").check.get_active())
+        self.window._on_row_activated(self.window.list, self.row("c"))
+        self.assertFalse(self.row("c").check.get_active())
+
+    def test_unchecking_back_to_one_folder_leaves_the_batch(self):
+        self.window.choose_toggle.set_active(True)
+        self.row("b").check.set_active(True)
+        self.row("a").check.set_active(False)
+        self.assertIsNone(self.window._batch)
+        self.assertEqual(self.editor.name_label.get_text(), "b")
+        self.assertEqual(self.editor.apply_button.get_label(), "Apply")
+
+    def test_applying_to_existing_folders_replaces_their_icon_and_leaves_the_mode(self):
+        self.window.choose_toggle.set_active(True)
+        self.row("b").check.set_active(True)
+        self.row("c").check.set_active(True)
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("heart-symbolic"))
+        self.window._apply()
+        settle()
+        for key in self.keys:
+            self.assertEqual(self.service.store.get(key).settings["glyph_name"], "heart-symbolic")
+        self.assertFalse(self.window.choose_toggle.get_active())
+        self.assertIsNone(self.window._batch)
+        self.assertFalse(self.row("a").check.get_visible())
+
+    def test_leaving_the_mode_restores_single_selection(self):
+        self.window.choose_toggle.set_active(True)
+        self.row("b").check.set_active(True)
+        self.window.choose_toggle.set_active(False)
+        settle()
+        self.assertIsNone(self.window._batch)
+        self.assertEqual(self.window.list.get_selection_mode(), Gtk.SelectionMode.SINGLE)
+        self.assertIsNotNone(self.window.list.get_selected_row())
+
+    def test_a_row_click_does_not_open_the_folder_while_choosing(self):
+        self.window.choose_toggle.set_active(True)
+        before = self.window._current_key
+        self.window._on_row_selected(self.window.list, self.row("c"))
+        self.assertEqual(self.window._current_key, before)
+
+    def test_adding_a_folder_leaves_the_mode(self):
+        self.window.choose_toggle.set_active(True)
+        self.window.add_folder(self.make_folder("fresh"))
+        settle()
+        self.assertFalse(self.window.choose_toggle.get_active())
+
+
 class SuggestionUiTests(WindowTestCase):
     def test_a_folder_named_after_a_subject_gets_suggestions(self):
         self.window.add_folder(self.make_folder("Photos"))
@@ -2282,7 +2362,7 @@ class MemoryAndLayoutTests(WindowTestCase):
 
     def test_the_folder_list_uses_compact_icons(self):
         folder = self.add_and_apply()
-        picture = self.window._rows[str(folder)].get_child().get_first_child()
+        picture = self.window._rows[str(folder)].get_child().get_first_child().get_next_sibling()
         self.assertEqual(picture.get_size_request(), (32, 32))
 
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 19:33+0100\n"
+"POT-Creation-Date: 2026-11-14 19:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -462,6 +462,9 @@ msgid "Search Folders (Ctrl+F)"
 msgstr ""
 
 msgid "Search Folders"
+msgstr ""
+
+msgid "Select Several Folders"
 msgstr ""
 
 msgid "No folder matches your search"

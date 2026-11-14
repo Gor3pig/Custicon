@@ -17,7 +17,7 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
@@ -96,6 +96,14 @@ def show_batch(window, demo) -> bool:
     return False
 
 
+def show_choosing(window, demo) -> bool:
+    window.choose_toggle.set_active(True)
+    for name in ("Musique", "Photos"):
+        window._rows[str(demo.folders[name])].check.set_active(True)
+    window.editor.update_glyph(window.editor.draft.with_glyph_name("phosphor:star"))
+    return False
+
+
 def show_about(window) -> bool:
     window.get_application().activate_action("about", None)
     return False
@@ -120,6 +128,9 @@ def arrange(screen: str, window, demo: Demo) -> None:
         window.add_folder(new_folder)
     if screen == "batch":
         GLib.timeout_add(DIALOG_DELAY_MS, show_batch, window, demo)
+    if screen == "choosing":
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, show_choosing, window, demo)
     if screen == "picker":
         GLib.timeout_add(DIALOG_DELAY_MS, window._choose_glyph)
     if screen in SET_SCREENS:

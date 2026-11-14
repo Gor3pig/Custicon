@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 19:33+0100\n"
+"POT-Creation-Date: 2026-11-14 19:46+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -471,6 +471,9 @@ msgstr "Rechercher des dossiers (Ctrl+F)"
 
 msgid "Search Folders"
 msgstr "Rechercher des dossiers"
+
+msgid "Select Several Folders"
+msgstr "Sélectionner plusieurs dossiers"
 
 msgid "No folder matches your search"
 msgstr "Aucun dossier ne correspond à votre recherche"
