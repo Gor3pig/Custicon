@@ -13,8 +13,8 @@
       follows your theme.
     </p>
     <ul>
-      <li>Choose a pictogram from your icon theme, or use your own SVG or PNG file</li>
-      <li>Let the color be chosen automatically, or set the color, the size and the position yourself</li>
+      <li>Choose a pictogram from your icon theme or from the bundled Phosphor set, or use your own SVG or PNG file</li>
+      <li>Tint the folder itself, and let the pictogram color be chosen automatically, or set the color, the size and the position yourself</li>
       <li>See the result live before applying it</li>
       <li>Remove an icon at any time: the folder gets back the icon it had before</li>
       <li>Regenerate every icon after a change of icon theme</li>
@@ -54,6 +54,19 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.3.0" date="2026-11-14">
+      <description>
+        <p>More pictograms, a tinted folder and a complete About dialog.</p>
+        <ul>
+          <li>Choose a pictogram from the new Phosphor set, bundled with Custicon, as well as from your icon theme</li>
+          <li>Tint the folder itself: no tint, the accent color of your system, or a color of your own</li>
+          <li>The automatic color of the pictogram follows the tinted folder</li>
+          <li>A complete About dialog with the release notes, and a Help entry (F1) that opens the guide in your language</li>
+          <li>Custicon detects more reliably when access to the home folder is missing</li>
+          <li>The README and the user guide are available in English and French</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.2.0" date="2026-11-13">
       <description>
         <p>New ways to customize and to manage folders.</p>
