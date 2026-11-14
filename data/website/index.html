@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custicon - A pictogram on the icon of your folders</title>
+  <meta name="description" content="Custicon puts a pictogram on the folder icon of your icon theme, in Nautilus, and can tint the folder itself. Free, local and reversible. A free app for GNOME.">
+  <link rel="icon" type="image/png" sizes="64x64" href="images/custicon-64x64.png">
+  <link rel="canonical" href="https://gor3pig.github.io/Custicon/">
+  <link rel="alternate" hreflang="en" href="https://gor3pig.github.io/Custicon/">
+  <link rel="alternate" hreflang="fr" href="https://gor3pig.github.io/Custicon/fr/">
+  <link rel="alternate" hreflang="x-default" href="https://gor3pig.github.io/Custicon/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Custicon">
+  <meta property="og:title" content="Custicon - A pictogram on the icon of your folders">
+  <meta property="og:description" content="Custicon puts a pictogram on the folder icon of your icon theme, in Nautilus, and can tint the folder itself. Free, local and reversible. A free app for GNOME.">
+  <meta property="og:url" content="https://gor3pig.github.io/Custicon/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="fr_FR">
+  <meta property="og:image" content="https://gor3pig.github.io/Custicon/images/share.png">
+  <meta property="og:image:width" content="1000">
+  <meta property="og:image:height" content="720">
+  <meta property="og:image:alt" content="The main window of Custicon, with a folder tinted green and its pictogram">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-close-label="Close" data-copied-label="Copied">
+  <div class="wrap top">
+    <p class="language"><strong>English</strong> · <a href="fr/" hreflang="fr" lang="fr">Français</a></p>
+  </div>
+
+  <header class="wrap hero">
+    <img class="app-icon" src="images/custicon-256x256.png" alt="" width="128" height="128">
+    <h1>Custicon</h1>
+    <p class="tagline">A pictogram on the icon of your folders, in Nautilus.</p>
+    <div class="actions">
+      <a class="button primary" href="#install">Install</a>
+      <a class="button" href="https://github.com/Gor3pig/Custicon">View on GitHub</a>
+    </div>
+    <p class="note">Free software for Linux, available in English and French.</p>
+  </header>
+
+  <main>
+    <div class="wrap showcase">
+      <a class="zoom" href="images/en-main.webp"><img src="images/en-main.webp" alt="The main window of Custicon, with a folder tinted green and its pictogram" width="1000" height="720"></a>
+    </div>
+
+    <section class="wrap">
+      <h2>What is Custicon?</h2>
+      <div class="intro">
+        <p>Nautilus shows the Documents, Music and Pictures folders with a small pictogram in the middle. <strong>Custicon lets you do the same for any folder.</strong></p>
+        <p>The pictogram sits on the real folder icon of your current icon theme, not on an imitation, so the result follows your theme. Change theme, and one action updates every icon. You can also tint the folder itself.</p>
+      </div>
+    </section>
+
+    <section class="wrap">
+      <h2>What Custicon does</h2>
+      <div class="cards"><article class="card"><h3>Choose</h3><p>A pictogram from your icon theme or from the 300 and more Phosphor icons bundled with Custicon, found by name in English or French. Or your own SVG or PNG file, or a few letters.</p></article><article class="card"><h3>Adjust</h3><p>Automatic or chosen color, size and position, with a live preview at four sizes.</p></article><article class="card"><h3>Tint</h3><p>Give the folder itself any color, or the accent color of your system. The light and dark areas of the folder are kept.</p></article><article class="card"><h3>Remove</h3><p>The folder gets back exactly the icon it had before, and a removal can be undone for a few seconds.</p></article><article class="card"><h3>Regenerate</h3><p>After a change of theme or accent color, one click updates every icon you made.</p></article><article class="card"><h3>Respect</h3><p>Nothing is ever written in your folders. The icon lives in the metadata that Nautilus already reads.</p></article></div>
+    </section>
+
+    <section class="wrap">
+      <h2>A closer look</h2>
+      <div class="shots"><figure><a class="zoom" href="images/en-picker.webp"><img src="images/en-picker.webp" alt="Search the icons of your theme, in English or in French" width="1000" height="720" loading="lazy"></a><figcaption>Search the icons of your theme, in English or in French</figcaption></figure><figure><a class="zoom" href="images/en-phosphor.webp"><img src="images/en-phosphor.webp" alt="Or pick one of the bundled Phosphor icons" width="1000" height="720" loading="lazy"></a><figcaption>Or pick one of the bundled Phosphor icons</figcaption></figure><figure><a class="zoom" href="images/en-tint.webp"><img src="images/en-tint.webp" alt="Tint the folder and keep its shading" width="1000" height="720" loading="lazy"></a><figcaption>Tint the folder and keep its shading</figcaption></figure><figure><a class="zoom" href="images/en-states.webp"><img src="images/en-states.webp" alt="Follow every customized folder and find the ones that moved" width="1000" height="720" loading="lazy"></a><figcaption>Follow every customized folder and find the ones that moved</figcaption></figure></div>
+    </section>
+
+    <section class="wrap">
+      <ul class="principles"><li>No file added to your folders</li><li>Fully local, no network</li><li>Faithful to your theme</li><li>Reversible</li></ul>
+    </section>
+
+    <section class="wrap" id="install">
+      <h2>Install</h2>
+      <div class="steps">
+        <h3>1. Set up Flatpak</h3>
+        <p>Fedora, Linux Mint, Pop!_OS and many other distributions ship Flatpak already. On Ubuntu and a few others, follow the <a href="https://flathub.org/setup">official guide for your distribution</a> first, then restart your session.</p>
+
+        <h3>2. Install Custicon</h3>
+        <p>Click the button below and open the file with the Software app, or run this command:</p>
+        <p class="install-button"><a class="button primary" href="custicon.flatpakref">Install Custicon</a></p>
+        <div class="command"><pre><code>flatpak install --user https://gor3pig.github.io/Custicon/custicon.flatpakref</code></pre><button class="copy" type="button" data-copy="flatpak install --user https://gor3pig.github.io/Custicon/custicon.flatpakref">Copy</button></div>
+
+        <h3>3. Stay up to date</h3>
+        <p>Custicon is updated like your other apps: the Software app offers each new version, and every update is signed.</p>
+        <p>Custicon asks for read-only access to your home folder, to see the real location of your folders. It cannot modify their content and has no network access.</p>
+        <p class="muted">Custicon runs on any Linux distribution that supports Flatpak, with Nautilus, on a 64-bit Intel or AMD PC. There is no version for Windows, macOS or ARM devices.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <nav><a href="https://github.com/Gor3pig/Custicon/blob/main/help/en/README.md">User guide</a><a href="https://github.com/Gor3pig/Custicon/releases">All releases</a><a href="https://github.com/Gor3pig/Custicon">Source code</a><a href="https://github.com/Gor3pig/Custicon/issues">Report a bug or suggest an idea</a></nav>
+    <p>Custicon is free software, released under the <a href="https://github.com/Gor3pig/Custicon/blob/main/COPYING">GNU GPL v3 or later</a>. Its bundled Phosphor icons are under the MIT license.</p>
+  </footer>
+</body>
+</html>

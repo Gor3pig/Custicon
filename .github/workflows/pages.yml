@@ -3,6 +3,17 @@ name: Flatpak repository
 on:
   release:
     types: [published]
+  push:
+    branches: [main]
+    paths:
+      - data/website/**
+      - data/icons/**
+      - data/screenshots/en-main.png
+      - build-aux/custicon.flatpakref
+      - build-aux/custicon.flatpakrepo
+      - build-aux/custicon.gpg
+      - build-aux/flatpak-repo.sh
+      - .github/workflows/pages.yml
   workflow_dispatch:
 
 permissions: {}
@@ -49,9 +60,11 @@ jobs:
 
       - name: Assemble the published files
         run: |
-          mkdir -p _site/images
+          mkdir -p _site
+          cp -r data/website/. _site/
           cp build-aux/custicon.flatpakref build-aux/custicon.flatpakrepo build-aux/custicon.gpg _site/
-          cp data/icons/custicon-64x64.png _site/images/
+          cp data/icons/custicon-64x64.png data/icons/custicon-256x256.png _site/images/
+          cp data/screenshots/en-main.png _site/images/share.png
 
       - name: Build the signed Flatpak repository
         env:

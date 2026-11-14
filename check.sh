@@ -81,7 +81,7 @@ validate_metainfo() {
 }
 
 flatpak_repository_files_match() {
-    local failed=0 key url file fingerprint
+    local failed=0 key url file fingerprint command
     key=$(base64 -w0 build-aux/custicon.gpg)
     url=$(sed -n 's/^Url=//p' build-aux/custicon.flatpakrepo)
     for file in build-aux/custicon.flatpakref build-aux/custicon.flatpakrepo; do
@@ -102,6 +102,13 @@ flatpak_repository_files_match() {
         printf 'custicon.flatpakref: the branch must be master\n'
         failed=1
     fi
+    command="flatpak install --user ${url%repo/}custicon.flatpakref"
+    for file in data/website/index.html data/website/fr/index.html; do
+        if ! grep -qF -- "<code>$command</code>" "$file" || ! grep -qF -- "data-copy=\"$command\"" "$file"; then
+            printf '%s: the install command must be: %s\n' "$file" "$command"
+            failed=1
+        fi
+    done
     if ! grep -qF -- "--repo-url=$url" .github/workflows/release.yml; then
         printf 'release.yml: the bundle must embed the repository address %s\n' "$url"
         failed=1
