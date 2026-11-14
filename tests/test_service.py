@@ -314,6 +314,80 @@ class IconSetServiceTests(ServiceTestCase):
         self.assertEqual(self.service.outdated(), [])
 
 
+class PickerMemoryServiceTests(ServiceTestCase):
+    def test_nothing_is_remembered_at_first(self):
+        memory = self.service.picker_memory()
+        self.assertEqual((memory.recent, memory.favorites), ((), ()))
+
+    def test_a_chosen_pictogram_goes_first_without_duplicates(self):
+        for name in ("a-symbolic", "b-symbolic", "c-symbolic", "a-symbolic"):
+            self.assertTrue(self.service.remember_glyph(name))
+        self.assertEqual(self.service.picker_memory().recent, ("a-symbolic", "c-symbolic", "b-symbolic"))
+
+    def test_the_recent_list_is_limited(self):
+        for number in range(30):
+            self.service.remember_glyph(f"icon-{number}")
+        recent = self.service.picker_memory().recent
+        self.assertEqual(len(recent), 12)
+        self.assertEqual(recent[0], "icon-29")
+
+    def test_an_invalid_name_is_not_remembered(self):
+        for name in ("", "a\0b", "x" * 101, None, 5):
+            self.assertFalse(self.service.remember_glyph(name), repr(name))
+            self.assertFalse(self.service.set_favorite(name, True), repr(name))
+        self.assertEqual(self.service.picker_memory().recent, ())
+
+    def test_a_favorite_can_be_added_and_removed(self):
+        self.service.set_favorite("phosphor:house", True)
+        self.service.set_favorite("emoji:cat-face", True)
+        self.assertEqual(self.service.picker_memory().favorites, ("emoji:cat-face", "phosphor:house"))
+        self.service.set_favorite("phosphor:house", False)
+        self.assertEqual(self.service.picker_memory().favorites, ("emoji:cat-face",))
+
+    def test_adding_a_favorite_twice_or_removing_an_unknown_one_changes_nothing(self):
+        self.service.set_favorite("a", True)
+        self.service.set_favorite("a", True)
+        self.service.set_favorite("zzz", False)
+        self.assertEqual(self.service.picker_memory().favorites, ("a",))
+
+    def test_favorites_and_recents_are_independent(self):
+        self.service.remember_glyph("a")
+        self.service.set_favorite("b", True)
+        memory = self.service.picker_memory()
+        self.assertEqual((memory.recent, memory.favorites), (("a",), ("b",)))
+
+    def test_choosing_a_pictogram_keeps_the_favorites(self):
+        self.service.set_favorite("b", True)
+        self.service.remember_glyph("a")
+        self.assertEqual(self.service.picker_memory().favorites, ("b",))
+        self.assertEqual(self.service.picker_memory().recent, ("a",))
+
+    def test_adding_a_favorite_keeps_the_recents(self):
+        self.service.remember_glyph("a")
+        self.service.set_favorite("b", True)
+        self.service.set_favorite("c", True)
+        self.assertEqual(self.service.picker_memory().recent, ("a",))
+
+    def test_the_lists_survive_a_new_service(self):
+        self.service.remember_glyph("a")
+        self.service.set_favorite("b", True)
+        other = Service(self.store, theme_name=lambda: self.theme, search_dirs=[str(self.themes)])
+        self.assertEqual(other.picker_memory().recent, ("a",))
+        self.assertEqual(other.picker_memory().favorites, ("b",))
+
+    def test_a_write_failure_does_not_break_the_caller(self):
+        with mock.patch.object(Store, "save_picker", side_effect=StoreError("disk full")):
+            self.assertFalse(self.service.remember_glyph("a"))
+            self.assertFalse(self.service.set_favorite("b", True))
+
+    def test_the_favorites_are_limited(self):
+        for number in range(80):
+            self.service.set_favorite(f"icon-{number}", True)
+        favorites = self.service.picker_memory().favorites
+        self.assertEqual(len(favorites), 60)
+        self.assertEqual(favorites[0], "icon-79")
+
+
 class ResetTests(ServiceTestCase):
     def test_reset_removes_the_icon_when_there_was_none_before(self):
         folder = self.make_folder()

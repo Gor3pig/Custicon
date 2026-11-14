@@ -138,6 +138,15 @@ class EmojiSearchTests(unittest.TestCase):
         self.assertTrue(any("heart" in name for name in self.first("coeur")), self.first("coeur"))
         self.assertTrue(any("fire" in name for name in self.first("feu")), self.first("feu"))
 
+    def test_the_worst_accepted_rank_can_be_limited(self):
+        everything = self.emoji.symbolic_names("cat", limit=10_000)
+        names_only = self.emoji.symbolic_names("cat", limit=10_000, max_rank=2)
+        words_too = self.emoji.symbolic_names("cat", limit=10_000, max_rank=3)
+        self.assertLessEqual(len(names_only), len(words_too))
+        self.assertLessEqual(len(words_too), len(everything))
+        self.assertEqual(self.emoji.symbolic_names("cat", limit=10_000, max_rank=0), ["emoji:cat"])
+        self.assertEqual(everything[: len(names_only)], names_only)
+
     def test_a_whole_word_ranks_before_a_part_of_a_word(self):
         names = self.emoji.symbolic_names("chat", limit=200)
         cats = [index for index, name in enumerate(names) if "cat" in name]

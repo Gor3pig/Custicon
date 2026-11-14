@@ -2,7 +2,7 @@ import json
 import unittest
 
 from custicon.errors import StoreError
-from custicon.store import Entry, Store
+from custicon.store import MAX_FAVORITES, MAX_NAME_LENGTH, MAX_RECENT, Entry, Store
 
 from .support import WorkspaceTestCase
 
@@ -175,6 +175,62 @@ class DefaultsTests(WorkspaceTestCase):
         blocker.write_text("a file")
         with self.assertRaises(StoreError):
             Store(blocker / "inside").save_defaults({"size": 1.0})
+
+
+class PickerMemoryTests(WorkspaceTestCase):
+    def setUp(self):
+        self.root = self.make_workspace() / "data"
+        self.store = Store(self.root)
+
+    def test_nothing_is_remembered_at_first(self):
+        self.assertEqual(self.store.load_picker(), {"recent": [], "favorites": []})
+
+    def test_the_lists_survive_a_new_store_instance(self):
+        self.store.save_picker(["phosphor:house", "star-symbolic"], ["emoji:cat-face"])
+        self.assertEqual(Store(self.root).load_picker(), {"recent": ["phosphor:house", "star-symbolic"], "favorites": ["emoji:cat-face"]})
+
+    def test_unusable_files_give_empty_lists(self):
+        self.root.mkdir(parents=True)
+        for text in ("{broken", "[1]", '"text"', "", "[" * 100000, '{"recent": "no", "favorites": 3}'):
+            self.store.picker_path.write_text(text)
+            self.assertEqual(self.store.load_picker(), {"recent": [], "favorites": []}, text[:20])
+
+    def test_damaged_names_are_dropped_and_the_others_kept(self):
+        self.root.mkdir(parents=True)
+        document = {"recent": ["ok", 5, None, "", "a\0b", "x" * 101, ["l"], "fine"], "favorites": ["good", {"a": 1}, "good", "other"]}
+        self.store.picker_path.write_text(json.dumps(document))
+        self.assertEqual(self.store.load_picker(), {"recent": ["ok", "fine"], "favorites": ["good", "other"]})
+
+    def test_duplicates_are_removed_keeping_the_first(self):
+        self.store.save_picker(["a", "b", "a", "c", "b"], [])
+        self.assertEqual(self.store.load_picker()["recent"], ["a", "b", "c"])
+
+    def test_the_lists_are_limited(self):
+        names = [f"icon-{number}" for number in range(200)]
+        self.store.save_picker(names, names)
+        loaded = self.store.load_picker()
+        self.assertEqual(loaded["recent"], names[:MAX_RECENT])
+        self.assertEqual(loaded["favorites"], names[:MAX_FAVORITES])
+
+    def test_the_file_itself_is_cleaned_when_saved(self):
+        self.store.save_picker(["a", "", "a", "b\0c", "d"], ["x" * 101, "f"])
+        document = json.loads(self.store.picker_path.read_text(encoding="utf-8"))
+        self.assertEqual(document, {"recent": ["a", "d"], "favorites": ["f"]})
+
+    def test_a_name_of_the_maximum_length_is_kept(self):
+        name = "x" * MAX_NAME_LENGTH
+        self.store.save_picker([name], [name])
+        self.assertEqual(self.store.load_picker(), {"recent": [name], "favorites": [name]})
+
+    def test_saving_leaves_no_temporary_file(self):
+        self.store.save_picker(["a"], ["b"])
+        self.assertFalse([path for path in self.root.rglob("*") if path.name.endswith(".tmp")])
+
+    def test_an_unwritable_location_is_a_store_error(self):
+        blocker = self.root.parent / "blocker"
+        blocker.write_text("a file")
+        with self.assertRaises(StoreError):
+            Store(blocker / "inside").save_picker(["a"], [])
 
 
 if __name__ == "__main__":

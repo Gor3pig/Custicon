@@ -10,6 +10,10 @@ from .errors import StoreError
 
 REGISTRY_NAME = "registry.json"
 DEFAULTS_NAME = "defaults.json"
+PICKER_NAME = "picker.json"
+MAX_RECENT = 12
+MAX_FAVORITES = 60
+MAX_NAME_LENGTH = 100
 STYLES_NAME = "styles.json"
 STYLES_VERSION = 1
 MAX_STYLES = 50
@@ -43,6 +47,7 @@ class Store:
         self.glyphs_dir = self.root / GLYPHS_DIR
         self.registry_path = self.root / REGISTRY_NAME
         self.defaults_path = self.root / DEFAULTS_NAME
+        self.picker_path = self.root / PICKER_NAME
         self.styles_path = self.root / STYLES_NAME
 
     def icon_path(self, digest: str) -> Path:
@@ -117,6 +122,33 @@ class Store:
 
     def save_defaults(self, values: dict) -> None:
         self._write_atomic(self.defaults_path, json.dumps(values, indent=2).encode())
+
+    @staticmethod
+    def _clean_names(values, limit: int) -> list[str]:
+        if not isinstance(values, list):
+            return []
+        names = []
+        for value in values:
+            if isinstance(value, str) and 1 <= len(value) <= MAX_NAME_LENGTH and "\0" not in value and value not in names:
+                names.append(value)
+        return names[:limit]
+
+    def load_picker(self) -> dict:
+        empty = {"recent": [], "favorites": []}
+        try:
+            document = json.loads(self.picker_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, RecursionError):
+            return empty
+        if not isinstance(document, dict):
+            return empty
+        return {
+            "recent": Store._clean_names(document.get("recent"), MAX_RECENT),
+            "favorites": Store._clean_names(document.get("favorites"), MAX_FAVORITES),
+        }
+
+    def save_picker(self, recent: list[str], favorites: list[str]) -> None:
+        document = {"recent": Store._clean_names(recent, MAX_RECENT), "favorites": Store._clean_names(favorites, MAX_FAVORITES)}
+        self._write_atomic(self.picker_path, json.dumps(document, indent=2, ensure_ascii=False).encode())
 
     def load_styles(self) -> list[dict]:
         try:

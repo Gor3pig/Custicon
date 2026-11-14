@@ -14,6 +14,7 @@ SVG_SUFFIX = ".svg"
 INDEX_NAME = "index.json"
 RENAMED = {"phone-handset": "phone"}
 MIN_TAG_QUERY = 3
+WORST_RANK = 4
 PACKAGE_DIRECTORY = Path(__file__).resolve().parent
 PHOSPHOR_DIRECTORY = PACKAGE_DIRECTORY / "phosphor"
 DEFAULT_LIMIT = 200
@@ -120,7 +121,7 @@ class IconSet:
     def title(self, language: str = DEFAULT_LANGUAGE) -> str:
         return self.titles.get(language) or self.titles.get(DEFAULT_LANGUAGE) or self.key
 
-    def symbolic_names(self, query: str = "", limit: int = DEFAULT_LIMIT) -> list[str]:
+    def symbolic_names(self, query: str = "", limit: int = DEFAULT_LIMIT, max_rank: int = WORST_RANK) -> list[str]:
         self._load()
         needle = normalize_text(query.strip())
         if not needle:
@@ -139,7 +140,8 @@ class IconSet:
                 rank = 4
             else:
                 continue
-            ranked.append((rank, name))
+            if rank <= max_rank:
+                ranked.append((rank, name))
         ranked.sort()
         return [self.prefix + name for _rank, name in ranked[:limit]]
 

@@ -18,7 +18,7 @@ from .errors import (
 )
 from .metadata import read_custom_icon, write_custom_icon
 from .render import is_png, read_icon_bytes
-from .store import GLYPH_FILE_PATTERN, MAX_STYLE_NAME, MAX_STYLES, Entry, Store
+from .store import GLYPH_FILE_PATTERN, MAX_NAME_LENGTH, MAX_STYLE_NAME, MAX_STYLES, Entry, Store
 from .textglyph import MAX_CHARACTERS, text_to_svg
 from .iconsets import IconSets, PhosphorSet
 from .themes import DEFAULT_THEME, IconTheme, active_icon_theme, system_accent_color
@@ -110,6 +110,12 @@ class BuiltIcon:
     theme: str
     folder_file: Path
     folder_tint: str | None = None
+
+
+@dataclass(frozen=True)
+class PickerMemory:
+    recent: tuple
+    favorites: tuple
 
 
 @dataclass(frozen=True)
@@ -341,6 +347,35 @@ class Service:
 
     def remembered_appearance(self) -> dict:
         return self.clean_appearance(self._store.load_defaults() or {}) or {}
+
+    def picker_memory(self) -> PickerMemory:
+        loaded = self._store.load_picker()
+        return PickerMemory(tuple(loaded["recent"]), tuple(loaded["favorites"]))
+
+    @staticmethod
+    def _usable_name(name) -> bool:
+        return isinstance(name, str) and 1 <= len(name) <= MAX_NAME_LENGTH and "\0" not in name
+
+    def remember_glyph(self, name) -> bool:
+        if not self._usable_name(name):
+            return False
+        memory = self.picker_memory()
+        try:
+            self._store.save_picker([name, *memory.recent], list(memory.favorites))
+        except CusticonError:
+            return False
+        return True
+
+    def set_favorite(self, name, favorite: bool) -> bool:
+        if not self._usable_name(name):
+            return False
+        memory = self.picker_memory()
+        favorites = [name, *memory.favorites] if favorite else [item for item in memory.favorites if item != name]
+        try:
+            self._store.save_picker(list(memory.recent), favorites)
+        except CusticonError:
+            return False
+        return True
 
     def styles(self) -> list[Style]:
         styles = []
