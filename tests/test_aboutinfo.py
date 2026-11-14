@@ -117,6 +117,29 @@ class HelpUrlTests(unittest.TestCase):
             self.assertEqual(aboutinfo.help_url([language]), f"{self.BASE}/fr/README.md", language)
 
 
+class WebsiteUrlTests(unittest.TestCase):
+    SITE = "https://gor3pig.github.io/Custicon/"
+
+    def test_a_french_desktop_opens_the_french_page(self):
+        self.assertEqual(aboutinfo.website_url(["fr_FR.UTF-8", "fr_FR", "fr", "C"]), f"{self.SITE}fr/")
+
+    def test_english_comes_first_when_the_user_prefers_it(self):
+        self.assertEqual(aboutinfo.website_url(["en_US", "en", "fr", "C"]), self.SITE)
+
+    def test_a_language_without_a_page_falls_back_to_english(self):
+        self.assertEqual(aboutinfo.website_url(["de_DE.UTF-8", "de", "C"]), self.SITE)
+
+    def test_a_language_without_a_page_lets_a_later_translated_one_win(self):
+        self.assertEqual(aboutinfo.website_url(["br_FR", "br", "fr_FR", "fr", "C"]), f"{self.SITE}fr/")
+
+    def test_no_language_gives_the_english_page(self):
+        self.assertEqual(aboutinfo.website_url([]), self.SITE)
+
+    def test_the_metainfo_homepage_is_the_english_page(self):
+        text = aboutinfo.DEVELOPMENT_METAINFO.read_text(encoding="utf-8")
+        self.assertIn(f'<url type="homepage">{self.SITE}</url>', text)
+
+
 class FindingTheMetainfoTests(WorkspaceTestCase):
     def setUp(self):
         self.root = self.make_workspace()

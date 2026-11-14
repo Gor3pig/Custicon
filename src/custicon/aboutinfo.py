@@ -7,6 +7,7 @@ from .config import APP_ID
 METAINFO_NAME = f"{APP_ID}.metainfo.xml"
 DEVELOPMENT_METAINFO = Path(__file__).resolve().parents[2] / "data" / f"{METAINFO_NAME}.in"
 HELP_BASE = "https://github.com/Gor3pig/Custicon/blob/main/help"
+SITE = "https://gor3pig.github.io/Custicon/"
 SOURCE_LANGUAGE = "en"
 TRANSLATED_GUIDES = ("fr",)
 FRENCH = "fr"
@@ -24,15 +25,22 @@ def language_code(language: str) -> str:
     return language
 
 
-def help_url(languages: list[str]) -> str:
-    guide = SOURCE_LANGUAGE
+def guide_language(languages: list[str]) -> str:
     for code in map(language_code, languages):
         if code in TRANSLATED_GUIDES:
-            guide = code
-            break
+            return code
         if code == SOURCE_LANGUAGE or code == "C":
             break
-    return f"{HELP_BASE}/{guide}/README.md"
+    return SOURCE_LANGUAGE
+
+
+def help_url(languages: list[str]) -> str:
+    return f"{HELP_BASE}/{guide_language(languages)}/README.md"
+
+
+def website_url(languages: list[str]) -> str:
+    language = guide_language(languages)
+    return SITE if language == SOURCE_LANGUAGE else f"{SITE}{language}/"
 
 
 def chosen_text(element: ET.Element, translation: ET.Element | None, french: bool) -> str:

@@ -1207,7 +1207,7 @@ class AboutAndHelpTests(WindowTestCase):
         self.assertEqual(dialog.get_developer_name(), "Gor3pig")
         self.assertEqual(dialog.get_license_type(), Gtk.License.GPL_3_0)
         self.assertEqual(dialog.get_copyright(), "© 2026 Gor3pig")
-        self.assertEqual(dialog.get_website(), "https://github.com/Gor3pig/Custicon")
+        self.assertEqual(dialog.get_website(), "https://gor3pig.github.io/Custicon/")
         self.assertEqual(dialog.get_issue_url(), "https://github.com/Gor3pig/Custicon/issues")
         self.assertEqual(dialog.get_support_url(), "https://github.com/Gor3pig/Custicon/blob/main/help/en/README.md")
         self.assertTrue(dialog.get_comments())
@@ -1220,6 +1220,11 @@ class AboutAndHelpTests(WindowTestCase):
         dialog = build_about_dialog(["en_US", "en"], [])
         self.assertEqual(dialog.get_release_notes_version(), VERSION)
         self.assertIn("<li>", dialog.get_release_notes())
+
+    def test_the_about_dialog_points_to_the_home_page_in_the_desktop_language(self):
+        from custicon.ui.about import build_about_dialog
+
+        self.assertEqual(build_about_dialog(["fr_FR.UTF-8", "fr"], []).get_website(), "https://gor3pig.github.io/Custicon/fr/")
 
     def test_the_about_dialog_points_to_the_guide_in_the_desktop_language(self):
         from custicon.ui.about import build_about_dialog

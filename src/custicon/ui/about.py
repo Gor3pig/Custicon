@@ -4,12 +4,12 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
-from ..aboutinfo import current_release_notes, help_url
+from ..aboutinfo import current_release_notes, help_url, website_url
 from ..config import APP_ID, APP_NAME, VERSION
 from ..i18n import _
 
-WEBSITE = "https://github.com/Gor3pig/Custicon"
-ISSUES = "https://github.com/Gor3pig/Custicon/issues"
+REPOSITORY = "https://github.com/Gor3pig/Custicon"
+ISSUES = f"{REPOSITORY}/issues"
 COPYRIGHT = "© 2026 Gor3pig"
 PHOSPHOR_COPYRIGHT = "© 2023 Phosphor Icons"
 
@@ -23,7 +23,7 @@ def build_about_dialog(languages: list[str] | None = None, data_dirs: list[str] 
         developer_name="Gor3pig",
         version=VERSION,
         comments=_("Customize the icon of a folder in Nautilus."),
-        website=WEBSITE,
+        website=website_url(languages),
         issue_url=ISSUES,
         support_url=help_url(languages),
         license_type=Gtk.License.GPL_3_0,
