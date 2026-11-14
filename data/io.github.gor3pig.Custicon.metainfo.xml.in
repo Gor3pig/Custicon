@@ -60,6 +60,7 @@
         <ul>
           <li>Access to the home folder is now read and write: the read-only form did not work on every system, and Custicon had to be allowed more access by hand</li>
           <li>Custicon still never writes in your folders: the icon is saved by the GVfs service of your session</li>
+          <li>The custom color is now a round rainbow swatch that shows the chosen color in its center</li>
           <li>The help and the documentation describe the permissions as they really are</li>
         </ul>
       </description>
