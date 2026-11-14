@@ -464,12 +464,15 @@ class Service:
         except CusticonError:
             pass
 
-    def outdated(self) -> list[str]:
+    def outdated(self, known: list[Customized] | None = None) -> list[str]:
         theme = self._theme_name()
         accent = None
         stale = []
-        for entry in self._store.all().values():
-            if self._status(entry) != STATUS_OK:
+        if known is None:
+            known = self.customized()
+        for item in known:
+            entry = item.entry
+            if item.status != STATUS_OK:
                 continue
             if entry.theme != theme or self._set_is_stale(entry):
                 stale.append(entry.folder)

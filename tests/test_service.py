@@ -592,6 +592,35 @@ class RegenerationTests(ServiceTestCase):
         self.assertEqual(read_custom_icon(folder), self.store.icon_uri(self.store.get(str(folder)).digest))
 
 
+class OutdatedWithKnownStatusTests(ServiceTestCase):
+    def test_known_statuses_give_the_same_answer_as_a_fresh_reading(self):
+        folder = self.make_folder()
+        self.service.apply(folder, STAR)
+        self.theme = "Green"
+        self.assertEqual(self.service.outdated(self.service.customized()), self.service.outdated())
+        self.assertEqual(self.service.outdated(), [str(folder)])
+
+    def test_the_given_statuses_are_trusted_instead_of_read_again(self):
+        from custicon.service import Customized, STATUS_ICON_CHANGED
+
+        folder = self.make_folder()
+        entry = self.service.apply(folder, STAR)
+        self.theme = "Green"
+        self.assertEqual(self.service.outdated([Customized(entry, STATUS_ICON_CHANGED)]), [])
+        self.assertEqual(self.service.outdated([Customized(entry, STATUS_OK)]), [str(folder)])
+
+    def test_an_empty_list_of_known_statuses_means_nothing_is_stale(self):
+        self.service.apply(self.make_folder(), STAR)
+        self.theme = "Green"
+        self.assertEqual(self.service.outdated([]), [])
+
+    def test_the_known_statuses_avoid_reading_the_metadata_again(self):
+        self.service.apply(self.make_folder(), STAR)
+        known = self.service.customized()
+        with mock.patch("custicon.service.read_custom_icon", side_effect=AssertionError("read again")):
+            self.service.outdated(known)
+
+
 class ListingTests(ServiceTestCase):
     def status(self, folder: Path) -> str:
         return next(item.status for item in self.service.customized() if item.entry.folder == str(folder))

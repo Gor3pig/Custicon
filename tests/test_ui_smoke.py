@@ -1181,6 +1181,170 @@ class DirectManipulationTests(WindowTestCase):
         self.assertIn("EventControllerScroll", kinds)
 
 
+class ListReuseTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.folder = self.add_and_apply("a")
+        self.add_and_apply("b")
+        self.key = str(self.folder.resolve())
+        self.window.reload(select=self.key)
+        settle()
+
+    def test_an_unchanged_list_keeps_its_rows(self):
+        before = dict(self.window._rows)
+        self.window.reload(select=self.key)
+        self.assertEqual({key: id(row) for key, row in self.window._rows.items()}, {key: id(row) for key, row in before.items()})
+
+    def test_a_change_of_the_registry_rebuilds_the_rows(self):
+        before = self.window._rows[self.key]
+        self.window.editor.update_glyph(self.window.editor.draft.with_glyph_name("heart-symbolic"))
+        self.window._apply()
+        settle()
+        self.assertIsNot(self.window._rows[self.key], before)
+
+    def test_a_change_of_status_rebuilds_the_rows(self):
+        before = self.window._rows[self.key]
+        write_custom_icon(self.folder, USER_ICON)
+        self.window.reload(select=self.key)
+        self.assertIsNot(self.window._rows[self.key], before)
+
+    def test_a_new_pending_folder_rebuilds_the_rows(self):
+        count = len(self.window._rows)
+        self.window.add_folder(self.make_folder("c"))
+        settle()
+        self.assertEqual(len(self.window._rows), count + 1)
+
+    def test_a_change_of_theme_rebuilds_the_rows(self):
+        before = self.window._rows[self.key]
+        self.theme = "Green"
+        self.window.reload(select=self.key)
+        self.assertIsNot(self.window._rows[self.key], before)
+
+    def test_the_icon_of_a_row_is_read_once_per_image(self):
+        self.window._row_textures.clear()
+        self.window._rows_shown = None
+        with mock.patch.object(window_module, "texture_from_file", wraps=window_module.texture_from_file) as read:
+            self.window.reload(select=self.key)
+            first = read.call_count
+            self.window._rows_shown = None
+            self.window.reload(select=self.key)
+        self.assertGreater(first, 0)
+        self.assertEqual(read.call_count, first)
+
+    def test_regaining_focus_does_not_reload_an_unchanged_editor(self):
+        self.window.is_active = lambda: True
+        with mock.patch.object(self.window, "_show_key") as show:
+            self.window._on_active_changed()
+        show.assert_not_called()
+
+    def test_regaining_focus_reloads_the_editor_when_the_folder_changed_outside(self):
+        self.window.is_active = lambda: True
+        write_custom_icon(self.folder, USER_ICON)
+        with mock.patch.object(self.window, "_show_key", wraps=self.window._show_key) as show:
+            self.window._on_active_changed()
+        show.assert_called_once()
+        self.assertTrue(self.window.editor.banner.get_revealed())
+
+    def test_regaining_focus_drops_a_folder_forgotten_elsewhere_without_reloading_the_editor(self):
+        other = str(self.workspace.joinpath("b").resolve())
+        self.window.reload(select=other)
+        settle()
+        self.window.is_active = lambda: True
+        self.window._service.forget(self.folder)
+        with mock.patch.object(self.window, "_show_key") as show:
+            self.window._on_active_changed()
+        show.assert_not_called()
+        self.assertNotIn(self.key, self.window._rows)
+        self.assertEqual(self.window._current_key, other)
+
+    def test_regaining_focus_with_unsaved_changes_keeps_them(self):
+        self.window.editor.size_slider.adjustment.set_value(150)
+        self.window.is_active = lambda: True
+        with mock.patch.object(self.window, "_show_key") as show:
+            self.window._on_active_changed()
+        show.assert_not_called()
+        self.assertAlmostEqual(self.window.editor.draft.size, 1.5)
+
+
+class SuggestionCacheTests(WindowTestCase):
+    def test_the_suggestions_of_a_name_are_computed_once(self):
+        with mock.patch.object(window_module, "suggest", wraps=window_module.suggest) as compute:
+            first = self.window._suggestions_for("Photos", 6)
+            second = self.window._suggestions_for("Photos", 6)
+        self.assertEqual(first, second)
+        self.assertEqual(compute.call_count, 1)
+
+    def test_another_limit_or_name_is_computed_apart(self):
+        with mock.patch.object(window_module, "suggest", wraps=window_module.suggest) as compute:
+            self.window._suggestions_for("Photos", 6)
+            self.window._suggestions_for("Photos", 8)
+            self.window._suggestions_for("Music", 6)
+        self.assertEqual(compute.call_count, 3)
+
+    def test_a_returned_list_cannot_corrupt_the_cache(self):
+        self.window._suggestions_for("Photos", 6).clear()
+        self.assertTrue(self.window._suggestions_for("Photos", 6))
+
+    def test_new_sets_empty_the_cache(self):
+        self.window._suggestions_for("Photos", 6)
+        replacement = mock.Mock()
+        with mock.patch.object(self.service, "icon_sets", return_value=replacement), mock.patch.object(window_module, "suggest", return_value=["x"]) as compute:
+            self.assertEqual(self.window._suggestions_for("Photos", 6), ["x"])
+        compute.assert_called_once()
+
+    def test_the_picker_reuses_the_suggestions_of_the_window(self):
+        self.window.add_folder(self.make_folder("Photos"))
+        settle()
+        with mock.patch("custicon.ui.picker.suggest", side_effect=AssertionError("computed again")):
+            self.window._choose_glyph()
+            settle()
+        picker = self.window.get_visible_dialog()
+        self.assertIn("phosphor:camera", picker.suggestion_names)
+
+    def test_the_picker_keeps_its_longer_list_of_suggestions(self):
+        self.window.add_folder(self.make_folder("Photos"))
+        settle()
+        self.window._choose_glyph()
+        settle()
+        from custicon.suggestions import suggest
+
+        expected = suggest("Photos", self.service.icon_sets(), window_module.PICKER_SUGGESTION_LIMIT)
+        self.assertEqual(self.window.get_visible_dialog().suggestion_names, expected)
+        self.assertEqual(window_module.PICKER_SUGGESTION_LIMIT, 8)
+
+
+class PickerReuseTests(PickerCase):
+    def test_a_paintable_is_created_once_per_name_and_size(self):
+        dialog = self.dialog()
+        first = dialog._paintable("phosphor:camera")
+        self.assertIs(dialog._paintable("phosphor:camera"), first)
+        self.assertIsNot(dialog._paintable("phosphor:camera", 28), first)
+
+    def test_a_missing_name_is_remembered_as_missing(self):
+        dialog = self.dialog()
+        self.assertIsNone(dialog._paintable("phosphor:nothing-here"))
+        self.assertIn(("phosphor:nothing-here", 24), dialog._paintables)
+
+    def test_a_label_is_computed_once_per_name_and_language(self):
+        dialog = self.dialog()
+        with mock.patch.object(dialog._sets, "for_name", wraps=dialog._sets.for_name) as lookup:
+            dialog.label_of("phosphor:camera")
+            dialog.label_of("phosphor:camera")
+        self.assertEqual(lookup.call_count, 1)
+
+    def test_a_label_follows_the_language(self):
+        from custicon import iconsets
+
+        dialog = self.dialog(language="en")
+        english = dialog.label_of("emoji:" + dialog._sets["emoji"].all_names()[0].split(":", 1)[1])
+        with mock.patch.object(iconsets, "current_language", return_value="fr"):
+            french = dialog.label_of("emoji:" + dialog._sets["emoji"].all_names()[0].split(":", 1)[1])
+        self.assertNotEqual(english, french)
+
+    def test_the_grid_is_limited_in_columns(self):
+        self.assertEqual(self.dialog().grid.get_max_columns(), 12)
+
+
 class BatchUiTests(WindowTestCase):
     def setUp(self):
         super().setUp()

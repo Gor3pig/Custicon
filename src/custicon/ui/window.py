@@ -32,7 +32,9 @@ from .picker import PickerDialog
 from .textures import texture_from_file, texture_from_svg_text
 
 ROW_ICON_SIZE = 32
+ROW_TEXTURE_LIMIT = 512
 SUGGESTION_LIMIT = 6
+PICKER_SUGGESTION_LIMIT = 8
 SUGGESTION_ICON_SIZE = 22
 PREVIEW_DELAY_MS = 50
 TOAST_SECONDS = 8
@@ -82,6 +84,12 @@ class MainWindow(Adw.ApplicationWindow):
         self._regeneration_source = 0
         self._shown_error: str | None = None
         self._rows: dict[str, FolderRow] = {}
+        self._row_textures: dict = {}
+        self._plain_textures: dict = {}
+        self._suggested: dict = {}
+        self._suggested_sets = None
+        self._shown = None
+        self._rows_shown = None
 
         self._build_actions()
         self.toasts = Adw.ToastOverlay()
@@ -260,15 +268,24 @@ class MainWindow(Adw.ApplicationWindow):
         if not keep_editor:
             self._show_key(key)
 
+    def _rows_signature(self, items: list, scale: int):
+        pending = (self._pending.folder, self._pending.glyph_name) if self._pending is not None else None
+        return (tuple((item.entry, item.status) for item in items), pending, scale, self._service.current_theme())
+
     def _rebuild_rows(self) -> None:
+        scale = self.get_scale_factor()
+        items = self._customized()
+        signature = self._rows_signature(items, scale)
+        if self._rows and signature == self._rows_shown:
+            self._update_outdated_banner(items)
+            return
+        self._rows_shown = signature
         child = self.list.get_first_child()
         while child is not None:
             following = child.get_next_sibling()
             self.list.remove(child)
             child = following
         self._rows.clear()
-        scale = self.get_scale_factor()
-        items = self._customized()
         if self._pending is not None:
             self._add_row(
                 str(self._pending.folder),
@@ -280,16 +297,26 @@ class MainWindow(Adw.ApplicationWindow):
             )
         for item in items:
             entry = item.entry
-            try:
-                texture = texture_from_file(self._service.store.icon_path(entry.digest), ROW_ICON_SIZE * scale)
-            except CusticonError:
-                texture = self._plain_folder_texture(scale)
+            texture = self._row_texture(entry.digest, scale)
             self._add_row(entry.folder, folder_name(entry.folder), display_path(entry.folder), texture, status_label(item.status), False)
-        self._update_outdated_banner()
+        self._update_outdated_banner(items)
 
-    def _update_outdated_banner(self) -> None:
+    def _row_texture(self, digest: str, scale: int):
+        key = (digest, scale)
+        texture = self._row_textures.get(key)
+        if texture is None:
+            try:
+                texture = texture_from_file(self._service.store.icon_path(digest), ROW_ICON_SIZE * scale)
+            except CusticonError:
+                return self._plain_folder_texture(scale)
+            self._row_textures[key] = texture
+            if len(self._row_textures) > ROW_TEXTURE_LIMIT:
+                self._row_textures.pop(next(iter(self._row_textures)))
+        return texture
+
+    def _update_outdated_banner(self, known: list | None = None) -> None:
         try:
-            stale = self._service.outdated()
+            stale = self._service.outdated(known)
         except CusticonError:
             stale = []
         self.outdated_banner.set_revealed(bool(stale))
@@ -317,9 +344,18 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _plain_folder_texture(self, scale: int):
         try:
-            return texture_from_file(self._service.folder_file(), ROW_ICON_SIZE * scale)
+            path = self._service.folder_file()
         except CusticonError:
             return None
+        key = (str(path), scale)
+        texture = self._plain_textures.get(key)
+        if texture is None:
+            try:
+                texture = texture_from_file(path, ROW_ICON_SIZE * scale)
+            except CusticonError:
+                return None
+            self._plain_textures[key] = texture
+        return texture
 
     def _on_choosing_toggled(self, button) -> None:
         self._choosing = button.get_active()
@@ -375,9 +411,21 @@ class MainWindow(Adw.ApplicationWindow):
             self._report_registry_error(error)
             return None
 
+    def _current_state(self):
+        key = self._current_key
+        if key is None:
+            return None
+        if self._pending is not None and key == str(self._pending.folder):
+            return (key, self._pending, STATUS_OK)
+        entry = self._entry(key)
+        if entry is None:
+            return None
+        return (key, entry, self._service.entry_status(entry))
+
     def _show_key(self, key: str) -> None:
         self._batch = None
         self._current_key = key
+        self._shown = self._current_state()
         if self._pending is not None and key == str(self._pending.folder):
             self._load(self._pending, False, STATUS_OK)
             return
@@ -394,11 +442,21 @@ class MainWindow(Adw.ApplicationWindow):
         self._refresh_suggestions(draft)
         self._schedule_preview()
 
+    def _suggestions_for(self, name: str, limit: int) -> list[str]:
+        sets = self._service.icon_sets()
+        if sets is not self._suggested_sets:
+            self._suggested_sets = sets
+            self._suggested = {}
+        found = self._suggested.get((name, limit))
+        if found is None:
+            found = self._suggested[(name, limit)] = suggest(name, sets, limit)
+        return list(found)
+
     def _refresh_suggestions(self, draft: Draft) -> None:
         sets = self._service.icon_sets()
         language = iconsets.current_language()
         items = []
-        for name in suggest(folder_name(draft.folder), sets, SUGGESTION_LIMIT):
+        for name in self._suggestions_for(folder_name(draft.folder), SUGGESTION_LIMIT):
             icon_set = sets.for_name(name)
             if icon_set is not None:
                 items.append((name, icon_set.paintable(name, SUGGESTION_ICON_SIZE), icon_set.label(name, language)))
@@ -647,6 +705,7 @@ class MainWindow(Adw.ApplicationWindow):
             folder_name(draft.folder),
             self._service.picker_memory(),
             self._service.set_favorite,
+            self._suggestions_for(folder_name(draft.folder), PICKER_SUGGESTION_LIMIT),
         )
         picker.present(self)
 
@@ -967,7 +1026,10 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _on_active_changed(self, *_args) -> None:
         if self.is_active() and self._rows and not self.has_unsaved_changes():
-            self.reload()
+            shown = self._shown
+            self.reload(keep_editor=True)
+            if shown is None or self._current_state() != shown:
+                self._show_key(self._current_key)
 
     def _on_theme_changed(self, *_args) -> None:
         self._service.refresh_themes()

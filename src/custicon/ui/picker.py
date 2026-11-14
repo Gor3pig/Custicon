@@ -46,7 +46,7 @@ CATEGORY_LABELS = {
 
 
 class PickerDialog(Adw.Dialog):
-    def __init__(self, theme: IconTheme, current: str | None, on_chosen, icon_sets: iconsets.IconSets | None = None, folder_name: str = "", memory=None, on_favorite=None):
+    def __init__(self, theme: IconTheme, current: str | None, on_chosen, icon_sets: iconsets.IconSets | None = None, folder_name: str = "", memory=None, on_favorite=None, suggestions: list[str] | None = None):
         super().__init__(title=_("Choose a Pictogram"), content_width=780, content_height=640)
         self._theme = theme
         self._sets = icon_sets or iconsets.default_sets()
@@ -60,9 +60,12 @@ class PickerDialog(Adw.Dialog):
         self._category = None
         self._category_ids: list[str] = []
         self._loading = False
+        self._paintables: dict = {}
+        self._labels: dict = {}
         self._folder_name = folder_name
 
-        self.suggestion_names = [name for name in suggest(folder_name, self._sets) if self._exists(name)] if folder_name else []
+        proposed = suggestions if suggestions is not None else (suggest(folder_name, self._sets) if folder_name else [])
+        self.suggestion_names = [name for name in proposed if self._exists(name)]
         self.recent_names = [name for name in (memory.recent if memory else ()) if self._exists(name)]
         self.favorite_names = [name for name in (memory.favorites if memory else ()) if self._exists(name)]
 
@@ -112,7 +115,7 @@ class PickerDialog(Adw.Dialog):
         factory = Gtk.SignalListItemFactory()
         factory.connect("setup", self._setup_cell)
         factory.connect("bind", self._bind_cell)
-        self.grid = Gtk.GridView(model=self.selection, factory=factory, min_columns=4, max_columns=16)
+        self.grid = Gtk.GridView(model=self.selection, factory=factory, min_columns=4, max_columns=12)
         self.grid.connect("activate", lambda _grid, position: self._on_activated(position))
         scrolled = Gtk.ScrolledWindow(hexpand=True, vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
         scrolled.set_child(self.grid)
@@ -179,15 +182,25 @@ class PickerDialog(Adw.Dialog):
         return True
 
     def label_of(self, name: str) -> str:
-        icon_set = self._sets.for_name(name)
-        return icon_set.label(name, iconsets.current_language()) if icon_set else name
+        language = iconsets.current_language()
+        key = (name, language)
+        found = self._labels.get(key)
+        if found is None:
+            icon_set = self._sets.for_name(name)
+            found = self._labels[key] = icon_set.label(name, language) if icon_set else name
+        return found
 
     def _paintable(self, name: str, size: int = CELL_SIZE):
+        key = (name, size)
+        if key in self._paintables:
+            return self._paintables[key]
         icon_set = self._sets.for_name(name)
         try:
-            return icon_set.paintable(name, size) if icon_set else self._theme.paintable(name, size)
+            found = icon_set.paintable(name, size) if icon_set else self._theme.paintable(name, size)
         except CusticonError:
-            return None
+            found = None
+        self._paintables[key] = found
+        return found
 
     def _setup_cell(self, _factory, item) -> None:
         image = Gtk.Image(pixel_size=CELL_SIZE, margin_top=CELL_MARGIN, margin_bottom=CELL_MARGIN, margin_start=CELL_MARGIN, margin_end=CELL_MARGIN)
