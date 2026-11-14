@@ -43,7 +43,7 @@ Quatre possibilités, dans le groupe **Pictogramme**.
 ### Une icône du système ou une icône Phosphor
 
 **Icône du système** > **Choisir…** ouvre la liste des pictogrammes. Un sélecteur en haut permet de passer
-du **Thème d’icônes** (les pictogrammes de votre thème actif) à **Phosphor** (un jeu de plus de 300 pictogrammes
+du **Thème d’icônes** (les pictogrammes de votre thème actif) à **Phosphor** (un jeu de 1 500 pictogrammes
 livré avec Custicon : animaux, lieux, objets, symboles…).
 
 <img src="../../data/screenshots/fr-picker.png" alt="Le choix du pictogramme dans le thème d’icônes" width="800">

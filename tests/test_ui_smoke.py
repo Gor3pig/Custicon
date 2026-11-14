@@ -438,7 +438,10 @@ class PhosphorPickerTests(WindowTestCase):
         dialog.set_toggle.set_active_name("phosphor")
         settle(lambda: dialog._names and dialog._names[0].startswith("phosphor:"))
         self.assertTrue(all(name.startswith("phosphor:") for name in dialog._names))
-        self.assertIn("phosphor:house", dialog._names)
+        self.assertEqual(len(dialog._names), 200)
+        dialog.search.set_text("house")
+        settle(lambda: dialog._names[:1] == ["phosphor:house"])
+        self.assertEqual(dialog._names[0], "phosphor:house")
 
     def test_the_search_applies_to_the_active_set(self):
         dialog = self.dialog()

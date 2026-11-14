@@ -104,5 +104,19 @@ class PhosphorKeywordTests(unittest.TestCase):
         self.assertEqual(english_fragments("maison", PHOSPHOR_KEYWORDS), ["house", "garage", "couch"])
         self.assertNotEqual(english_fragments("maison", PHOSPHOR_KEYWORDS), english_fragments("maison"))
 
+    def test_the_table_covers_the_whole_collection_not_only_a_selection(self):
+        self.assertGreaterEqual(len(PHOSPHOR_KEYWORDS), 240)
+
+    def test_everyday_french_words_find_pictograms(self):
+        names = PhosphorSet().symbolic_names
+        for word, expected in (("voiture", "phosphor:car"), ("telephone", "phosphor:phone"), ("argent", "phosphor:money"), ("ordinateur", "phosphor:laptop"), ("photo", "phosphor:camera"), ("fusee", "phosphor:rocket")):
+            found = []
+            for fragment in english_fragments(word, PHOSPHOR_KEYWORDS):
+                found.extend(names(fragment, limit=50))
+            self.assertIn(expected, found, word)
+
+    def test_the_old_renamed_fragment_is_no_longer_used(self):
+        self.assertNotIn("phone-handset", [fragment for fragments in PHOSPHOR_KEYWORDS.values() for fragment in fragments])
+
     def test_the_default_table_is_unchanged(self):
         self.assertEqual(english_fragments("musique"), ["audio", "folder-music", "multimedia"])

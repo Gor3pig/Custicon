@@ -43,7 +43,7 @@ Four possibilities, in the **Pictogram** group.
 ### A system icon or a Phosphor icon
 
 **System Icon** > **Choose…** opens the list of pictograms. A switch at the top lets you go from the
-**Icon theme** (the pictograms of your current theme) to **Phosphor** (a set of more than 300 pictograms shipped
+**Icon theme** (the pictograms of your current theme) to **Phosphor** (a set of 1,500 pictograms shipped
 with Custicon: animals, places, objects, symbols…).
 
 <img src="../../data/screenshots/en-picker.png" alt="Choosing a pictogram in the icon theme" width="800">
