@@ -10,6 +10,8 @@ from .. import environment
 from ..config import APP_ID, APP_NAME
 from ..store import MAX_STYLE_NAME
 from ..errors import CusticonError
+from .. import iconsets
+from ..suggestions import suggest
 from ..i18n import _, ngettext
 from ..service import (
     RESET_FOLDER_MISSING,
@@ -30,6 +32,8 @@ from .picker import PickerDialog
 from .textures import texture_from_file, texture_from_svg_text
 
 ROW_ICON_SIZE = 32
+SUGGESTION_LIMIT = 6
+SUGGESTION_ICON_SIZE = 22
 PREVIEW_DELAY_MS = 50
 TOAST_SECONDS = 8
 FORGET_STATUSES = (STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED)
@@ -221,6 +225,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.editor.on_remove = self._confirm_remove
         self.editor.on_choose_glyph = self._choose_glyph
         self.editor.on_browse_glyph = self._browse_glyph
+        self.editor.on_pick_suggestion = self._on_suggestion_picked
         self.editor.on_banner_action = self._on_banner_action
         self.editor.on_apply_style = self._apply_style
         self.editor.on_delete_style = self._delete_style
@@ -341,7 +346,22 @@ class MainWindow(Adw.ApplicationWindow):
         self.content_page.set_title(folder_name(draft.folder))
         self.editor.load(draft, existing, status, status_banner(status), banner_action(status), remove_label)
         self._refresh_styles()
+        self._refresh_suggestions(draft)
         self._schedule_preview()
+
+    def _refresh_suggestions(self, draft: Draft) -> None:
+        sets = self._service.icon_sets()
+        language = iconsets.current_language()
+        items = []
+        for name in suggest(folder_name(draft.folder), sets, SUGGESTION_LIMIT):
+            icon_set = sets.for_name(name)
+            if icon_set is not None:
+                items.append((name, icon_set.paintable(name, SUGGESTION_ICON_SIZE), icon_set.label(name, language)))
+        self.editor.set_suggestions(items)
+
+    def _on_suggestion_picked(self, name: str) -> None:
+        if self.editor.draft is not None:
+            self._on_glyph_chosen(name)
 
     def _on_editor_change(self, draft: Draft) -> None:
         if self._pending is not None and draft.folder == self._pending.folder:
@@ -376,6 +396,7 @@ class MainWindow(Adw.ApplicationWindow):
                     render = lambda size: texture_from_svg_text(folder_svg, size * scale)
                 self.editor.set_computed_color(None)
                 self.editor.set_computed_folder_tint(folder_tint)
+            self.editor.set_accent_color(self._service.accent_color())
             self.editor.set_preview(render(BIG_SIZE), [render(size) for size in SMALL_SIZES], note)
             self.editor.set_blocked(False)
         except CusticonError as error:

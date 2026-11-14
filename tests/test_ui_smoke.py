@@ -263,27 +263,25 @@ class EditorBehaviourTests(WindowTestCase):
         self.assertEqual(self.editor.size_slider.label.get_text(), "150%")
 
     def test_turning_automatic_color_off_keeps_the_color(self):
-        self.editor.color_row.set_selected(2)
+        self.editor.color_palette.choose_color("#e62d42")
         self.assertFalse(self.editor.draft.auto_color)
-        self.assertTrue(self.editor.swatch.get_sensitive())
+        self.assertEqual(self.editor.color_palette.state(), ("custom", "#e62d42"))
 
     def test_turning_automatic_color_off_keeps_the_displayed_color(self):
         self.editor.set_computed_color("#aa5500")
-        shown = hex_from_rgba(self.editor.swatch.get_rgba())
-        self.assertEqual(shown, "#aa5500")
-        self.editor.color_row.set_selected(2)
+        self.editor.color_palette.custom_button.set_rgba(rgba_from_hex("#aa5500"))
         self.assertEqual(self.editor.draft.color, "#aa5500")
-        self.assertEqual(hex_from_rgba(self.editor.swatch.get_rgba()), shown)
-        self.assertEqual(self.editor.draft.to_settings().color, shown)
+        self.assertEqual(self.editor.color_palette.custom_hex(), "#aa5500")
+        self.assertEqual(self.editor.draft.to_settings().color, "#aa5500")
 
     def test_reset_returns_to_the_default_appearance(self):
         self.editor.size_slider.adjustment.set_value(200)
-        self.editor.color_row.set_selected(2)
+        self.editor.color_palette.choose_color("#e62d42")
         self.assertTrue(self.editor.reset_button.get_sensitive())
         self.editor.reset_button.emit("clicked")
         self.assertTrue(self.editor.draft.has_default_appearance())
         self.assertEqual(self.editor.size_slider.adjustment.get_value(), 100)
-        self.assertEqual(self.editor.color_row.get_selected(), 0)
+        self.assertEqual(self.editor.color_palette.state(), ("auto", None))
         self.assertFalse(self.editor.reset_button.get_sensitive())
 
     def test_the_tint_switch_only_matters_for_files(self):
@@ -292,7 +290,7 @@ class EditorBehaviourTests(WindowTestCase):
         glyph.write_text(glyph_svg())
         self.editor.update_glyph(self.editor.draft.with_glyph_file(glyph))
         self.assertTrue(self.editor.tint_row.get_sensitive())
-        self.assertEqual(self.editor.file_row.get_subtitle(), "mine.svg")
+        self.assertEqual(self.editor.glyph_label.get_text(), "mine.svg")
 
     def test_unsaved_changes_are_detected(self):
         self.assertFalse(self.window.has_unsaved_changes())
@@ -696,7 +694,7 @@ class IconSetPickerTests(PickerCase):
         for language, expected in (("fr", "médaille d’argent (Émoji)"), ("en", "2nd place medal (Emoji)")):
             with mock.patch.object(iconsets, "current_language", return_value=language):
                 self.window.editor.update_glyph(self.window.editor.draft.with_glyph_name("emoji:2nd-place-medal"))
-            self.assertEqual(self.window.editor.system_row.get_subtitle(), expected)
+            self.assertEqual(self.window.editor.glyph_label.get_text(), expected)
 
     def test_the_picker_of_the_window_is_given_the_registry_and_the_memory(self):
         self.window.add_folder(self.make_folder("Photos"))
@@ -826,6 +824,135 @@ class SidebarTests(PickerCase):
         self.assertGreaterEqual(dialog.get_content_width(), 640)
 
 
+@unittest.skipUnless(DISPLAY_AVAILABLE, "needs a display")
+class PaletteTests(unittest.TestCase):
+    def make(self, base="none"):
+        from custicon.ui.palette import Palette
+
+        self.calls = []
+        return Palette("Folder Tint", base, lambda mode, color: self.calls.append((mode, color)))
+
+    def active(self, palette):
+        return [name for name, button in palette.buttons().items() if button.get_active()]
+
+    def test_the_base_choice_is_active_at_first_and_nothing_is_reported(self):
+        palette = self.make("none")
+        self.assertEqual(self.active(palette), ["base"])
+        self.assertEqual(palette.state(), ("none", None))
+        self.assertEqual(self.calls, [])
+
+    def test_the_base_mode_is_the_one_given(self):
+        self.assertEqual(self.make("auto").state(), ("auto", None))
+
+    def test_there_are_nine_palette_colors_after_the_base_and_the_accent(self):
+        palette = self.make()
+        self.assertEqual(list(palette.buttons())[:2], ["base", "accent"])
+        colors = [name for name in palette.buttons() if name.startswith("#")]
+        self.assertEqual(len(colors), 9)
+        self.assertEqual(colors[0], "#3584e4")
+
+    def test_choosing_a_palette_color_reports_a_custom_mode(self):
+        palette = self.make()
+        palette.choose_color("#e62d42")
+        self.assertEqual(self.calls, [("custom", "#e62d42")])
+        self.assertEqual(self.active(palette), ["#e62d42"])
+        self.assertEqual(palette.state(), ("custom", "#e62d42"))
+
+    def test_choosing_the_accent_or_the_base_reports_their_mode(self):
+        palette = self.make("auto")
+        palette.choose_accent()
+        palette.choose_base()
+        self.assertEqual(self.calls, [("accent", None), ("auto", None)])
+        self.assertEqual(self.active(palette), ["base"])
+
+    def test_only_one_choice_is_active_at_a_time(self):
+        palette = self.make()
+        for color in ("#e62d42", "#3a944a", "#9141ac"):
+            palette.choose_color(color)
+            self.assertEqual(self.active(palette), [color])
+        palette.choose_accent()
+        self.assertEqual(self.active(palette), ["accent"])
+
+    def test_clicking_the_active_choice_keeps_it_active(self):
+        palette = self.make()
+        palette.choose_color("#e62d42")
+        palette.buttons()["#e62d42"].set_active(False)
+        self.assertTrue(palette.buttons()["#e62d42"].get_active())
+        self.assertEqual(palette.state(), ("custom", "#e62d42"))
+
+    def test_setting_a_state_selects_the_right_choice_without_reporting(self):
+        palette = self.make()
+        palette.set_state("custom", "#3584E4")
+        self.assertEqual(self.active(palette), ["#3584e4"])
+        palette.set_state("accent", None)
+        self.assertEqual(self.active(palette), ["accent"])
+        palette.set_state("none", None)
+        self.assertEqual(self.active(palette), ["base"])
+        self.assertEqual(self.calls, [])
+
+    def test_a_color_outside_the_palette_lights_the_custom_button(self):
+        palette = self.make()
+        palette.set_state("custom", "#123456")
+        self.assertEqual(self.active(palette), ["custom"])
+        self.assertEqual(palette.custom_hex(), "#123456")
+        self.assertEqual(palette.state(), ("custom", "#123456"))
+        self.assertEqual(self.calls, [])
+
+    def test_the_custom_button_reports_the_chosen_color(self):
+        from custicon.ui.editor import rgba_from_hex
+
+        palette = self.make()
+        palette.custom_button.set_rgba(rgba_from_hex("#112233"))
+        self.assertEqual(self.calls[-1], ("custom", "#112233"))
+        self.assertEqual(self.active(palette), ["custom"])
+
+    def test_a_palette_color_does_not_move_the_custom_color(self):
+        palette = self.make()
+        palette.set_state("custom", "#123456")
+        palette.choose_color("#e62d42")
+        self.assertEqual(palette.custom_hex(), "#123456")
+        self.assertEqual(palette.state(), ("custom", "#e62d42"))
+
+    def test_an_invalid_state_color_falls_back_to_the_custom_button(self):
+        palette = self.make()
+        palette.set_state("custom", "not a color")
+        self.assertEqual(self.active(palette), ["custom"])
+
+    def test_a_custom_state_without_a_color_keeps_the_last_custom_color(self):
+        palette = self.make()
+        palette.set_state("custom", "#123456")
+        palette.set_state("none", None)
+        palette.set_state("custom", None)
+        self.assertEqual(palette.state(), ("custom", "#123456"))
+
+    def test_the_accent_swatch_shows_the_accent_color(self):
+        palette = self.make()
+        self.assertEqual(palette.accent_color(), "#3584e4")
+        palette.set_accent("#e66100")
+        self.assertEqual(palette.accent_color(), "#e66100")
+        palette.set_accent("garbage")
+        self.assertEqual(palette.accent_color(), "#e66100")
+
+    def test_every_choice_has_a_tooltip_and_an_accessible_name(self):
+        palette = self.make()
+        for name, button in palette.buttons().items():
+            self.assertTrue(button.get_tooltip_text(), name)
+        self.assertEqual(palette.buttons()["#3584e4"].get_tooltip_text(), "Blue")
+        self.assertEqual(palette.buttons()["#e62d42"].get_tooltip_text(), "Red")
+
+    def test_the_computed_color_is_added_to_the_tooltips(self):
+        palette = self.make("auto")
+        palette.set_computed("#438de6")
+        self.assertIn("#438de6", palette.buttons()["base"].get_tooltip_text())
+        palette.set_state("accent", None)
+        palette.set_computed(None)
+        self.assertNotIn("#", palette.buttons()["base"].get_tooltip_text())
+
+    def test_the_palette_is_a_labelled_group(self):
+        palette = self.make()
+        self.assertEqual(palette.get_accessible_role(), Gtk.AccessibleRole.GROUP)
+
+
 class ColorModeUiTests(WindowTestCase):
     def setUp(self):
         super().setUp()
@@ -833,35 +960,39 @@ class ColorModeUiTests(WindowTestCase):
         settle()
         self.editor = self.window.editor
 
-    def test_the_color_row_offers_three_modes(self):
-        self.assertEqual(self.editor.color_row.get_model().get_n_items(), 3)
-        self.assertEqual(self.editor.color_row.get_selected(), 0)
+    def test_the_pictogram_color_starts_automatic(self):
+        self.assertEqual(self.editor.color_palette.state(), ("auto", None))
+        self.assertEqual(self.editor.draft.color_mode, "auto")
 
-    def test_choosing_the_system_accent_updates_the_draft_and_locks_the_swatch(self):
-        self.editor.color_row.set_selected(1)
+    def test_choosing_the_system_accent_updates_the_draft(self):
+        self.editor.color_palette.choose_accent()
         self.assertEqual(self.editor.draft.color_mode, "accent")
-        self.assertFalse(self.editor.swatch.get_sensitive())
         self.assertTrue(self.editor.draft.to_settings().accent)
 
-    def test_the_computed_color_is_shown_for_the_accent_mode(self):
-        self.editor.color_row.set_selected(1)
-        self.editor.set_computed_color("#ff0000")
-        self.assertIn("#ff0000", self.editor.color_row.get_subtitle())
-        self.assertEqual(hex_from_rgba(self.editor.swatch.get_rgba()), "#ff0000")
+    def test_choosing_a_palette_color_sets_a_custom_color(self):
+        self.editor.color_palette.choose_color("#e62d42")
+        self.assertEqual(self.editor.draft.color_mode, "custom")
+        self.assertEqual(self.editor.draft.color, "#e62d42")
+        self.assertEqual(self.editor.draft.to_settings().color, "#e62d42")
 
-    def test_the_custom_mode_unlocks_the_swatch_and_keeps_its_color(self):
-        self.editor.set_computed_color("#aa5500")
-        self.editor.color_row.set_selected(2)
-        self.assertTrue(self.editor.swatch.get_sensitive())
-        self.assertEqual(self.editor.draft.color, "#aa5500")
-        self.editor.set_computed_color("#00ff00")
-        self.assertEqual(hex_from_rgba(self.editor.swatch.get_rgba()), "#aa5500")
+    def test_the_computed_color_is_shown_in_the_tooltip_of_the_automatic_choice(self):
+        self.editor.set_computed_color("#438de6")
+        self.assertIn("#438de6", self.editor.color_palette.buttons()["base"].get_tooltip_text())
 
-    def test_switching_back_to_automatic_unlocks_nothing(self):
-        self.editor.color_row.set_selected(2)
-        self.editor.color_row.set_selected(0)
+    def test_the_custom_button_sets_a_custom_color(self):
+        self.editor.color_palette.custom_button.set_rgba(rgba_from_hex("#123456"))
+        self.assertEqual((self.editor.draft.color_mode, self.editor.draft.color), ("custom", "#123456"))
+
+    def test_switching_back_to_automatic_keeps_the_last_custom_color_in_the_draft(self):
+        self.editor.color_palette.choose_color("#e62d42")
+        self.editor.color_palette.choose_base()
         self.assertEqual(self.editor.draft.color_mode, "auto")
-        self.assertFalse(self.editor.swatch.get_sensitive())
+        self.assertEqual(self.editor.draft.color, "#e62d42")
+
+    def test_the_accent_swatch_follows_the_system_accent_after_a_preview(self):
+        self.window._render_preview()
+        self.assertEqual(self.editor.color_palette.accent_color(), self.window._service.accent_color())
+        self.assertEqual(self.editor.folder_tint_palette.accent_color(), self.window._service.accent_color())
 
 
 class FolderTintUiTests(WindowTestCase):
@@ -871,49 +1002,45 @@ class FolderTintUiTests(WindowTestCase):
         settle()
         self.editor = self.window.editor
 
-    def test_the_folder_tint_row_offers_three_modes_and_starts_on_none(self):
-        self.assertEqual(self.editor.folder_tint_row.get_model().get_n_items(), 3)
-        self.assertEqual(self.editor.folder_tint_row.get_selected(), 0)
-        self.assertFalse(self.editor.folder_tint_swatch.get_sensitive())
+    def test_the_folder_tint_starts_on_none(self):
+        self.assertEqual(self.editor.folder_tint_palette.state(), ("none", None))
+        self.assertEqual(self.editor.draft.folder_tint_mode, "none")
 
-    def test_choosing_the_system_accent_updates_the_draft_and_locks_the_swatch(self):
-        self.editor.folder_tint_row.set_selected(1)
+    def test_choosing_the_system_accent_updates_the_draft(self):
+        self.editor.folder_tint_palette.choose_accent()
         self.assertEqual(self.editor.draft.folder_tint_mode, "accent")
-        self.assertFalse(self.editor.folder_tint_swatch.get_sensitive())
         self.assertTrue(self.editor.draft.to_settings().folder_tint_accent)
 
-    def test_the_custom_mode_unlocks_the_swatch_and_sends_its_color(self):
-        self.editor.folder_tint_row.set_selected(2)
-        self.assertTrue(self.editor.folder_tint_swatch.get_sensitive())
+    def test_choosing_a_palette_color_sends_its_color(self):
+        self.editor.folder_tint_palette.choose_color("#ed5b00")
         self.assertEqual(self.editor.draft.folder_tint_mode, "custom")
-        self.assertEqual(self.editor.draft.to_settings().folder_tint, self.editor.draft.folder_tint)
-        self.editor.folder_tint_swatch.set_rgba(rgba_from_hex("#112233"))
+        self.assertEqual(self.editor.draft.to_settings().folder_tint, "#ed5b00")
+
+    def test_the_custom_button_sends_its_color(self):
+        self.editor.folder_tint_palette.custom_button.set_rgba(rgba_from_hex("#112233"))
         self.assertEqual(self.editor.draft.folder_tint, "#112233")
+        self.assertEqual(self.editor.draft.to_settings().folder_tint, "#112233")
 
     def test_going_back_to_none_removes_the_tint(self):
-        self.editor.folder_tint_row.set_selected(2)
-        self.editor.folder_tint_row.set_selected(0)
+        self.editor.folder_tint_palette.choose_color("#ed5b00")
+        self.editor.folder_tint_palette.choose_base()
         self.assertEqual(self.editor.draft.folder_tint_mode, "none")
         self.assertIsNone(self.editor.draft.to_settings().folder_tint)
 
-    def test_the_computed_tint_is_shown_for_the_accent_mode(self):
-        self.editor.folder_tint_row.set_selected(1)
+    def test_the_computed_tint_is_shown_in_the_tooltip_of_the_base_choice(self):
         self.editor.set_computed_folder_tint("#ff0000")
-        self.assertIn("#ff0000", self.editor.folder_tint_row.get_subtitle())
-
-    def test_the_none_mode_explains_that_the_theme_color_is_kept(self):
-        self.assertNotEqual(self.editor.folder_tint_row.get_subtitle(), "")
+        self.assertIn("#ff0000", self.editor.folder_tint_palette.buttons()["base"].get_tooltip_text())
 
     def test_reset_removes_the_folder_tint(self):
-        self.editor.folder_tint_row.set_selected(2)
+        self.editor.folder_tint_palette.choose_color("#ed5b00")
         self.assertTrue(self.editor.reset_button.get_sensitive())
         self.editor.reset_button.emit("clicked")
-        self.assertEqual(self.editor.folder_tint_row.get_selected(), 0)
+        self.assertEqual(self.editor.folder_tint_palette.state(), ("none", None))
         self.assertEqual(self.editor.draft.folder_tint_mode, "none")
 
     def test_the_preview_shows_the_tinted_folder_even_without_a_pictogram(self):
         self.assertFalse(self.editor.draft.ready)
-        self.editor.folder_tint_row.set_selected(2)
+        self.editor.folder_tint_palette.choose_color("#ed5b00")
         self.window._render_preview()
         self.assertIsNotNone(self.editor.big.get_paintable())
         self.assertFalse(self.editor.apply_button.get_sensitive())
@@ -929,27 +1056,178 @@ class FolderTintUiTests(WindowTestCase):
             self.assertTrue(plain.called)
             self.assertFalse(tinted.called)
             plain.reset_mock()
-            self.editor.folder_tint_row.set_selected(2)
+            self.editor.folder_tint_palette.choose_color("#ed5b00")
             self.window._render_preview()
             self.assertTrue(tinted.called)
             self.assertFalse(plain.called)
 
-    def test_the_preview_reports_the_accent_with_a_pictogram(self):
+    def test_the_preview_reports_the_accent_in_the_accent_swatch(self):
         self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
-        self.editor.folder_tint_row.set_selected(1)
+        self.editor.folder_tint_palette.choose_accent()
         self.window._render_preview()
-        self.assertIn("#", self.editor.folder_tint_row.get_subtitle())
+        self.assertIn("#", self.editor.folder_tint_palette.buttons()["accent"].get_tooltip_text())
 
     def test_applying_stores_the_folder_tint(self):
         folder = self.editor.draft.folder
         self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
-        self.editor.folder_tint_row.set_selected(2)
-        self.editor.folder_tint_swatch.set_rgba(rgba_from_hex("#e01b24"))
+        self.editor.folder_tint_palette.custom_button.set_rgba(rgba_from_hex("#e01b24"))
         self.window._apply()
         settle()
         stored = self.window._service.store.get(str(Path(folder).resolve()))
         self.assertIsNotNone(stored)
         self.assertEqual(stored.settings["folder_tint"], "#e01b24")
+
+
+class DirectManipulationTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.editor = self.window.editor
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+
+    def drag(self, dx, dy):
+        self.editor._on_drag_begin(None, 0, 0)
+        self.editor._on_drag_update(None, dx, dy)
+        self.editor._on_drag_end(None, dx, dy)
+
+    def test_dragging_moves_the_pictogram_by_the_fraction_of_the_preview(self):
+        from custicon.ui.editor import BIG_SIZE
+
+        self.drag(BIG_SIZE * 0.1, -BIG_SIZE * 0.2)
+        self.assertAlmostEqual(self.editor.draft.offset_x, 0.1, places=3)
+        self.assertAlmostEqual(self.editor.draft.offset_y, -0.2, places=3)
+
+    def test_the_sliders_follow_the_drag(self):
+        from custicon.ui.editor import BIG_SIZE
+
+        self.drag(BIG_SIZE * 0.1, 0)
+        self.assertAlmostEqual(self.editor.x_slider.adjustment.get_value(), 10.0, places=1)
+        self.assertEqual(self.editor.x_slider.label.get_text(), "10%")
+
+    def test_the_offsets_are_limited(self):
+        from custicon.ui.editor import BIG_SIZE
+
+        self.drag(BIG_SIZE * 5, -BIG_SIZE * 5)
+        self.assertEqual((self.editor.draft.offset_x, self.editor.draft.offset_y), (0.5, -0.5))
+
+    def test_a_drag_starts_from_the_current_position(self):
+        from custicon.ui.editor import BIG_SIZE
+
+        self.drag(BIG_SIZE * 0.1, 0)
+        self.drag(BIG_SIZE * 0.05, 0)
+        self.assertAlmostEqual(self.editor.draft.offset_x, 0.15, places=3)
+
+    def test_a_drag_without_a_pictogram_does_nothing(self):
+        self.editor.update_glyph(self.editor.draft.with_glyph_text(""))
+        self.assertFalse(self.editor.draft.ready)
+        self.drag(50, 50)
+        self.assertEqual((self.editor.draft.offset_x, self.editor.draft.offset_y), (0.0, 0.0))
+
+    def test_an_update_without_a_begin_does_nothing(self):
+        self.editor._on_drag_update(None, 50, 50)
+        self.assertEqual(self.editor.draft.offset_x, 0.0)
+
+    def test_the_wheel_enlarges_and_reduces(self):
+        self.assertTrue(self.editor._on_scroll(None, 0, -1))
+        larger = self.editor.draft.size
+        self.assertGreater(larger, 1.0)
+        self.editor._on_scroll(None, 0, 1)
+        self.editor._on_scroll(None, 0, 1)
+        self.assertLess(self.editor.draft.size, larger)
+
+    def test_the_wheel_is_limited_and_follows_the_slider(self):
+        from custicon.service import MAX_SIZE, MIN_SIZE
+
+        for _ in range(100):
+            self.editor._on_scroll(None, 0, -3)
+        self.assertEqual(self.editor.draft.size, MAX_SIZE)
+        for _ in range(200):
+            self.editor._on_scroll(None, 0, 3)
+        self.assertEqual(self.editor.draft.size, MIN_SIZE)
+        self.assertEqual(self.editor.size_slider.label.get_text(), "20%")
+
+    def test_the_wheel_without_movement_or_without_a_pictogram_is_ignored(self):
+        self.assertFalse(self.editor._on_scroll(None, 0, 0))
+        self.editor.update_glyph(self.editor.draft.with_glyph_text(""))
+        self.assertFalse(self.editor._on_scroll(None, 0, -1))
+        self.assertEqual(self.editor.draft.size, 1.0)
+
+    def test_the_reset_button_wakes_up_after_a_drag(self):
+        self.assertFalse(self.editor.reset_button.get_sensitive())
+        self.drag(30, 0)
+        self.assertTrue(self.editor.reset_button.get_sensitive())
+
+    def test_a_drag_reaches_the_preview_through_the_window(self):
+        from custicon.ui.editor import BIG_SIZE
+
+        self.drag(BIG_SIZE * 0.1, 0)
+        self.window._render_preview()
+        self.assertIsNotNone(self.editor.big.get_paintable())
+
+    def test_the_big_preview_has_the_gesture_controllers(self):
+        kinds = {type(self.editor.big.observe_controllers().get_item(index)).__name__ for index in range(self.editor.big.observe_controllers().get_n_items())}
+        self.assertIn("GestureDrag", kinds)
+        self.assertIn("EventControllerScroll", kinds)
+
+
+class SuggestionUiTests(WindowTestCase):
+    def test_a_folder_named_after_a_subject_gets_suggestions(self):
+        self.window.add_folder(self.make_folder("Photos"))
+        settle()
+        names = self.window.editor.suggestion_names
+        self.assertIn("phosphor:camera", names)
+        self.assertLessEqual(len(names), 6)
+        self.assertTrue(self.window.editor.suggestions_row.get_visible())
+
+    def test_a_folder_without_a_meaningful_name_gets_none(self):
+        self.window.add_folder(self.make_folder("xqzvw"))
+        settle()
+        self.assertEqual(self.window.editor.suggestion_names, [])
+        self.assertFalse(self.window.editor.suggestions_row.get_visible())
+
+    def test_clicking_a_suggestion_chooses_it(self):
+        self.window.add_folder(self.make_folder("Photos"))
+        settle()
+        self.window.editor.on_pick_suggestion("phosphor:camera")
+        self.assertEqual(self.window.editor.draft.glyph_name, "phosphor:camera")
+        self.assertEqual(self.service.picker_memory().recent[0], "phosphor:camera")
+
+    def test_the_suggestions_follow_the_selected_folder(self):
+        self.window.add_folder(self.make_folder("Photos"))
+        self.window.add_folder(self.make_folder("Musique"))
+        settle()
+        self.assertTrue(any("music" in name for name in self.window.editor.suggestion_names))
+        self.assertNotIn("phosphor:camera", self.window.editor.suggestion_names)
+
+    def test_every_suggestion_is_a_button_with_a_name(self):
+        self.window.add_folder(self.make_folder("Photos"))
+        settle()
+        box = self.window.editor.suggestions_box
+        buttons = []
+        child = box.get_first_child()
+        while child is not None:
+            buttons.append(child)
+            child = child.get_next_sibling()
+        self.assertEqual(len(buttons), len(self.window.editor.suggestion_names))
+        for button in buttons:
+            self.assertTrue(button.get_tooltip_text())
+
+
+class EditorLayoutTests(WindowTestCase):
+    def test_the_controls_do_not_need_a_scrollbar_at_the_default_window_size(self):
+        self.window.set_default_size(1000, 720)
+        self.window.add_folder(self.make_folder("Photos"))
+        self.window.present()
+        settle(lambda: self.window.editor.get_height() > 300)
+        scrolled = self.window.editor.scrolled
+        content = scrolled.get_child().get_preferred_size()[1].height
+        self.assertLessEqual(content, scrolled.get_height() + 2, (content, scrolled.get_height()))
+
+    def test_the_two_columns_become_one_on_a_narrow_pane(self):
+        editor = self.window.editor
+        self.assertEqual(editor.columns.get_orientation(), Gtk.Orientation.HORIZONTAL)
+        self.assertEqual(editor.columns.get_first_child().get_visible(), True)
 
 
 class OutdatedBannerTests(WindowTestCase):
@@ -1015,7 +1293,7 @@ class TextGlyphUiTests(WindowTestCase):
 
     def test_a_phosphor_icon_is_named_with_its_set_in_the_row(self):
         self.editor.update_glyph(self.editor.draft.with_glyph_name("phosphor:acorn"))
-        self.assertEqual(self.editor.system_row.get_subtitle(), "acorn (Phosphor)")
+        self.assertEqual(self.editor.glyph_label.get_text(), "acorn (Phosphor)")
 
     def test_the_picker_opened_from_the_window_offers_phosphor(self):
         self.window._choose_glyph()
@@ -1027,7 +1305,7 @@ class TextGlyphUiTests(WindowTestCase):
     def test_typing_a_text_clears_the_other_sources_in_the_rows(self):
         self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
         self.editor.text_row.set_text("Z")
-        self.assertEqual(self.editor.system_row.get_subtitle(), "No pictogram chosen")
+        self.assertEqual(self.editor.glyph_label.get_text(), "“Z”")
         self.assertIsNone(self.editor.draft.glyph_name)
 
     def test_the_text_is_previewed_and_applied(self):
@@ -1116,7 +1394,7 @@ class StylesUiTests(WindowTestCase):
         self.save("Accent", {"color": None, "accent": True, "size": 1.0, "offset_x": 0.0, "offset_y": 0.0, "tint": True})
         self.editor.styles_list.get_first_child().get_child().get_first_child().emit("clicked")
         self.assertEqual(self.editor.draft.color_mode, "accent")
-        self.assertEqual(self.editor.color_row.get_selected(), 1)
+        self.assertEqual(self.editor.color_palette.state(), ("accent", None))
 
     def test_an_unknown_style_name_changes_nothing(self):
         before = self.editor.draft

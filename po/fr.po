@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 18:12+0100\n"
+"POT-Creation-Date: 2026-11-14 19:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -26,27 +26,44 @@ msgstr "Personnalisez l’icône d’un dossier dans Nautilus."
 msgid "translator-credits"
 msgstr "Gor3pig"
 
+msgid "Drag the pictogram to move it, scroll to resize it"
+msgstr ""
+"Faites glisser le pictogramme pour le déplacer, utilisez la molette pour le "
+"redimensionner"
+
 #, python-format
 msgid "%d px"
 msgstr "%d px"
 
-msgid "Pictogram"
-msgstr "Pictogramme"
-
-msgid "System Icon"
-msgstr "Icône du système"
-
 msgid "Choose…"
 msgstr "Choisir…"
 
-msgid "SVG or PNG File"
-msgstr "Fichier SVG ou PNG"
+msgid "Suggestions"
+msgstr "Suggestions"
 
-msgid "Browse…"
-msgstr "Parcourir…"
+msgid "Folder Tint"
+msgstr "Teinte du dossier"
 
-msgid "Letters or Symbols"
-msgstr "Lettres ou symboles"
+msgid "Pictogram Color"
+msgstr "Couleur du pictogramme"
+
+msgid "Pictogram"
+msgstr "Pictogramme"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "Horizontal"
+msgstr "Horizontal"
+
+msgid "Vertical"
+msgstr "Vertical"
+
+msgid "SVG or PNG File…"
+msgstr "Fichier SVG ou PNG…"
+
+msgid "Letters or Symbols…"
+msgstr "Lettres ou symboles…"
 
 msgid "Tint the Pictogram"
 msgstr "Teinter le pictogramme"
@@ -54,38 +71,11 @@ msgstr "Teinter le pictogramme"
 msgid "For a file: applies the chosen color"
 msgstr "Pour un fichier : applique la couleur choisie"
 
-msgid "Appearance"
-msgstr "Apparence"
+msgid "Type 1 to 3 characters"
+msgstr "Saisissez 1 à 3 caractères"
 
-msgid "Reset to Defaults"
-msgstr "Rétablir les valeurs par défaut"
-
-msgid "Folder Tint"
-msgstr "Teinte du dossier"
-
-msgid "None"
-msgstr "Aucune"
-
-msgid "System Accent"
-msgstr "Accent du système"
-
-msgid "Custom"
-msgstr "Personnalisée"
-
-msgid "Color"
-msgstr "Couleur"
-
-msgid "Automatic"
-msgstr "Automatique"
-
-msgid "Size"
-msgstr "Taille"
-
-msgid "Horizontal Position"
-msgstr "Position horizontale"
-
-msgid "Vertical Position"
-msgstr "Position verticale"
+msgid "Letters or Symbols"
+msgstr "Lettres ou symboles"
 
 msgid "No saved styles yet"
 msgstr "Aucun style enregistré"
@@ -109,31 +99,14 @@ msgstr ""
 msgid "Remove Icon"
 msgstr "Retirer l’icône"
 
+msgid "Reset to Defaults"
+msgstr "Rétablir les valeurs par défaut"
+
 msgid "Apply"
 msgstr "Appliquer"
 
 msgid "No pictogram chosen"
 msgstr "Aucun pictogramme choisi"
-
-msgid "No file chosen"
-msgstr "Aucun fichier choisi"
-
-#, python-format
-msgid "The accent color of your system (%s)"
-msgstr "La couleur d’accent de votre système (%s)"
-
-msgid "The accent color of your system"
-msgstr "La couleur d’accent de votre système"
-
-msgid "The folder keeps the color of your icon theme"
-msgstr "Le dossier garde la couleur de votre thème d’icônes"
-
-#, python-format
-msgid "A darker shade of the folder color (%s)"
-msgstr "Teinte plus foncée de la couleur du dossier (%s)"
-
-msgid "A darker shade of the folder color"
-msgstr "Teinte plus foncée de la couleur du dossier"
 
 #, python-format
 msgid "%d%%"
@@ -255,6 +228,45 @@ msgid "%d folder could not be updated"
 msgid_plural "%d folders could not be updated"
 msgstr[0] "%d dossier n’a pas pu être mis à jour"
 msgstr[1] "%d dossiers n’ont pas pu être mis à jour"
+
+msgid "Blue"
+msgstr "Bleu"
+
+msgid "Teal"
+msgstr "Sarcelle"
+
+msgid "Green"
+msgstr "Vert"
+
+msgid "Yellow"
+msgstr "Jaune"
+
+msgid "Orange"
+msgstr "Orange"
+
+msgid "Red"
+msgstr "Rouge"
+
+msgid "Pink"
+msgstr "Rose"
+
+msgid "Purple"
+msgstr "Violet"
+
+msgid "Slate"
+msgstr "Ardoise"
+
+msgid "None"
+msgstr "Aucune"
+
+msgid "Automatic"
+msgstr "Automatique"
+
+msgid "System Accent"
+msgstr "Accent du système"
+
+msgid "Custom"
+msgstr "Personnalisée"
 
 msgid "Arrows"
 msgstr "Flèches"

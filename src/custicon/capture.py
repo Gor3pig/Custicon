@@ -83,8 +83,7 @@ def switch_to_set(window, key: str, query: str) -> bool:
 
 def show_tint(window) -> bool:
     editor = window.editor
-    editor.folder_tint_swatch.set_rgba(rgba_from_hex("#e66100"))
-    editor.folder_tint_row.set_selected(2)
+    editor.folder_tint_palette.choose_color("#ed5b00")
     return False
 
 

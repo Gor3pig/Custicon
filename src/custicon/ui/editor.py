@@ -5,42 +5,48 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gtk
+from gi.repository import Adw, Gdk, Gtk, Pango
 
-from ..i18n import _
 from .. import iconsets
+from ..i18n import _
 from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
 from ..textglyph import MAX_CHARACTERS
 from .draft import Draft
 from .format import display_path, folder_name, from_percent, percent_text, to_percent
+from .palette import Palette, hex_of, rgba_of
 
-BIG_SIZE = 144
+BIG_SIZE = 250
 SMALL_SIZES = (64, 48, 32)
-COLOR_MODES = ("auto", "accent", "custom")
-FOLDER_TINT_MODES = ("none", "accent", "custom")
 MAX_TEXT_LENGTH = MAX_CHARACTERS
-SLIDER_WIDTH = 150
 SLIDER_STEP = 0.5
 SLIDER_PAGE = 5
 SLIDER_DIGITS = 1
+OFFSET_STEP = 0.005
+SCROLL_FACTOR = 1.06
+SUGGESTION_SIZE = 22
+NARROW_CONDITION = "max-width: 600sp"
+LABEL_WIDTH = 9
 
 
 def hex_from_rgba(color: Gdk.RGBA) -> str:
-    return "#%02x%02x%02x" % tuple(round(channel * 255) for channel in (color.red, color.green, color.blue))
+    return hex_of(color)
 
 
 def rgba_from_hex(value: str) -> Gdk.RGBA:
-    color = Gdk.RGBA()
-    color.parse(value)
-    return color
+    return rgba_of(value)
+
+
+def snapped(value: float, lower: float, upper: float) -> float:
+    return min(upper, max(lower, round(value / OFFSET_STEP) * OFFSET_STEP))
 
 
 class Slider:
     def __init__(self, title: str, lower: float, upper: float, value: float, marks: tuple[float, ...] = ()):
-        self.row = Adw.ActionRow(title=title, use_markup=False)
+        self.row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, margin_top=8, margin_bottom=8, margin_start=12, margin_end=12)
+        self.title = Gtk.Label(label=title, xalign=0.0, width_chars=LABEL_WIDTH)
+        self.title.add_css_class("heading")
         self.adjustment = Gtk.Adjustment(value=value, lower=lower, upper=upper, step_increment=SLIDER_STEP, page_increment=SLIDER_PAGE)
         self.scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, adjustment=self.adjustment)
-        self.scale.set_size_request(SLIDER_WIDTH, -1)
         self.scale.set_valign(Gtk.Align.CENTER)
         self.scale.set_hexpand(True)
         self.scale.set_digits(SLIDER_DIGITS)
@@ -51,8 +57,9 @@ class Slider:
         self.label = Gtk.Label(xalign=1.0, width_chars=7)
         self.label.add_css_class("dim-label")
         self.label.add_css_class("numeric")
-        self.row.add_suffix(self.scale)
-        self.row.add_suffix(self.label)
+        self.row.append(self.title)
+        self.row.append(self.scale)
+        self.row.append(self.label)
 
     def set_value(self, value: float) -> None:
         self.adjustment.set_value(value)
@@ -61,14 +68,34 @@ class Slider:
     def connect_changed(self, callback) -> None:
         def handler(adjustment):
             value = adjustment.get_value()
-            snapped = round(value / SLIDER_STEP) * SLIDER_STEP
-            if snapped != value:
-                adjustment.set_value(snapped)
+            rounded = round(value / SLIDER_STEP) * SLIDER_STEP
+            if rounded != value:
+                adjustment.set_value(rounded)
                 return
             self.label.set_text(percent_text(from_percent(value)))
             callback(value)
 
         self.adjustment.connect("value-changed", handler)
+
+
+def labelled_row(title: str, widget: Gtk.Widget) -> Gtk.Widget:
+    row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, margin_top=8, margin_bottom=8, margin_start=12, margin_end=12)
+    label = Gtk.Label(label=title, xalign=0.0, width_chars=LABEL_WIDTH, wrap=True, valign=Gtk.Align.CENTER)
+    label.add_css_class("heading")
+    widget.set_hexpand(True)
+    row.append(label)
+    row.append(widget)
+    return row
+
+
+def card_of(rows: list[Gtk.Widget]) -> Gtk.Widget:
+    card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+    card.add_css_class("card")
+    for index, row in enumerate(rows):
+        if index:
+            card.append(Gtk.Separator())
+        card.append(row)
+    return card
 
 
 class Editor(Gtk.Box):
@@ -79,6 +106,7 @@ class Editor(Gtk.Box):
         self.on_remove = None
         self.on_choose_glyph = None
         self.on_browse_glyph = None
+        self.on_pick_suggestion = None
         self.on_banner_action = None
         self.on_apply_style = None
         self.on_delete_style = None
@@ -88,44 +116,63 @@ class Editor(Gtk.Box):
         self._existing = False
         self._blocked = False
         self._status = "ok"
+        self._drag_origin = None
+        self.suggestion_names: list[str] = []
 
         self.banner = Adw.Banner(revealed=False)
         self.banner.connect("button-clicked", lambda *_: self.on_banner_action and self.on_banner_action())
         self.append(self.banner)
 
+        columns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16, margin_top=14, margin_bottom=12, margin_start=16, margin_end=16, valign=Gtk.Align.START)
+        columns.append(self._build_preview())
+        columns.append(self._build_controls())
+        self.columns = columns
+        clamp = Adw.Clamp(maximum_size=960, tightening_threshold=720, child=columns)
+        breakpoint_bin = Adw.BreakpointBin(width_request=300, height_request=200)
+        breakpoint_bin.set_child(clamp)
+        narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse(NARROW_CONDITION))
+        narrow.add_setter(columns, "orientation", Gtk.Orientation.VERTICAL)
+        breakpoint_bin.add_breakpoint(narrow)
         scrolled = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
-        clamp = Adw.Clamp(maximum_size=640, tightening_threshold=480, margin_top=18, margin_bottom=18, margin_start=12, margin_end=12)
-        column = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
-        clamp.set_child(column)
-        scrolled.set_child(clamp)
+        scrolled.set_child(breakpoint_bin)
+        self.scrolled = scrolled
         self.append(scrolled)
-
-        column.append(self._build_preview())
-        column.append(self._build_glyph_group())
-        column.append(self._build_appearance_group())
         self.append(self._build_action_bar())
 
     def _build_preview(self) -> Gtk.Widget:
-        card = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        column = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, valign=Gtk.Align.START)
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         card.add_css_class("card")
-        inner = Adw.WrapBox(child_spacing=24, line_spacing=12, margin_top=16, margin_bottom=16, margin_start=20, margin_end=20)
+        stage = Gtk.Box(halign=Gtk.Align.CENTER, margin_top=14, margin_bottom=4, margin_start=14, margin_end=14)
         self.big = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN, can_shrink=False)
         self.big.set_size_request(BIG_SIZE, BIG_SIZE)
-        self.big.set_valign(Gtk.Align.CENTER)
-        inner.append(self.big)
+        self.big.set_cursor_from_name("grab")
+        self.big.set_tooltip_text(_("Drag the pictogram to move it, scroll to resize it"))
+        drag = Gtk.GestureDrag()
+        drag.connect("drag-begin", self._on_drag_begin)
+        drag.connect("drag-update", self._on_drag_update)
+        drag.connect("drag-end", self._on_drag_end)
+        self.big.add_controller(drag)
+        wheel = Gtk.EventControllerScroll(flags=Gtk.EventControllerScrollFlags.VERTICAL)
+        wheel.connect("scroll", self._on_scroll)
+        self.big.add_controller(wheel)
+        stage.append(self.big)
+        card.append(stage)
 
-        info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, valign=Gtk.Align.CENTER)
-        self.name_label = Gtk.Label(xalign=0.0, wrap=True, ellipsize=3)
-        self.name_label.add_css_class("title-2")
-        self.path_label = Gtk.Label(xalign=0.0, ellipsize=2)
+        info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, margin_start=14, margin_end=14)
+        self.name_label = Gtk.Label(xalign=0.0, wrap=True, ellipsize=Pango.EllipsizeMode.END)
+        self.name_label.add_css_class("title-3")
+        self.path_label = Gtk.Label(xalign=0.0, ellipsize=Pango.EllipsizeMode.MIDDLE)
         self.path_label.add_css_class("dim-label")
+        self.path_label.add_css_class("caption")
         info.append(self.name_label)
         info.append(self.path_label)
+        card.append(info)
 
-        sizes = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16, margin_top=12, valign=Gtk.Align.END)
+        sizes = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16, margin_top=10, margin_bottom=12, margin_start=14, margin_end=14, valign=Gtk.Align.END)
         self.small_pictures = []
         for size in SMALL_SIZES:
-            figure = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, valign=Gtk.Align.END)
+            figure = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, valign=Gtk.Align.END)
             picture = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN, can_shrink=False)
             picture.set_size_request(size, size)
             caption = Gtk.Label(label=_("%d px") % size)
@@ -135,82 +182,75 @@ class Editor(Gtk.Box):
             figure.append(caption)
             sizes.append(figure)
             self.small_pictures.append((size, picture))
-        info.append(sizes)
+        card.append(sizes)
+        column.append(card)
 
-        self.preview_note = Gtk.Label(xalign=0.0, wrap=True, margin_top=8)
+        self.preview_note = Gtk.Label(xalign=0.0, wrap=True)
         self.preview_note.add_css_class("caption")
         self.preview_note.add_css_class("dim-label")
-        info.append(self.preview_note)
-        inner.append(info)
-        card.append(inner)
-        return card
+        column.append(self.preview_note)
+        return column
 
-    def _build_glyph_group(self) -> Gtk.Widget:
-        group = Adw.PreferencesGroup(title=_("Pictogram"))
-        self.system_row = Adw.ActionRow(title=_("System Icon"), use_markup=False)
+    def _build_controls(self) -> Gtk.Widget:
+        column = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, hexpand=True, valign=Gtk.Align.START)
+
+        chip = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.glyph_label = Gtk.Label(xalign=0.0, hexpand=True, ellipsize=Pango.EllipsizeMode.END)
+        self.glyph_label.add_css_class("heading")
         choose = Gtk.Button(label=_("Choose…"), valign=Gtk.Align.CENTER)
         choose.connect("clicked", lambda *_: self.on_choose_glyph and self.on_choose_glyph())
-        self.system_row.add_suffix(choose)
-        self.system_row.set_activatable_widget(choose)
-        group.add(self.system_row)
+        self.choose_button = choose
+        chip.append(self.glyph_label)
+        chip.append(choose)
 
-        self.file_row = Adw.ActionRow(title=_("SVG or PNG File"), use_markup=False)
-        browse = Gtk.Button(label=_("Browse…"), valign=Gtk.Align.CENTER)
-        browse.connect("clicked", lambda *_: self.on_browse_glyph and self.on_browse_glyph())
-        self.file_row.add_suffix(browse)
-        self.file_row.set_activatable_widget(browse)
-        group.add(self.file_row)
+        self.suggestions_box = Adw.WrapBox(child_spacing=6, line_spacing=6, hexpand=True)
+        self.suggestions_row = labelled_row(_("Suggestions"), self.suggestions_box)
+        self.suggestions_row.set_visible(False)
 
-        self.text_row = Adw.EntryRow(title=_("Letters or Symbols"))
-        self.text_row.connect("changed", self._on_text_changed)
-        group.add(self.text_row)
-
-        self.tint_row = Adw.SwitchRow(title=_("Tint the Pictogram"), subtitle=_("For a file: applies the chosen color"), use_markup=False)
-        self.tint_row.connect("notify::active", self._on_tint)
-        group.add(self.tint_row)
-        return group
-
-    def _build_appearance_group(self) -> Gtk.Widget:
-        group = Adw.PreferencesGroup(title=_("Appearance"))
-        self.reset_button = Gtk.Button(label=_("Reset to Defaults"), valign=Gtk.Align.CENTER)
-        self.reset_button.add_css_class("flat")
-        self.reset_button.connect("clicked", self._on_reset_appearance)
-        suffix = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6, valign=Gtk.Align.CENTER)
-        suffix.append(self._build_styles_button())
-        suffix.append(self.reset_button)
-        group.set_header_suffix(suffix)
-
-        self.folder_tint_row = Adw.ComboRow(
-            title=_("Folder Tint"),
-            model=Gtk.StringList.new([_("None"), _("System Accent"), _("Custom")]),
-            use_markup=False,
+        self.folder_tint_palette = Palette(_("Folder Tint"), "none", self._on_folder_palette)
+        self.color_palette = Palette(_("Pictogram Color"), "auto", self._on_color_palette)
+        column.append(
+            card_of(
+                [
+                    labelled_row(_("Pictogram"), chip),
+                    self.suggestions_row,
+                    labelled_row(_("Folder Tint"), self.folder_tint_palette),
+                    labelled_row(_("Pictogram Color"), self.color_palette),
+                ]
+            )
         )
-        self.folder_tint_row.connect("notify::selected", self._on_folder_tint_mode)
-        self.folder_tint_swatch = Gtk.ColorDialogButton(dialog=Gtk.ColorDialog(with_alpha=False), valign=Gtk.Align.CENTER)
-        self.folder_tint_swatch.connect("notify::rgba", self._on_folder_tint)
-        self.folder_tint_row.add_prefix(self.folder_tint_swatch)
-        group.add(self.folder_tint_row)
-
-        self.color_row = Adw.ComboRow(
-            title=_("Color"),
-            model=Gtk.StringList.new([_("Automatic"), _("System Accent"), _("Custom")]),
-            use_markup=False,
-        )
-        self.color_row.connect("notify::selected", self._on_color_mode)
-        self.swatch = Gtk.ColorDialogButton(dialog=Gtk.ColorDialog(with_alpha=False), valign=Gtk.Align.CENTER)
-        self.swatch.connect("notify::rgba", self._on_color)
-        self.color_row.add_prefix(self.swatch)
-        group.add(self.color_row)
 
         self.size_slider = Slider(_("Size"), to_percent(MIN_SIZE), to_percent(MAX_SIZE), 100)
         self.size_slider.connect_changed(self._on_size)
-        self.x_slider = Slider(_("Horizontal Position"), -to_percent(MAX_OFFSET), to_percent(MAX_OFFSET), 0, marks=(0,))
+        self.x_slider = Slider(_("Horizontal"), -to_percent(MAX_OFFSET), to_percent(MAX_OFFSET), 0, marks=(0,))
         self.x_slider.connect_changed(self._on_offset_x)
-        self.y_slider = Slider(_("Vertical Position"), -to_percent(MAX_OFFSET), to_percent(MAX_OFFSET), 0, marks=(0,))
+        self.y_slider = Slider(_("Vertical"), -to_percent(MAX_OFFSET), to_percent(MAX_OFFSET), 0, marks=(0,))
         self.y_slider.connect_changed(self._on_offset_y)
-        for slider in (self.size_slider, self.x_slider, self.y_slider):
-            group.add(slider.row)
-        return group
+        column.append(card_of([self.size_slider.row, self.x_slider.row, self.y_slider.row]))
+
+        sources = Adw.WrapBox(child_spacing=8, line_spacing=8)
+        browse = Gtk.Button(label=_("SVG or PNG File…"))
+        browse.connect("clicked", lambda *_: self.on_browse_glyph and self.on_browse_glyph())
+        self.browse_button = browse
+        self.letters_button = Gtk.MenuButton(label=_("Letters or Symbols…"), popover=self._build_letters_popover())
+        self.tint_row = Gtk.CheckButton(label=_("Tint the Pictogram"), tooltip_text=_("For a file: applies the chosen color"))
+        self.tint_row.connect("notify::active", self._on_tint)
+        sources.append(browse)
+        sources.append(self.letters_button)
+        sources.append(self.tint_row)
+        column.append(sources)
+        return column
+
+    def _build_letters_popover(self) -> Gtk.Popover:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin_top=10, margin_bottom=10, margin_start=10, margin_end=10)
+        hint = Gtk.Label(label=_("Type 1 to 3 characters"), xalign=0.0)
+        hint.add_css_class("caption")
+        hint.add_css_class("dim-label")
+        self.text_row = Gtk.Entry(max_length=0, width_chars=12, placeholder_text=_("Letters or Symbols"))
+        self.text_row.connect("changed", self._on_text_changed)
+        box.append(hint)
+        box.append(self.text_row)
+        return Gtk.Popover(child=box)
 
     def _build_styles_button(self) -> Gtk.Widget:
         self.styles_list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
@@ -226,8 +266,7 @@ class Editor(Gtk.Box):
         box.append(scrolled)
         box.append(save)
         self.styles_popover = Gtk.Popover(child=box)
-        self.styles_button = Gtk.MenuButton(label=_("Styles"), popover=self.styles_popover, valign=Gtk.Align.CENTER)
-        self.styles_button.add_css_class("flat")
+        self.styles_button = Gtk.MenuButton(label=_("Styles"), popover=self.styles_popover, direction=Gtk.ArrowType.UP)
         return self.styles_button
 
     def set_styles(self, names: list[str]) -> None:
@@ -265,10 +304,8 @@ class Editor(Gtk.Box):
             self.on_save_style()
 
     def _build_action_bar(self) -> Gtk.Widget:
-        bar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, margin_top=10, margin_bottom=12, margin_start=12, margin_end=12)
+        bar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin_top=6, margin_bottom=10, margin_start=16, margin_end=16)
         bar.add_css_class("toolbar")
-        clamp = Adw.Clamp(maximum_size=640, tightening_threshold=480)
-        inner = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         hint = Gtk.Label(
             label=_("Nautilus does not refresh its icons by itself: after applying, press F5 in the Nautilus window."),
             wrap=True,
@@ -276,20 +313,24 @@ class Editor(Gtk.Box):
         )
         hint.add_css_class("caption")
         hint.add_css_class("dim-label")
-        inner.append(hint)
-        buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        bar.append(hint)
+        buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self.remove_button = Gtk.Button(label=_("Remove Icon"))
         self.remove_button.add_css_class("destructive-action")
         self.remove_button.add_css_class("flat")
         self.remove_button.connect("clicked", lambda *_: self.on_remove and self.on_remove())
-        self.apply_button = Gtk.Button(label=_("Apply"), hexpand=True, halign=Gtk.Align.END)
+        spacer = Gtk.Box(hexpand=True)
+        self.reset_button = Gtk.Button(label=_("Reset to Defaults"))
+        self.reset_button.connect("clicked", self._on_reset_appearance)
+        self.apply_button = Gtk.Button(label=_("Apply"))
         self.apply_button.add_css_class("suggested-action")
         self.apply_button.connect("clicked", lambda *_: self.on_apply and self.on_apply())
         buttons.append(self.remove_button)
+        buttons.append(spacer)
+        buttons.append(self._build_styles_button())
+        buttons.append(self.reset_button)
         buttons.append(self.apply_button)
-        inner.append(buttons)
-        clamp.set_child(inner)
-        bar.append(clamp)
+        bar.append(buttons)
         return bar
 
     @property
@@ -319,24 +360,30 @@ class Editor(Gtk.Box):
             self._loading = False
         self._refresh_actions()
 
+    def glyph_text(self, draft: Draft) -> str:
+        if draft.glyph_name:
+            return iconsets.display_name(draft.glyph_name, iconsets.current_language())
+        if draft.glyph_file:
+            return Path(draft.glyph_file).name
+        if draft.glyph_text:
+            return "“%s”" % draft.glyph_text
+        return _("No pictogram chosen")
+
     def _show_widgets(self, draft: Draft) -> None:
-        self.system_row.set_subtitle(iconsets.display_name(draft.glyph_name, iconsets.current_language()) if draft.glyph_name else _("No pictogram chosen"))
-        self.file_row.set_subtitle(Path(draft.glyph_file).name if draft.glyph_file else _("No file chosen"))
+        self.glyph_label.set_text(self.glyph_text(draft))
         if self.text_row.get_text() != (draft.glyph_text or ""):
             self.text_row.set_text(draft.glyph_text or "")
         self.tint_row.set_active(draft.tint)
         self.tint_row.set_sensitive(bool(draft.glyph_file))
-        self.folder_tint_row.set_selected(FOLDER_TINT_MODES.index(draft.folder_tint_mode))
-        self.folder_tint_swatch.set_rgba(rgba_from_hex(draft.folder_tint))
-        self.folder_tint_swatch.set_sensitive(draft.folder_tint_mode == "custom")
-        self.folder_tint_row.set_subtitle(self._folder_tint_subtitle(draft.folder_tint_mode, None))
-        self.color_row.set_selected(COLOR_MODES.index(draft.color_mode))
-        self.swatch.set_rgba(rgba_from_hex(draft.color))
-        self.swatch.set_sensitive(draft.color_mode == "custom")
+        self.folder_tint_palette.set_state(draft.folder_tint_mode, draft.folder_tint)
+        self.color_palette.set_state(draft.color_mode, draft.color)
+        self._show_sliders(draft)
+        self.reset_button.set_sensitive(not draft.has_default_appearance())
+
+    def _show_sliders(self, draft: Draft) -> None:
         self.size_slider.set_value(to_percent(draft.size))
         self.x_slider.set_value(to_percent(draft.offset_x))
         self.y_slider.set_value(to_percent(draft.offset_y))
-        self.reset_button.set_sensitive(not draft.has_default_appearance())
 
     def update_glyph(self, draft: Draft) -> None:
         self._loading = True
@@ -348,35 +395,33 @@ class Editor(Gtk.Box):
         self._refresh_actions()
         self._emit_change()
 
-    def set_computed_folder_tint(self, color: str | None) -> None:
-        mode = self._draft.folder_tint_mode if self._draft else "none"
-        self.folder_tint_row.set_subtitle(self._folder_tint_subtitle(mode, color))
+    def set_accent_color(self, color: str) -> None:
+        self.folder_tint_palette.set_accent(color)
+        self.color_palette.set_accent(color)
 
-    @staticmethod
-    def _folder_tint_subtitle(mode: str, color: str | None) -> str:
-        if mode == "accent":
-            return _("The accent color of your system (%s)") % color if color else _("The accent color of your system")
-        if mode == "none":
-            return _("The folder keeps the color of your icon theme")
-        return ""
+    def set_computed_folder_tint(self, color: str | None) -> None:
+        self.folder_tint_palette.set_computed(color)
 
     def set_computed_color(self, color: str | None) -> None:
-        mode = self._draft.color_mode if self._draft else "auto"
-        self.color_row.set_subtitle(self._color_subtitle(mode, color))
-        if color and mode != "custom":
-            self._loading = True
-            try:
-                self.swatch.set_rgba(rgba_from_hex(color))
-            finally:
-                self._loading = False
+        self.color_palette.set_computed(color)
 
-    @staticmethod
-    def _color_subtitle(mode: str, color: str | None) -> str:
-        if mode == "accent":
-            return _("The accent color of your system (%s)") % color if color else _("The accent color of your system")
-        if mode == "auto":
-            return _("A darker shade of the folder color (%s)") % color if color else _("A darker shade of the folder color")
-        return ""
+    def set_suggestions(self, items: list) -> None:
+        child = self.suggestions_box.get_first_child()
+        while child is not None:
+            following = child.get_next_sibling()
+            self.suggestions_box.remove(child)
+            child = following
+        self.suggestion_names = [name for name, _paintable, _label in items]
+        for name, paintable, label in items:
+            button = Gtk.Button(tooltip_text=label)
+            button.add_css_class("flat")
+            image = Gtk.Image(pixel_size=SUGGESTION_SIZE)
+            image.set_from_paintable(paintable)
+            button.set_child(image)
+            button.update_property([Gtk.AccessibleProperty.LABEL], [label])
+            button.connect("clicked", lambda _button, chosen=name: self.on_pick_suggestion and self.on_pick_suggestion(chosen))
+            self.suggestions_box.append(button)
+        self.suggestions_row.set_visible(bool(items))
 
     def set_preview(self, big, smalls: list, note: str) -> None:
         self.big.set_paintable(big)
@@ -406,19 +451,18 @@ class Editor(Gtk.Box):
         self._draft = replace(self._draft, **changes)
         self._emit_change()
 
-    def _on_text_changed(self, row) -> None:
+    def _on_text_changed(self, entry) -> None:
         if self._loading or self._draft is None:
             return
-        text = row.get_text()
+        text = entry.get_text()
         if len(text) > MAX_TEXT_LENGTH:
             text = text[:MAX_TEXT_LENGTH]
-            row.set_text(text)
+            entry.set_text(text)
             return
         self._loading = True
         try:
             self._draft = self._draft.with_glyph_text(text)
-            self.system_row.set_subtitle(_("No pictogram chosen"))
-            self.file_row.set_subtitle(_("No file chosen"))
+            self.glyph_label.set_text(self.glyph_text(self._draft))
             self.tint_row.set_sensitive(False)
         finally:
             self._loading = False
@@ -427,29 +471,17 @@ class Editor(Gtk.Box):
     def _on_tint(self, row, _param) -> None:
         self._update(tint=row.get_active())
 
-    def _on_color_mode(self, row, _param) -> None:
-        if self._loading or self._draft is None:
-            return
-        mode = COLOR_MODES[row.get_selected()]
-        self.swatch.set_sensitive(mode == "custom")
-        if mode == "custom":
-            self._update(color_mode=mode, color=hex_from_rgba(self.swatch.get_rgba()))
+    def _on_folder_palette(self, mode: str, color: str | None) -> None:
+        if color is None:
+            self._update(folder_tint_mode=mode)
         else:
+            self._update(folder_tint_mode=mode, folder_tint=color)
+
+    def _on_color_palette(self, mode: str, color: str | None) -> None:
+        if color is None:
             self._update(color_mode=mode)
-
-    def _on_folder_tint_mode(self, row, _param) -> None:
-        if self._loading or self._draft is None:
-            return
-        mode = FOLDER_TINT_MODES[row.get_selected()]
-        self.folder_tint_swatch.set_sensitive(mode == "custom")
-        self.folder_tint_row.set_subtitle(self._folder_tint_subtitle(mode, None))
-        self._update(folder_tint_mode=mode)
-
-    def _on_folder_tint(self, button, _param) -> None:
-        self._update(folder_tint=hex_from_rgba(button.get_rgba()))
-
-    def _on_color(self, button, _param) -> None:
-        self._update(color=hex_from_rgba(button.get_rgba()))
+        else:
+            self._update(color_mode=mode, color=color)
 
     def _on_size(self, value: float) -> None:
         self._update(size=from_percent(value))
@@ -459,6 +491,42 @@ class Editor(Gtk.Box):
 
     def _on_offset_y(self, value: float) -> None:
         self._update(offset_y=from_percent(value))
+
+    def _apply_direct(self, **changes) -> None:
+        if self._draft is None:
+            return
+        self._update(**changes)
+        self._loading = True
+        try:
+            self._show_sliders(self._draft)
+        finally:
+            self._loading = False
+        self.reset_button.set_sensitive(not self._draft.has_default_appearance())
+
+    def _on_drag_begin(self, _gesture, _x, _y) -> None:
+        draft = self._draft
+        self._drag_origin = (draft.offset_x, draft.offset_y) if draft is not None and draft.ready else None
+        self.big.set_cursor_from_name("grabbing")
+
+    def _on_drag_update(self, _gesture, dx: float, dy: float) -> None:
+        if self._drag_origin is None:
+            return
+        origin_x, origin_y = self._drag_origin
+        self._apply_direct(
+            offset_x=snapped(origin_x + dx / BIG_SIZE, -MAX_OFFSET, MAX_OFFSET),
+            offset_y=snapped(origin_y + dy / BIG_SIZE, -MAX_OFFSET, MAX_OFFSET),
+        )
+
+    def _on_drag_end(self, _gesture, _dx, _dy) -> None:
+        self._drag_origin = None
+        self.big.set_cursor_from_name("grab")
+
+    def _on_scroll(self, _controller, _dx: float, dy: float) -> bool:
+        draft = self._draft
+        if draft is None or not draft.ready or not dy:
+            return False
+        self._apply_direct(size=snapped(draft.size * SCROLL_FACTOR ** (-dy), MIN_SIZE, MAX_SIZE))
+        return True
 
     def _on_reset_appearance(self, _button) -> None:
         if self._draft is None:

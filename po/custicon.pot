@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 18:12+0100\n"
+"POT-Creation-Date: 2026-11-14 19:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,26 +30,41 @@ msgstr ""
 msgid "translator-credits"
 msgstr ""
 
+msgid "Drag the pictogram to move it, scroll to resize it"
+msgstr ""
+
 #, python-format
 msgid "%d px"
-msgstr ""
-
-msgid "Pictogram"
-msgstr ""
-
-msgid "System Icon"
 msgstr ""
 
 msgid "Choose…"
 msgstr ""
 
-msgid "SVG or PNG File"
+msgid "Suggestions"
 msgstr ""
 
-msgid "Browse…"
+msgid "Folder Tint"
 msgstr ""
 
-msgid "Letters or Symbols"
+msgid "Pictogram Color"
+msgstr ""
+
+msgid "Pictogram"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Horizontal"
+msgstr ""
+
+msgid "Vertical"
+msgstr ""
+
+msgid "SVG or PNG File…"
+msgstr ""
+
+msgid "Letters or Symbols…"
 msgstr ""
 
 msgid "Tint the Pictogram"
@@ -58,37 +73,10 @@ msgstr ""
 msgid "For a file: applies the chosen color"
 msgstr ""
 
-msgid "Appearance"
+msgid "Type 1 to 3 characters"
 msgstr ""
 
-msgid "Reset to Defaults"
-msgstr ""
-
-msgid "Folder Tint"
-msgstr ""
-
-msgid "None"
-msgstr ""
-
-msgid "System Accent"
-msgstr ""
-
-msgid "Custom"
-msgstr ""
-
-msgid "Color"
-msgstr ""
-
-msgid "Automatic"
-msgstr ""
-
-msgid "Size"
-msgstr ""
-
-msgid "Horizontal Position"
-msgstr ""
-
-msgid "Vertical Position"
+msgid "Letters or Symbols"
 msgstr ""
 
 msgid "No saved styles yet"
@@ -111,30 +99,13 @@ msgstr ""
 msgid "Remove Icon"
 msgstr ""
 
+msgid "Reset to Defaults"
+msgstr ""
+
 msgid "Apply"
 msgstr ""
 
 msgid "No pictogram chosen"
-msgstr ""
-
-msgid "No file chosen"
-msgstr ""
-
-#, python-format
-msgid "The accent color of your system (%s)"
-msgstr ""
-
-msgid "The accent color of your system"
-msgstr ""
-
-msgid "The folder keeps the color of your icon theme"
-msgstr ""
-
-#, python-format
-msgid "A darker shade of the folder color (%s)"
-msgstr ""
-
-msgid "A darker shade of the folder color"
 msgstr ""
 
 #, python-format
@@ -254,6 +225,45 @@ msgid "%d folder could not be updated"
 msgid_plural "%d folders could not be updated"
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "Blue"
+msgstr ""
+
+msgid "Teal"
+msgstr ""
+
+msgid "Green"
+msgstr ""
+
+msgid "Yellow"
+msgstr ""
+
+msgid "Orange"
+msgstr ""
+
+msgid "Red"
+msgstr ""
+
+msgid "Pink"
+msgstr ""
+
+msgid "Purple"
+msgstr ""
+
+msgid "Slate"
+msgstr ""
+
+msgid "None"
+msgstr ""
+
+msgid "Automatic"
+msgstr ""
+
+msgid "System Accent"
+msgstr ""
+
+msgid "Custom"
+msgstr ""
 
 msgid "Arrows"
 msgstr ""

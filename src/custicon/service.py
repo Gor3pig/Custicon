@@ -201,6 +201,9 @@ class Service:
         icon_set = self._sets.for_name(entry.settings.get("glyph_name"))
         return icon_set is not None and entry.settings.get("glyph_revision") != icon_set.revision
 
+    def accent_color(self) -> str:
+        return self._accent_color()
+
     def folder_preview(self, settings: Settings, theme_name: str | None = None) -> tuple[str | None, str | None]:
         folder_tint = self._accent_color() if settings.folder_tint_accent else settings.folder_tint
         if folder_tint is None:
