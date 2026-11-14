@@ -15,7 +15,7 @@ from .draft import Draft
 from .format import display_path, folder_name, from_percent, percent_text, to_percent
 from .palette import Palette, hex_of, rgba_of
 
-BIG_SIZE = 250
+BIG_SIZE = 180
 SMALL_SIZES = (64, 48, 32)
 MAX_TEXT_LENGTH = MAX_CHARACTERS
 SLIDER_STEP = 0.5
