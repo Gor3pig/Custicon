@@ -87,10 +87,20 @@ class GuardTests(WorkspaceTestCase):
 
 
 class HomeAccessTests(WorkspaceTestCase):
-    def access(self, filesystems):
-        info = self.make_workspace() / "flatpak-info"
+    def access(self, filesystems, names=(".var",)):
+        workspace = self.make_workspace()
+        home = workspace / "home"
+        home.mkdir(exist_ok=True)
+        for name in names:
+            (home / name).mkdir(exist_ok=True)
+        info = workspace / "flatpak-info"
         info.write_text("[Application]\nname=x\n\n[Context]\n" + (f"filesystems={filesystems}\n" if filesystems is not None else ""))
-        with mock.patch.object(environment, "FLATPAK_INFO", str(info)):
+        return self.run_access(info, home)
+
+    def run_access(self, info, home):
+        with mock.patch.object(environment, "FLATPAK_INFO", str(info)), mock.patch.object(
+            environment.os.path, "expanduser", side_effect=lambda value: str(home) if value == "~" else value
+        ):
             return environment.home_access()
 
     def test_outside_the_sandbox_the_home_folder_is_always_visible(self):
@@ -104,6 +114,43 @@ class HomeAccessTests(WorkspaceTestCase):
     def test_other_folders_do_not_grant_access_to_the_home_folder(self):
         for value in ("xdg-download;", "xdg-documents:ro;", "!home;", "/srv;", "host-os;", "", None):
             self.assertFalse(self.access(value), repr(value))
+
+    def test_the_home_folder_written_as_a_path_grants_access(self):
+        workspace = self.make_workspace()
+        home = workspace / "home"
+        home.mkdir()
+        (home / ".var").mkdir()
+        info = workspace / "flatpak-info"
+        for value in ("~;", "~:ro;", f"{home};", f"{home}:ro;", f"{home}/;", "xdg-download;~:ro;"):
+            info.write_text(f"[Context]\nfilesystems={value}\n")
+            self.assertTrue(self.run_access(info, home), value)
+
+    def test_another_folder_written_as_a_path_does_not_grant_access(self):
+        workspace = self.make_workspace()
+        home = workspace / "home"
+        home.mkdir()
+        (home / ".var").mkdir()
+        info = workspace / "flatpak-info"
+        for value in (f"{home}/Documents;", "/srv:ro;", "/;x"):
+            info.write_text(f"[Context]\nfilesystems={value}\n")
+            self.assertFalse(self.run_access(info, home), value)
+
+    def test_a_real_home_folder_is_seen_even_when_the_permission_is_not_listed(self):
+        self.assertTrue(self.access("xdg-download;", [".var", ".bashrc", "Downloads"]))
+        self.assertTrue(self.access(None, [".var", ".config"]))
+
+    def test_a_sandbox_home_with_only_the_application_data_is_not_the_real_home(self):
+        for names in ([".var"], [".var", "Downloads", "Documents"], []):
+            self.assertFalse(self.access("xdg-download;", names), names)
+
+    def test_an_empty_permission_list_with_a_bare_home_is_missing_access(self):
+        self.assertFalse(self.access("", [".var"]))
+
+    def test_an_unreadable_home_is_not_the_real_home(self):
+        workspace = self.make_workspace()
+        info = workspace / "flatpak-info"
+        info.write_text("[Context]\nfilesystems=xdg-download;\n")
+        self.assertFalse(self.run_access(info, workspace / "missing"))
 
     def test_an_unreadable_description_does_not_raise_an_alarm(self):
         info = self.make_workspace() / "flatpak-info"
