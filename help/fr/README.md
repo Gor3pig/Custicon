@@ -17,6 +17,7 @@ teinter le dossier lui-même. Ce guide décrit chaque étape.
 - [Régler l’apparence](#régler-lapparence)
 - [Appliquer et voir le résultat](#appliquer-et-voir-le-résultat)
 - [Gérer ses dossiers](#gérer-ses-dossiers)
+- [Plusieurs dossiers à la fois](#plusieurs-dossiers-à-la-fois)
 - [Retirer une icône](#retirer-une-icône)
 - [Après un changement de thème](#après-un-changement-de-thème)
 
@@ -38,11 +39,12 @@ Au premier lancement, la fenêtre propose de choisir un dossier. Vous pouvez aus
 
 ## Choisir le pictogramme
 
-Quatre possibilités, dans le groupe **Pictogramme**.
+Quatre possibilités, sur la ligne **Pictogramme** de l’éditeur. Dessous, **Suggestions** propose quelques pictogrammes
+qui correspondent au nom du dossier (par exemple un appareil photo pour un dossier « Photos ») : un clic suffit à en choisir un.
 
 ### Une icône du système, ou d’un jeu fourni
 
-**Icône du système** > **Choisir…** ouvre la liste des pictogrammes. Un sélecteur en haut passe d’une source à l’autre :
+**Choisir…** ouvre la liste des pictogrammes. Un sélecteur en haut passe d’une source à l’autre :
 
 - **Thème d’icônes** : les pictogrammes de votre thème actif.
 - **Phosphor** : 1 500 pictogrammes livrés avec Custicon (animaux, lieux, objets, symboles…).
@@ -53,10 +55,16 @@ Quatre possibilités, dans le groupe **Pictogramme**.
 
 <img src="../../data/screenshots/fr-phosphor.png" alt="Le choix du pictogramme dans le jeu Phosphor" width="800">
 
+<img src="../../data/screenshots/fr-emoji.png" alt="Le choix d’un émoji" width="800">
+
+<img src="../../data/screenshots/fr-brands.png" alt="Le choix d’un logo de marque" width="800">
+
 - Tapez un mot dans le champ de recherche, en anglais ou en français. Les noms sont en anglais
   (par exemple `camera`, `music`, `folder`, `star`), mais Custicon connaît aussi des mots français
   (`maison`, `musique`, `étoile`, `photo`, `chat`, `voiture`…), sans tenir compte des accents ni des majuscules.
   La recherche reste en place quand vous changez de jeu.
+- Le menu **Toutes** à côté des sources restreint la liste à une catégorie (animaux, lieux, objets…).
+- La barre latérale liste les **Suggestions** pour le dossier, vos pictogrammes **Récents** et vos **Favoris**. L’étoile en bas ajoute ou retire le pictogramme sélectionné des favoris. Sur une fenêtre étroite, la barre latérale est masquée.
 - Cliquez sur un pictogramme puis sur **Choisir**, ou double-cliquez dessus.
 - Si le thème actif ne fournit pas l’icône demandée, Custicon utilise celle d’Adwaita.
 - Un pictogramme d’un jeu fourni est indiqué avec le nom du jeu après son nom, par exemple « camera (Phosphor) ».
@@ -66,7 +74,7 @@ Quatre possibilités, dans le groupe **Pictogramme**.
 
 ### Un fichier
 
-**Fichier SVG ou PNG** > **Parcourir…** permet de prendre votre propre image.
+**Fichier SVG ou PNG…** permet de prendre votre propre image.
 
 - **Teinter le pictogramme** applique la couleur choisie à l’image. Pour un SVG, les couleurs
   d’origine sont remplacées ; pour un PNG, seule la forme (la transparence) est conservée.
@@ -74,36 +82,39 @@ Quatre possibilités, dans le groupe **Pictogramme**.
 
 ### Des lettres ou des symboles
 
-**Lettres ou symboles** permet de taper 1 à 3 caractères (par exemple `Z`, `A1`, `é`) qui servent de pictogramme.
+**Lettres ou symboles…** permet de taper 1 à 3 caractères (par exemple `Z`, `A1`, `é`) qui servent de pictogramme.
 Ils sont dessinés en vectoriel et teintés comme n’importe quel pictogramme du thème. Un caractère que la police
 ne sait pas dessiner est refusé avec un message. Choisir une icône ou un fichier efface le texte, et inversement.
 
 ## Régler l’apparence
 
-Le groupe **Apparence** règle le rendu. L’aperçu en haut de l’éditeur montre le résultat
-à quatre tailles, avec l’icône de dossier de votre thème actif.
+La colonne de gauche de l’éditeur montre l’aperçu, à quatre tailles, avec l’icône de dossier de votre thème actif.
+La colonne de droite règle le rendu.
 
 <img src="../../data/screenshots/fr-tint.png" alt="Un dossier teinté en orange avec son pictogramme" width="800">
 
-- **Teinte du dossier** : trois choix.
-  - **Aucune** : le dossier garde la couleur de votre thème d’icônes.
+- **Teinte du dossier** : une rangée de pastilles.
+  - La pastille barrée (**Aucune**) : le dossier garde la couleur de votre thème d’icônes.
   - **Accent du système** : le dossier prend la couleur d’accent choisie dans les paramètres de GNOME.
-  - **Personnalisée** : la pastille permet de choisir la couleur vous-même.
+  - Les neuf couleurs de la palette (bleu, sarcelle, vert, jaune, orange, rouge, rose, violet, ardoise).
+  - La dernière pastille (**Personnalisée**) ouvre un sélecteur de couleur.
 
   Le relief du dossier (ses zones claires et sombres) est conservé, et le fichier du thème n’est jamais modifié.
   Un gris, un blanc ou un noir donne un dossier désaturé plutôt qu’une couleur franche.
-- **Couleur** (du pictogramme) : trois choix.
-  - **Automatique** : Custicon prend la couleur de la face du dossier, teinte comprise, et en déduit une couleur
+- **Couleur du pictogramme** : la même rangée de pastilles.
+  - **Automatique** (première pastille) : Custicon prend la couleur de la face du dossier, teinte comprise, et en déduit une couleur
     plus foncée, comme le font les dossiers Documents ou Musique.
   - **Accent du système** : la couleur d’accent choisie dans les paramètres de GNOME. Quand vous la changez,
     un bandeau propose de régénérer les icônes qui la suivent.
-  - **Personnalisée** : la pastille permet de choisir la couleur vous-même.
+  - La palette et la pastille personnalisée fonctionnent comme pour la teinte du dossier.
 - **Taille** : de 20 % à 300 % de la taille d’origine.
-- **Position horizontale** et **Position verticale** : de -50 % à +50 %, depuis le centre de la face du dossier.
+- **Horizontal** et **Vertical** : la position, de -50 % à +50 %, depuis le centre de la face du dossier.
 - **Rétablir les valeurs par défaut** remet l’absence de teinte, la couleur automatique, la taille et la position d’origine.
 
 Les curseurs avancent par pas de 0,5 % (flèches du clavier ; Page précédente et Page suivante par pas de 5 %).
-Ils s’élargissent avec la fenêtre, ce qui rend le réglage à la souris plus précis.
+
+Vous pouvez aussi agir directement sur l’aperçu : **faites glisser le pictogramme** pour le déplacer et **utilisez la molette** au-dessus pour le redimensionner.
+Les curseurs suivent. Sur une fenêtre étroite, les deux colonnes s’empilent et l’éditeur défile.
 
 ### Styles nommés
 
@@ -152,8 +163,24 @@ sans tenir compte des accents ni des majuscules.
 ### Ouvrir un dossier depuis Nautilus
 
 Clic droit sur un dossier dans Nautilus, puis **Ouvrir avec Custicon**. Vous pouvez aussi glisser un dossier sur la fenêtre,
-ou lancer `flatpak run io.github.gor3pig.Custicon /chemin/du/dossier`. Un seul dossier est ouvert à la fois,
+ou lancer `flatpak run io.github.gor3pig.Custicon /chemin/du/dossier`. Plusieurs dossiers s’ouvrent en lot (voir plus bas),
 et un fichier est refusé. Si Custicon tourne déjà, la même fenêtre est réutilisée.
+
+### Plusieurs dossiers à la fois
+
+Deux façons de donner le même pictogramme et le même aspect à plusieurs dossiers :
+
+- **Ajouter un dossier** permet de choisir plusieurs dossiers d’un coup, et glisser plusieurs dossiers sur la fenêtre
+  ou les ouvrir depuis Nautilus fait de même.
+- Le bouton à la coche, en haut de la liste, active un **mode sélection** : cochez les dossiers voulus
+  (un clic sur une ligne la coche), y compris des dossiers déjà personnalisés.
+
+<img src="../../data/screenshots/fr-choosing.png" alt="Des dossiers cochés en mode sélection" width="800">
+
+À partir de deux dossiers, l’éditeur affiche « 3 dossiers » et le bouton **Appliquer à 3 dossiers**. Choisissez le pictogramme
+et l’apparence comme d’habitude, puis appliquez : chaque dossier les reçoit, à la place de son icône précédente. Si certains échouent,
+les autres sont quand même faits et un compte rendu liste les échecs. Quittez le mode sélection avec le même bouton.
+Le retrait d’icônes se fait toujours dossier par dossier.
 
 ## Retirer une icône
 

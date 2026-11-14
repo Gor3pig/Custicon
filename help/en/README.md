@@ -17,6 +17,7 @@ itself. This guide describes every step.
 - [Adjusting the appearance](#adjusting-the-appearance)
 - [Applying and seeing the result](#applying-and-seeing-the-result)
 - [Managing your folders](#managing-your-folders)
+- [Several folders at once](#several-folders-at-once)
 - [Removing an icon](#removing-an-icon)
 - [After a theme change](#after-a-theme-change)
 
@@ -38,11 +39,12 @@ On first launch, the window offers to choose a folder. You can also use
 
 ## Choosing the pictogram
 
-Four possibilities, in the **Pictogram** group.
+Four possibilities, in the **Pictogram** line of the editor. Under it, **Suggestions** offers a few pictograms
+that match the name of the folder (for example a camera for a folder called “Photos”): one click chooses one.
 
 ### A system icon, or an icon from a bundled set
 
-**System Icon** > **Choose…** opens the list of pictograms. A switch at the top goes from one source to another:
+**Choose…** opens the list of pictograms. A switch at the top goes from one source to another:
 
 - **Icon theme**: the pictograms of your current theme.
 - **Phosphor**: 1,500 pictograms shipped with Custicon (animals, places, objects, symbols…).
@@ -53,10 +55,16 @@ Four possibilities, in the **Pictogram** group.
 
 <img src="../../data/screenshots/en-phosphor.png" alt="Choosing a pictogram in the Phosphor set" width="800">
 
+<img src="../../data/screenshots/en-emoji.png" alt="Choosing an emoji" width="800">
+
+<img src="../../data/screenshots/en-brands.png" alt="Choosing a brand logo" width="800">
+
 - Type a word in the search field, in English or in French. The names are in English
   (for example `camera`, `music`, `folder`, `star`), but Custicon also knows French words
   (`maison`, `musique`, `étoile`, `photo`, `chat`, `voiture`…), ignoring accents and case.
   The search stays in place when you switch sets.
+- The **All** menu next to the sources narrows the list to a category (animals, places, objects…).
+- The side bar lists the **Suggestions** for the folder, your **Recent** pictograms and your **Favorites**. The star at the bottom adds or removes the selected pictogram from the favorites. On a narrow window, the side bar is hidden.
 - Click a pictogram then **Choose**, or double-click it.
 - If the current theme does not provide the requested icon, Custicon uses the Adwaita one.
 - A pictogram from a bundled set is shown with the name of the set after its name, for example “camera (Phosphor)”.
@@ -66,7 +74,7 @@ Four possibilities, in the **Pictogram** group.
 
 ### A file
 
-**SVG or PNG File** > **Browse…** lets you use your own image.
+**SVG or PNG File…** lets you use your own image.
 
 - **Tint the Pictogram** applies the chosen color to the image. For an SVG, the original colors are replaced;
   for a PNG, only the shape (the transparency) is kept.
@@ -74,36 +82,39 @@ Four possibilities, in the **Pictogram** group.
 
 ### Letters or symbols
 
-**Letters or Symbols** lets you type 1 to 3 characters (for example `Z`, `A1`, `é`) that serve as the pictogram.
+**Letters or Symbols…** lets you type 1 to 3 characters (for example `Z`, `A1`, `é`) that serve as the pictogram.
 They are drawn as vectors and tinted like any theme pictogram. A character the font cannot draw is refused with a message.
 Choosing an icon or a file clears the text, and the other way round.
 
 ## Adjusting the appearance
 
-The **Appearance** group sets the rendering. The preview at the top of the editor shows the result
-at four sizes, with the folder icon of your current theme.
+The left column of the editor shows the preview, at four sizes, with the folder icon of your current theme.
+The right column sets the rendering.
 
 <img src="../../data/screenshots/en-tint.png" alt="A folder tinted orange with its pictogram" width="800">
 
-- **Folder Tint**: three choices.
-  - **None**: the folder keeps the color of your icon theme.
+- **Folder Tint**: a row of swatches.
+  - The crossed swatch (**None**): the folder keeps the color of your icon theme.
   - **System Accent**: the folder takes the accent color chosen in the GNOME settings.
-  - **Custom**: the swatch lets you pick the color yourself.
+  - The nine colors of the palette (blue, teal, green, yellow, orange, red, pink, purple, slate).
+  - The last swatch (**Custom**) opens a color chooser.
 
   The relief of the folder (its light and dark areas) is kept, and the theme file is never modified.
   A gray, a white or a black gives a desaturated folder rather than a vivid color.
-- **Color** (of the pictogram): three choices.
-  - **Automatic**: Custicon takes the color of the folder face, tint included, and derives a darker
+- **Pictogram Color**: the same row of swatches.
+  - **Automatic** (the first swatch): Custicon takes the color of the folder face, tint included, and derives a darker
     color from it, as the Documents or Music folders do.
   - **System Accent**: the accent color chosen in the GNOME settings. When you change it,
     a banner offers to regenerate the icons that follow it.
-  - **Custom**: the swatch lets you pick the color yourself.
+  - The palette and the custom swatch work as for the folder tint.
 - **Size**: from 20% to 300% of the original size.
-- **Horizontal Position** and **Vertical Position**: from -50% to +50%, from the center of the folder face.
+- **Horizontal** and **Vertical**: the position, from -50% to +50%, from the center of the folder face.
 - **Reset to Defaults** brings back no tint, the automatic color, and the original size and position.
 
 The sliders move in steps of 0.5% (arrow keys; Page Up and Page Down move by 5%).
-They widen with the window, which makes mouse adjustment more precise.
+
+You can also act directly on the preview: **drag the pictogram** to move it and **scroll the wheel** over it to resize it.
+The sliders follow. On a narrow window, the two columns stack and the editor scrolls.
 
 ### Named styles
 
@@ -152,8 +163,24 @@ ignoring accents and case.
 ### Opening a folder from Nautilus
 
 Right-click a folder in Nautilus, then **Open with Custicon**. You can also drag a folder onto the window,
-or run `flatpak run io.github.gor3pig.Custicon /path/to/folder`. Only one folder is opened at a time,
+or run `flatpak run io.github.gor3pig.Custicon /path/to/folder`. Several folders open as a batch (see below),
 and a file is refused. If Custicon is already running, the same window is reused.
+
+### Several folders at once
+
+Two ways to give the same pictogram and the same look to several folders:
+
+- **Add Folder** lets you choose several folders at once, and dropping several folders on the window or opening
+  them from Nautilus does the same.
+- The button with the check mark at the top of the list turns on a **selection mode**: check the folders you want
+  (a click on a row checks it), including folders that are already customized.
+
+<img src="../../data/screenshots/en-choosing.png" alt="Folders ticked in selection mode" width="800">
+
+From two folders, the editor shows “3 folders” and the **Apply to 3 Folders** button. Choose the pictogram and
+the appearance as usual, then apply: every folder gets them, replacing its previous icon. If some folders fail,
+the others are still done and a report lists the failures. Turn the selection mode off with the same button.
+Removing icons is still done one folder at a time.
 
 ## Removing an icon
 
