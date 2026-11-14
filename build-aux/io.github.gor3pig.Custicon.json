@@ -9,6 +9,7 @@
     "--share=ipc",
     "--socket=fallback-x11",
     "--socket=wayland",
+    "--device=dri",
     "--filesystem=home:ro",
     "--talk-name=org.gtk.vfs.Metadata",
     "--talk-name=org.gtk.vfs.Daemon"

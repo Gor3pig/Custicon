@@ -263,17 +263,23 @@ The app store flags this permission because it covers all your files in read mod
 
 **Custicon says it cannot see my home folder.**
 Access was removed or not granted. Allow it in Settings (Applications, then Custicon),
-or run in a terminal:
+in Flatseal (**All user files**, read only), or run in a terminal:
 
 ```sh
 flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon
 ```
 
-then restart Custicon. If the message comes back, a permission override may be removing the access:
+then restart Custicon. This works for an installation for all users too (a per-user override applies to it).
+If the message comes back, a permission override may be removing the access:
 `flatpak override --user --show io.github.gor3pig.Custicon` (and `flatpak override --show io.github.gor3pig.Custicon`
 for the system-wide override) lists them, and `flatpak override --user --reset io.github.gor3pig.Custicon` deletes
 those of your user. The command `flatpak run --command=cat io.github.gor3pig.Custicon /.flatpak-info` shows what the
 application really sees.
+
+**The interface feels slow.**
+Custicon asks for GPU access (`--device=dri`) so that the interface is drawn by the graphics card. If a permission override removes it,
+the interface falls back to software drawing and becomes sluggish: check with `flatpak override --user --show io.github.gor3pig.Custicon` and
+restore it with `flatpak override --user --device=dri io.github.gor3pig.Custicon`.
 
 **Why can only folders inside the home folder be chosen?**
 For Nautilus to see the icon, Custicon has to write to the real path of the folder. External

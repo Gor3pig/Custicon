@@ -28,13 +28,21 @@ data of the application and disappear with it if you add the `--delete-data` opt
 
 ## Permissions
 
-Custicon runs in the Flatpak sandbox and only asks for what it needs: the display, **read-only** access to your home
-folder (to see the real path of your folders and read your icon themes) and communication with the GVfs metadata
-service, which writes the icon outside the sandbox. The content of your folders therefore cannot be modified by Custicon.
-It has no network access. Details are in [architecture.md](architecture.md) (in French).
+Custicon runs in the Flatpak sandbox and asks for exactly this, no more (`check.sh` fails if the list changes):
 
-The app store flags this permission because it covers all your files in read mode. It is required: without the real
-path of the folder, GVfs saves the icon in a tree that Nautilus does not read. If access is missing, Custicon says so
-and gives the command `flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon`.
-If the message comes back, a permission override may be removing the access: see the
-[guide](../help/en/README.md#questions-and-answers).
+| Permission | Why |
+|---|---|
+| `--socket=wayland`, `--socket=fallback-x11`, `--share=ipc` | Show the window (X11 only when Wayland is not available). |
+| `--device=dri` | Draw the interface with the graphics card. Without it GTK falls back to software drawing, which is slow. |
+| `--filesystem=home:ro` | **Read-only** access to the home folder, to know the real path of the folders and to read your icon themes. |
+| `--talk-name=org.gtk.vfs.Metadata`, `org.gtk.vfs.Daemon` | Let the GVfs service of your session write the icon outside the sandbox. |
+
+The content of your folders cannot be modified by Custicon, and it has no network access.
+
+The app store flags the home folder permission because it covers all your files in read mode. It is required: without the real
+path of the folder, GVfs saves the icon in a tree that Nautilus does not read.
+
+A permission can always be removed by the user or the administrator (Flatseal, `flatpak override`, per user, global or system-wide).
+No setting of the package can prevent it. If access to the home folder is missing, Custicon says so and gives the command
+`flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon`, which also works for an installation for all users.
+If the message comes back, an override may be removing the access: see the [guide](../help/en/README.md#questions-and-answers).

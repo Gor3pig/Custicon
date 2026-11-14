@@ -263,16 +263,22 @@ Le magasin d’applications signale cette permission, car elle concerne tous vos
 
 **Custicon indique qu’il ne voit pas mon dossier personnel.**
 L’accès a été retiré ou n’a pas été accordé. Autorisez-le dans les Paramètres (Applications, puis Custicon),
-ou lancez dans un terminal :
+dans Flatseal (**Tous les fichiers de l’utilisateur**, en lecture seule), ou lancez dans un terminal :
 
 ```sh
 flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon
 ```
 
-puis relancez Custicon. Si le message revient, une surcharge de permissions retire peut-être l’accès : `flatpak override --user --show io.github.gor3pig.Custicon`
+puis relancez Custicon. Cela convient aussi à une installation pour tous les utilisateurs (une surcharge de l’utilisateur s’y applique).
+Si le message revient, une surcharge de permissions retire peut-être l’accès : `flatpak override --user --show io.github.gor3pig.Custicon`
 (et `flatpak override --show io.github.gor3pig.Custicon` pour la surcharge système) les affiche, et
 `flatpak override --user --reset io.github.gor3pig.Custicon` supprime celles de votre utilisateur.
 La commande `flatpak run --command=cat io.github.gor3pig.Custicon /.flatpak-info` montre ce que l’application voit réellement.
+
+**L’interface est lente.**
+Custicon demande l’accès au GPU (`--device=dri`) pour que l’interface soit dessinée par la carte graphique. Si une surcharge de permissions le retire,
+l’interface retombe sur un dessin logiciel et devient poussive : vérifiez avec `flatpak override --user --show io.github.gor3pig.Custicon` et
+rétablissez-le avec `flatpak override --user --device=dri io.github.gor3pig.Custicon`.
 
 **Pourquoi ne peut-on choisir que les dossiers du dossier personnel ?**
 Pour que Nautilus voie l’icône, Custicon doit écrire sur le vrai chemin du dossier. Les disques

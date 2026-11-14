@@ -122,7 +122,24 @@ flatpak_repository_files_match() {
 }
 
 validate_manifest() {
-    python3 -c "import json,sys; json.load(open('build-aux/$APP_ID.json'))"
+    python3 - "build-aux/$APP_ID.json" <<'PY'
+import json
+import sys
+
+EXPECTED = [
+    "--share=ipc",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--device=dri",
+    "--filesystem=home:ro",
+    "--talk-name=org.gtk.vfs.Metadata",
+    "--talk-name=org.gtk.vfs.Daemon",
+]
+arguments = json.load(open(sys.argv[1]))["finish-args"]
+if sorted(arguments) != sorted(EXPECTED):
+    print("finish-args differ from the reviewed permissions:", sorted(set(arguments) ^ set(EXPECTED)))
+    sys.exit(1)
+PY
 }
 
 translatable_files_are_listed() {

@@ -930,7 +930,7 @@ class MainWindow(Adw.ApplicationWindow):
             heading=_("Allow Access to Your Home Folder"),
             body=_(
                 "Custicon needs to see the real location of your folders. It only reads them: the content of a folder is never modified.\n\n"
-                "Allow access to the home folder in the Settings (Applications, then Custicon), or run this command in a terminal, then restart Custicon:"
+                "Allow access to the home folder in the Settings (Applications, then Custicon) or in Flatseal, or run this command in a terminal, then restart Custicon. It works for an installation for all users too:"
             ),
         )
         command = Gtk.Label(label=environment.FLATPAK_COMMAND, selectable=True, wrap=True, xalign=0.0, margin_top=6)
