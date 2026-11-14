@@ -24,16 +24,17 @@ Le code est dans `src/custicon/`. La logique ne dépend de GTK que pour la réso
 | `themes.py` | Résolution des icônes avec `Gtk.IconTheme`, lecture du thème actif et de la couleur d’accent par le portail de réglages, recherche de pictogrammes. |
 | `textglyph.py` | Conversion de 1 à 3 caractères en tracé SVG (Pango et cairo), pour les pictogrammes en lettres. |
 | `keywords.py`, `textutil.py` | Dictionnaires hors ligne mots français vers fragments de noms (thème et jeu Phosphor), et normalisation sans accents ni casse. |
-| `iconsets.py`, `phosphor/` | Jeu de pictogrammes Phosphor livré avec l’application (noms préfixés `phosphor:`), avec sa licence MIT. |
+| `iconsets.py`, `phosphor/`, `emoji/`, `brands/` | Registre des jeux de pictogrammes livrés (noms préfixés `phosphor:`, `emoji:`, `brand:`), chacun avec son index (étiquettes, catégories, noms français) et sa licence. Les données viennent de `build-aux/update-icon-sets.py`, épinglé sur un commit et des empreintes. |
+| `suggestions.py` | Suggestions de pictogrammes d’après les mots du nom du dossier, réparties entre les jeux. |
 | `render.py` | Rendu des SVG et des PNG avec librsvg et cairo. |
 | `color.py` | Couleur de la face du dossier et teinte automatique plus foncée. |
 | `compose.py` | Assemblage du SVG final, recoloration du pictogramme, teinte du dossier, nettoyage des fichiers fournis. |
 | `metadata.py` | Lecture, écriture et suppression de `metadata::custom-icon`, avec relecture. |
-| `store.py` | Registre JSON, images générées rangées par empreinte du contenu, copies des pictogrammes, apparence mémorisée (`defaults.json`) et styles (`styles.json`). |
-| `service.py` | Appliquer, réinitialiser (un dossier ou tous), annuler un retrait, retrouver un dossier déplacé, régénérer, styles, nettoyage. Seul point d’entrée de l’interface. |
+| `store.py` | Registre JSON, images générées rangées par empreinte du contenu, copies des pictogrammes, apparence mémorisée (`defaults.json`), styles (`styles.json`) et pictogrammes récents et favoris (`picker.json`). |
+| `service.py` | Appliquer (un dossier ou plusieurs avec `apply_many`, qui continue après un échec et rend un compte rendu), réinitialiser (un dossier ou tous), annuler un retrait, retrouver un dossier déplacé, régénérer, styles, nettoyage. Seul point d’entrée de l’interface. |
 | `environment.py` | Adaptation à l’exécution dans un bac à sable Flatpak, détection de l’accès au dossier personnel. |
 | `aboutinfo.py` | Notes de version lues dans la metainfo (français ou anglais) et adresse du guide selon la langue. |
-| `ui/` | Fenêtre, éditeur, sélecteur de pictogramme, boîte « À propos » et logique de présentation. |
+| `ui/` | Fenêtre (liste, mode sélection, lot de dossiers), éditeur en deux colonnes (aperçu manipulable à la souris), palette de pastilles (`palette.py`), sélecteur de pictogramme (`Gtk.GridView`), boîte « À propos » et logique de présentation. |
 | `app.py`, `capture.py` | Application, et mode capture d’écran sans affichage. |
 
 ## Fidélité au thème
@@ -113,7 +114,7 @@ L’interface le rappelle à chaque endroit où cela compte.
 
 `./check.sh` lance, dans l’ordre : absence de commentaires dans le code, cohérence des versions,
 validation du fichier `.desktop`, des métadonnées AppStream et du manifeste, complétude des traductions et
-typographie française, tests unitaires, puis tests de l’interface sur un affichage Broadway virtuel
+typographie française, tests unitaires, puis tests de l’interface et du site web (WebKit) sur un affichage Broadway virtuel
 (jamais sur la session graphique de l’utilisateur).
 
 Les tests qui touchent à GVfs vérifient les métadonnées réelles et se sautent si le service est absent.
@@ -145,6 +146,19 @@ de données) et écrit une métadonnée dans les dossiers de l’utilisateur. Ce
   d’échec ; l’icône d’origine de l’utilisateur n’est jamais perdue. Le registre est écrit de façon atomique,
   doublé d’une sauvegarde, et validé à la lecture.
 - **Nettoyage prudent** : une image n’est supprimée que si aucun dossier ne la référence.
+
+## Fonctions de la 1.4
+
+- **Jeux de pictogrammes** : `IconSets` regroupe le thème, Phosphor (1 512, graisse normale), les émoji Fluent monochromes (1 595, noms français
+  du CLDR) et les logos Simple Icons (3 467, trois exclus). Un nom enregistré porte son préfixe ; la recherche ignore les accents.
+  `Settings.glyph_revision` marque les icônes générées avec une ancienne version d’un jeu, ce qui commande le bandeau de régénération.
+- **Sélecteur** : grille virtualisée, catégories, barre latérale (suggestions, récents, favoris) masquée sur fenêtre étroite.
+- **Éditeur** : deux colonnes dans un `Adw.BreakpointBin` (une seule colonne sous 600 sp). Le glisser (`Gtk.GestureDrag`) et la molette
+  agissent sur le brouillon sans passer par les curseurs, qui suivent.
+- **Plusieurs dossiers** : un lot (`MainWindow._batch`) se forme depuis le sélecteur de dossiers, le dépôt de fichiers ou le mode sélection
+  de la liste. Il est protégé du rechargement automatique de la fenêtre.
+- **Site web** : `data/website/`, page anglaise et page française, diaporama et visionneuse en JavaScript simple, redirection selon la langue
+  du navigateur (`language.js`, choix mémorisé). `tests/test_website.py` vérifie les liens et rejoue ces comportements dans WebKit.
 
 ## Fonctions ajoutées après la 1.0
 

@@ -22,7 +22,8 @@ maintient le dépôt.
   à l’adresse `https://gor3pig.github.io/Custicon/repo/`. Les copies installées depuis `custicon.flatpakref` proposent alors la mise à jour.
   Il peut aussi être lancé à la main (onglet **Actions**, depuis `main`) pour republier le dépôt à partir de la dernière release.
 
-Il n’y a pas de site web : Pages ne sert que le dépôt signé (`repo/`), `custicon.flatpakref`, `custicon.flatpakrepo`, `custicon.gpg` et l’icône.
+Pages sert le site (`data/website/`, en anglais et en français), le dépôt signé (`repo/`), `custicon.flatpakref`, `custicon.flatpakrepo`, `custicon.gpg` et l’icône.
+Un changement sous `data/website/` relance aussi la publication.
 
 ## Le dépôt Flatpak et sa clé
 
