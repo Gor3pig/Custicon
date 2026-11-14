@@ -130,6 +130,7 @@ EXPECTED = [
     "--share=ipc",
     "--socket=fallback-x11",
     "--socket=wayland",
+    "--nosocket=x11",
     "--device=dri",
     "--filesystem=home:ro",
     "--talk-name=org.gtk.vfs.Metadata",

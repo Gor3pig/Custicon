@@ -83,6 +83,7 @@ externes sont retirés, et la taille est limitée à 5 Mo.
 | Permission | Justification |
 |---|---|
 | `--socket=wayland`, `--socket=fallback-x11`, `--share=ipc` | Affichage GTK. |
+| `--nosocket=x11` | Empêche le socket X11 permanent : `flatpak build-finish` de Flatpak 1.16 (celui du CI) l’ajoute de lui-même quand `fallback-x11` est demandé, ce qui donnerait toujours accès à X11. À placer **après** les sockets. |
 | `--device=dri` | Accélération graphique : sans elle, GTK4 dessine en logiciel et l’interface devient lente (ajoutée en 1.4.1). |
 | `--filesystem=home:ro` | Voir le **vrai chemin** des dossiers, en **lecture seule**. L’application ne peut donc pas modifier le contenu de vos dossiers : seul le service GVfs de l’hôte écrit la métadonnée, hors du bac à sable. Un accès plus restreint est dangereux : le point de montage vu du bac à sable diffère alors de celui de l’hôte et GVfs écrit dans un arbre que Nautilus ne lit pas, sans erreur. Les dossiers de thèmes de l’hôte sont visibles sans cette permission. Le dossier de données de l’application reste accessible en écriture. |
 | `--talk-name=org.gtk.vfs.Metadata` et `org.gtk.vfs.Daemon` | Communiquer avec le démon de métadonnées de GVfs. Sans les deux, l’écriture est refusée. |

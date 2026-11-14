@@ -33,6 +33,7 @@ Custicon runs in the Flatpak sandbox and asks for exactly this, no more (`check.
 | Permission | Why |
 |---|---|
 | `--socket=wayland`, `--socket=fallback-x11`, `--share=ipc` | Show the window (X11 only when Wayland is not available). |
+| `--nosocket=x11` | Keeps the permanent X11 socket out: some versions of Flatpak add it by themselves when a package asks for `fallback-x11`. |
 | `--device=dri` | Draw the interface with the graphics card. Without it GTK falls back to software drawing, which is slow. |
 | `--filesystem=home:ro` | **Read-only** access to the home folder, to know the real path of the folders and to read your icon themes. |
 | `--talk-name=org.gtk.vfs.Metadata`, `org.gtk.vfs.Daemon` | Let the GVfs service of your session write the icon outside the sandbox. |
