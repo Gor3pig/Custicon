@@ -81,19 +81,35 @@ in the data space of the application. Nothing is written into the folder itself.
 
 Custicon is distributed as a Flatpak package.
 
-### From a release (the simplest)
+### From the Flatpak repository (recommended)
 
-Download the `custicon-X.Y.Z.flatpak` file attached to a [release](https://github.com/Gor3pig/Custicon/releases)
-(the repository is private: sign in to GitHub first), then:
+Fedora, Linux Mint, Pop!_OS and many other distributions ship Flatpak already. On Ubuntu and a few others,
+follow the [official guide for your distribution](https://flathub.org/setup) first, then restart your session.
+
+Open [custicon.flatpakref](https://gor3pig.github.io/Custicon/custicon.flatpakref) with the Software app, or run this command:
+
+```sh
+flatpak install --user https://gor3pig.github.io/Custicon/custicon.flatpakref
+flatpak run io.github.gor3pig.Custicon
+```
+
+Flatpak may offer to add Flathub to install the GNOME 51 platform. Without the `--user` option, the installation is system-wide.
+
+Custicon is then updated like your other apps: the Software app offers each new version, or run `flatpak update`.
+Every update is signed.
+
+### From a release file
+
+The `custicon-X.Y.Z.flatpak` file attached to each [release](https://github.com/Gor3pig/Custicon/releases) is an alternative.
+It is not updated by itself:
 
 ```sh
 sha256sum -c custicon-X.Y.Z.flatpak.sha256
 flatpak install --user custicon-X.Y.Z.flatpak
-flatpak run io.github.gor3pig.Custicon
 ```
 
-Flatpak may offer to add Flathub to install the GNOME 51 platform. Without the `--user` option,
-the installation is system-wide.
+If you installed Custicon this way and want automatic updates, uninstall it with `flatpak uninstall io.github.gor3pig.Custicon`
+and install it again from the `.flatpakref` file above. Your styles and customized folders are kept, as long as you do not add `--delete-data`.
 
 ### From the sources
 
@@ -156,7 +172,7 @@ application files, translations):
 ./check.sh
 ```
 
-It needs Python 3, PyGObject, GTK4, Libadwaita, librsvg, GVfs, `gettext`, `desktop-file-validate`
+It needs Python 3, PyGObject, GTK4, Libadwaita, librsvg, GVfs, `gettext`, `gpg`, `desktop-file-validate`
 and `appstreamcli`. The interface tests use `gtk4-broadwayd`, shipped with GTK4, and a session bus
 (`dbus-run-session` is used when there is none).
 

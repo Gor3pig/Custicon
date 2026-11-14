@@ -81,19 +81,35 @@ dans l’espace de données de l’application. Rien n’est écrit dans le doss
 
 Custicon se distribue sous forme de paquet Flatpak.
 
-### Depuis une release (le plus simple)
+### Depuis le dépôt Flatpak (recommandé)
 
-Téléchargez le fichier `custicon-X.Y.Z.flatpak` joint à une [release](https://github.com/Gor3pig/Custicon/releases)
-(le dépôt est privé : connectez-vous d’abord à GitHub), puis :
+Fedora, Linux Mint, Pop!_OS et beaucoup d’autres distributions fournissent déjà Flatpak. Sur Ubuntu et quelques autres,
+suivez d’abord le [guide officiel de votre distribution](https://flathub.org/setup), puis redémarrez votre session.
+
+Ouvrez [custicon.flatpakref](https://gor3pig.github.io/Custicon/custicon.flatpakref) avec l’application Logiciels, ou lancez cette commande :
+
+```sh
+flatpak install --user https://gor3pig.github.io/Custicon/custicon.flatpakref
+flatpak run io.github.gor3pig.Custicon
+```
+
+Flatpak propose d’ajouter Flathub pour installer l’environnement GNOME 51 si besoin. Sans l’option `--user`, l’installation est faite pour tout le système.
+
+Custicon se met ensuite à jour comme vos autres applications : l’application Logiciels propose chaque nouvelle version, ou lancez `flatpak update`.
+Chaque mise à jour est signée.
+
+### Depuis un fichier de release
+
+Le fichier `custicon-X.Y.Z.flatpak` joint à chaque [release](https://github.com/Gor3pig/Custicon/releases) est une solution de repli.
+Il ne se met pas à jour tout seul :
 
 ```sh
 sha256sum -c custicon-X.Y.Z.flatpak.sha256
 flatpak install --user custicon-X.Y.Z.flatpak
-flatpak run io.github.gor3pig.Custicon
 ```
 
-Flatpak propose d’ajouter Flathub pour installer l’environnement GNOME 51 si besoin. Sans l’option `--user`,
-l’installation est faite pour tout le système.
+Si vous avez installé Custicon ainsi et voulez les mises à jour automatiques, désinstallez-le avec `flatpak uninstall io.github.gor3pig.Custicon`,
+puis installez-le de nouveau depuis le fichier `.flatpakref` ci-dessus. Vos styles et vos dossiers personnalisés sont conservés, tant que vous n’ajoutez pas `--delete-data`.
 
 ### Depuis les sources
 
@@ -159,7 +175,7 @@ des fichiers de l’application, traductions) :
 ./check.sh
 ```
 
-Il demande Python 3, PyGObject, GTK4, Libadwaita, librsvg, GVfs, `gettext`, `desktop-file-validate`
+Il demande Python 3, PyGObject, GTK4, Libadwaita, librsvg, GVfs, `gettext`, `gpg`, `desktop-file-validate`
 et `appstreamcli`. Les tests de l’interface utilisent `gtk4-broadwayd`, fourni avec GTK4, et un bus de session
 (`dbus-run-session` est utilisé s’il n’y en a pas).
 

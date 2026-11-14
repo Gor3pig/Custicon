@@ -217,6 +217,12 @@ Essayez une lettre, un chiffre ou un symbole courant.
 Dans l’espace de données de l’application (`~/.var/app/io.github.gor3pig.Custicon/data/custicon/`).
 Une désinstallation avec suppression des données les efface : retirez d’abord les icônes.
 
+**Comment Custicon se met-il à jour ?**
+Si vous l’avez installé depuis `custicon.flatpakref`, l’application Logiciels propose chaque nouvelle version, ou lancez `flatpak update` ; les mises à jour sont signées.
+Une copie installée depuis le fichier `.flatpak` d’une release ne se met pas à jour toute seule : désinstallez-la (`flatpak uninstall io.github.gor3pig.Custicon`)
+puis installez-la de nouveau depuis le fichier `.flatpakref`, en gardant vos styles et vos dossiers personnalisés tant que vous n’ajoutez pas `--delete-data`.
+Les commandes d’installation sont dans le [README](../../README.fr.md#installation).
+
 **Pourquoi Custicon demande-t-il l’accès à mon dossier personnel ?**
 Pour que Nautilus voie l’icône, Custicon doit connaître le vrai chemin du dossier. Il ne demande que la
 **lecture** du dossier personnel : le contenu de vos dossiers ne peut pas être modifié par l’application,

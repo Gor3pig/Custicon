@@ -217,6 +217,12 @@ Try a letter, a digit or a common symbol.
 In the data space of the application (`~/.var/app/io.github.gor3pig.Custicon/data/custicon/`).
 An uninstall with data removal erases them: remove the icons first.
 
+**How is Custicon updated?**
+If you installed it from `custicon.flatpakref`, the Software app offers each new version, or run `flatpak update`; updates are signed.
+A copy installed from the `.flatpak` file of a release is not updated by itself: uninstall it (`flatpak uninstall io.github.gor3pig.Custicon`)
+and install it again from the `.flatpakref` file, keeping your styles and customized folders as long as you do not add `--delete-data`.
+The installation commands are in the [README](../../README.md#installation).
+
 **Why does Custicon ask for access to my home folder?**
 For Nautilus to see the icon, Custicon has to know the real path of the folder. It only asks for
 **read** access to the home folder: the content of your folders cannot be modified by the application,
