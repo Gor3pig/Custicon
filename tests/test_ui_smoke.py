@@ -163,6 +163,16 @@ class FakeFolderDialog:
         return self._file
 
 
+class FakeFoldersDialog:
+    def __init__(self, *paths):
+        self._store = Gio.ListStore.new(Gio.File)
+        for path in paths:
+            self._store.append(Gio.File.new_for_path(path))
+
+    def select_multiple_folders_finish(self, _result):
+        return self._store
+
+
 class FakeOpenDialog:
     def __init__(self, path):
         self._file = Gio.File.new_for_path(path)
@@ -174,13 +184,13 @@ class FakeOpenDialog:
 class FolderChoiceTests(WindowTestCase):
     def test_a_normal_folder_becomes_a_pending_entry(self):
         folder = self.make_folder()
-        self.window._folder_chosen(FakeFolderDialog(str(folder)), None)
+        self.window._folders_chosen(FakeFoldersDialog(str(folder)), None)
         settle()
         self.assertEqual(self.window._pending.folder, folder)
         self.assertIsNone(self.window.get_visible_dialog())
 
     def test_a_document_portal_path_is_refused_with_an_explanation(self):
-        self.window._folder_chosen(FakeFolderDialog("/run/user/1000/doc/abcd1234/Projects"), None)
+        self.window._folders_chosen(FakeFoldersDialog("/run/user/1000/doc/abcd1234/Projects"), None)
         settle()
         self.assertIsNone(self.window._pending)
         self.assertIsNotNone(self.window.get_visible_dialog())
@@ -1171,6 +1181,92 @@ class DirectManipulationTests(WindowTestCase):
         self.assertIn("EventControllerScroll", kinds)
 
 
+class BatchUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.folders = [self.make_folder("a"), self.make_folder("b"), self.make_folder("c")]
+        self.window.add_folders(self.folders)
+        settle()
+        self.editor = self.window.editor
+
+    def test_the_editor_names_the_batch(self):
+        self.assertEqual(self.editor.name_label.get_text(), "3 folders")
+        self.assertEqual(self.editor.path_label.get_text(), "a, b, c")
+        self.assertEqual(self.editor.apply_button.get_label(), "Apply to 3 Folders")
+        self.assertFalse(self.editor.remove_button.get_visible())
+        self.assertEqual(self.window.content_page.get_title(), "3 folders")
+
+    def test_the_main_page_is_shown_even_without_customized_folders(self):
+        self.assertEqual(self.window.stack.get_visible_child_name(), "main")
+
+    def test_applying_customizes_every_folder(self):
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.window._apply()
+        settle()
+        for folder in self.folders:
+            self.assertIsNotNone(self.service.store.get(str(folder.resolve())))
+        self.assertIsNone(self.window._batch)
+        self.assertEqual(len(self.window._rows), 3)
+
+    def test_apply_needs_a_pictogram(self):
+        self.assertFalse(self.editor.apply_button.get_sensitive())
+
+    def test_a_failure_is_reported_and_the_others_are_applied(self):
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.folders[1].rmdir()
+        self.window._apply()
+        settle()
+        self.assertIsNotNone(self.window.get_visible_dialog())
+        self.assertIsNotNone(self.service.store.get(str(self.folders[0].resolve())))
+        self.assertIsNotNone(self.service.store.get(str(self.folders[2].resolve())))
+        self.assertEqual(len(self.window._rows), 2)
+
+    def test_selecting_a_row_leaves_the_batch(self):
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.window._apply()
+        settle()
+        self.window.add_folders(self.folders)
+        settle()
+        self.window.list.select_row(self.window._rows[str(self.folders[0].resolve())])
+        settle()
+        self.assertIsNone(self.window._batch)
+        self.assertEqual(self.editor.name_label.get_text(), "a")
+        self.assertEqual(self.editor.apply_button.get_label(), "Apply")
+
+    def test_duplicates_collapse_into_one_folder(self):
+        self.window.add_folders([self.folders[0], self.folders[0]])
+        settle()
+        self.assertIsNone(self.window._batch)
+        self.assertEqual(self.window._pending.folder, self.folders[0].resolve())
+
+    def test_items_that_are_not_folders_are_ignored_with_a_toast(self):
+        note = self.root / "note.txt"
+        note.write_text("x")
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.open_files([Gio.File.new_for_path(str(self.folders[0])), Gio.File.new_for_path(str(self.folders[1])), Gio.File.new_for_path(str(note))])
+        settle()
+        self.assertIn("1 item ignored", toast.call_args.args[0])
+        self.assertEqual(len(self.window._batch), 2)
+
+    def test_the_chooser_accepts_several_folders(self):
+        self.window._folders_chosen(FakeFoldersDialog(str(self.folders[0]), str(self.folders[1])), None)
+        settle()
+        self.assertEqual(len(self.window._batch), 2)
+
+    def test_regaining_focus_keeps_the_batch(self):
+        self.window.is_active = lambda: True
+        self.window._on_active_changed()
+        settle()
+        self.assertEqual(len(self.window._batch), 3)
+        self.assertEqual(self.editor.name_label.get_text(), "3 folders")
+
+    def test_a_batch_counts_as_unsaved_work(self):
+        self.assertTrue(self.window.has_unsaved_changes())
+
+    def test_a_batch_has_no_name_suggestions(self):
+        self.assertEqual(self.editor.suggestion_names, [])
+
+
 class SuggestionUiTests(WindowTestCase):
     def test_a_folder_named_after_a_subject_gets_suggestions(self):
         self.window.add_folder(self.make_folder("Photos"))
@@ -1764,13 +1860,12 @@ class OpenFilesTests(WindowTestCase):
         self.assertIsNone(self.window._pending)
         self.assertIsNotNone(self.window.get_visible_dialog())
 
-    def test_only_the_first_folder_is_opened_and_the_user_is_told(self):
+    def test_several_folders_are_opened_as_a_batch(self):
         first, second = self.make_folder("a"), self.make_folder("b")
-        with mock.patch.object(self.window, "toast") as toast:
-            self.window.open_files([Gio.File.new_for_path(str(first)), Gio.File.new_for_path(str(second))])
+        self.window.open_files([Gio.File.new_for_path(str(first)), Gio.File.new_for_path(str(second))])
         settle()
-        self.assertEqual(self.window._pending.folder, first)
-        self.assertIn("one folder at a time", toast.call_args.args[0])
+        self.assertEqual(self.window._batch, [first.resolve(), second.resolve()])
+        self.assertIsNone(self.window._pending)
 
     def test_an_already_customized_folder_is_selected(self):
         folder = self.add_and_apply()
@@ -2053,7 +2148,7 @@ class ResilienceTests(WindowTestCase):
         bad = os.fsencode(self.workspace) + b"/caf\xe9"
         os.mkdir(bad)
         self.addCleanup(os.rmdir, bad)
-        self.window._folder_chosen(FakeFolderDialog(os.fsdecode(bad)), None)
+        self.window._folders_chosen(FakeFoldersDialog(os.fsdecode(bad)), None)
         settle()
         self.assertIsNone(self.window._pending)
         self.assertIsNotNone(self.window.get_visible_dialog())
@@ -2218,13 +2313,13 @@ class PermissionHelpTests(WindowTestCase):
     def test_a_portal_path_without_access_opens_the_same_help(self):
         window = self.make_window(False)
         with mock.patch.object(window_module.environment, "home_access", return_value=False):
-            window._folder_chosen(FakeFolderDialog("/run/user/1000/doc/abcd1234/Projects"), None)
+            window._folders_chosen(FakeFoldersDialog("/run/user/1000/doc/abcd1234/Projects"), None)
         settle()
         self.assertIsNotNone(window.get_visible_dialog().get_extra_child())
         self.assertIsNone(window._pending)
 
     def test_a_portal_path_with_access_keeps_the_plain_alert(self):
         with mock.patch.object(window_module.environment, "home_access", return_value=True):
-            self.window._folder_chosen(FakeFolderDialog("/run/user/1000/doc/abcd1234/Projects"), None)
+            self.window._folders_chosen(FakeFoldersDialog("/run/user/1000/doc/abcd1234/Projects"), None)
         settle()
         self.assertIsNone(self.window.get_visible_dialog().get_extra_child())

@@ -8,7 +8,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gtk, Pango
 
 from .. import iconsets
-from ..i18n import _
+from ..i18n import _, ngettext
 from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
 from ..textglyph import MAX_CHARACTERS
 from .draft import Draft
@@ -350,6 +350,7 @@ class Editor(Gtk.Box):
             self.banner.set_title(banner_text or "")
             self.banner.set_button_label(banner_action)
             self.banner.set_revealed(bool(banner_text))
+            self.apply_button.set_label(_("Apply"))
             self.remove_button.set_label(remove_label or _("Remove Icon"))
             self.remove_button.set_visible(existing or remove_label is not None)
             if existing:
@@ -359,6 +360,14 @@ class Editor(Gtk.Box):
         finally:
             self._loading = False
         self._refresh_actions()
+
+    def show_batch(self, names: list[str]) -> None:
+        count = len(names)
+        self.name_label.set_text(ngettext("%d folder", "%d folders", count) % count)
+        self.path_label.set_text(", ".join(names))
+        self.path_label.set_tooltip_text("\n".join(names))
+        self.apply_button.set_label(ngettext("Apply to %d Folder", "Apply to %d Folders", count) % count)
+        self.remove_button.set_visible(False)
 
     def glyph_text(self, draft: Draft) -> str:
         if draft.glyph_name:

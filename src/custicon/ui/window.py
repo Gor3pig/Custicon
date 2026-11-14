@@ -70,6 +70,7 @@ class MainWindow(Adw.ApplicationWindow):
         super().__init__(application=application, title=APP_NAME, default_width=1000, default_height=720)
         self._service = service
         self._pending: Draft | None = None
+        self._batch: list[Path] | None = None
         self._current_key: str | None = None
         self._reloading = False
         self._preview_source = 0
@@ -240,7 +241,7 @@ class MainWindow(Adw.ApplicationWindow):
             self._rebuild_rows()
             if not self._rows:
                 self._current_key = None
-                self.stack.set_visible_child_name("empty")
+                self.stack.set_visible_child_name("main" if self._batch else "empty")
                 return
             self.stack.set_visible_child_name("main")
             key = select if select in self._rows else (self._current_key if self._current_key in self._rows else next(iter(self._rows)))
@@ -332,6 +333,7 @@ class MainWindow(Adw.ApplicationWindow):
             return None
 
     def _show_key(self, key: str) -> None:
+        self._batch = None
         self._current_key = key
         if self._pending is not None and key == str(self._pending.folder):
             self._load(self._pending, False, STATUS_OK)
@@ -499,25 +501,73 @@ class MainWindow(Adw.ApplicationWindow):
             self._alert(_("Not a Folder"), _("Custicon customizes folders, not files."))
             return
         if len(files) > 1:
-            self.toast(_("Custicon opens one folder at a time: “%s” was opened.") % folder_name(folder))
+            self.open_many(files)
+            return
         self.add_folder(folder)
+
+    def open_many(self, files: list) -> None:
+        folders = []
+        ignored = 0
+        for gfile in files:
+            path = gfile.get_path()
+            if path is None or is_portal_path(path) or not is_text_path(path) or not Path(path).is_dir():
+                ignored += 1
+            elif Path(path) not in folders:
+                folders.append(Path(path))
+        if not folders and not environment.home_access():
+            self._show_permission_help()
+            return
+        if ignored:
+            self.toast(ngettext("%d item ignored: not a usable folder", "%d items ignored: not usable folders", ignored) % ignored)
+        self.add_folders(folders)
+
+    def add_folders(self, folders: list[Path]) -> None:
+        resolved = []
+        for folder in folders:
+            try:
+                real = folder.resolve()
+            except (OSError, RuntimeError):
+                continue
+            if real not in resolved:
+                resolved.append(real)
+        if len(resolved) <= 1:
+            if resolved:
+                self.add_folder(resolved[0])
+            return
+        self._batch = resolved
+        self._pending = None
+        self._current_key = None
+        self.reload(keep_editor=True)
+        self._reloading = True
+        try:
+            self.list.unselect_all()
+        finally:
+            self._reloading = False
+        names = [folder_name(folder) for folder in resolved]
+        draft = Draft(folder=resolved[0]).with_appearance(self._service.remembered_appearance())
+        self.content_page.set_title(ngettext("%d folder", "%d folders", len(resolved)) % len(resolved))
+        self.editor.load(draft, False, STATUS_OK)
+        self.editor.show_batch(names)
+        self.editor.set_suggestions([])
+        self._refresh_styles()
+        self._schedule_preview()
+        self.editor.choose_button.grab_focus()
+        self.split.set_show_content(True)
 
     def _on_files_dropped(self, _target, value, _x, _y) -> bool:
         self.open_files(value.get_files())
         return True
 
     def _choose_folder(self) -> None:
-        dialog = Gtk.FileDialog(title=_("Choose a Folder"))
-        dialog.select_folder(self, None, self._folder_chosen)
+        dialog = Gtk.FileDialog(title=_("Choose Folders"))
+        dialog.select_multiple_folders(self, None, self._folders_chosen)
 
-    def _folder_chosen(self, dialog, result) -> None:
+    def _folders_chosen(self, dialog, result) -> None:
         try:
-            gfile = dialog.select_folder_finish(result)
+            model = dialog.select_multiple_folders_finish(result)
         except GLib.Error:
             return
-        path = self._real_path(gfile)
-        if path is not None:
-            self.add_folder(Path(path))
+        self.open_files([model.get_item(index) for index in range(model.get_n_items())])
 
     def add_folder(self, path: Path) -> None:
         try:
@@ -572,9 +622,27 @@ class MainWindow(Adw.ApplicationWindow):
             return
         self.editor.update_glyph(self.editor.draft.with_glyph_file(path))
 
+    def _apply_batch(self, draft: Draft) -> None:
+        folders = self._batch
+        report = self._service.apply_many(folders, draft.to_settings())
+        if report.applied:
+            self._service.remember_appearance(draft.to_settings())
+        self._batch = None
+        self.reload(select=report.applied[0] if report.applied else None)
+        if report.failed:
+            lines = [ngettext("%d folder customized", "%d folders customized", len(report.applied)) % len(report.applied)]
+            lines.append(ngettext("%d folder could not be customized", "%d folders could not be customized", len(report.failed)) % len(report.failed))
+            lines.extend("%s: %s" % (folder_name(folder), message.split("\n")[0]) for folder, message in report.failed.items())
+            self._alert(_("Some Icons Could Not Be Applied"), "\n".join(lines))
+        else:
+            self.toast(ngettext("Icon applied to %d folder. Press F5 in Nautilus to see it.", "Icon applied to %d folders. Press F5 in Nautilus to see it.", len(report.applied)) % len(report.applied), _("Got It"))
+
     def _apply(self) -> None:
         draft = self.editor.draft
         if draft is None:
+            return
+        if self._batch:
+            self._apply_batch(draft)
             return
         try:
             entry = self._service.apply(draft.folder, draft.to_settings())
@@ -832,6 +900,8 @@ class MainWindow(Adw.ApplicationWindow):
 
     def has_unsaved_changes(self) -> bool:
         draft = self.editor.draft
+        if self._batch:
+            return True
         if draft is None or self._current_key is None:
             return False
         if self._pending is not None and self._current_key == str(self._pending.folder):

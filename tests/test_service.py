@@ -176,6 +176,39 @@ class ApplyTests(ServiceTestCase):
         self.assertEqual(self.store.all(), {})
 
 
+class ApplyManyTests(ServiceTestCase):
+    def test_every_folder_gets_the_icon(self):
+        folders = [self.make_folder("a"), self.make_folder("b"), self.make_folder("c")]
+        report = self.service.apply_many(folders, STAR)
+        self.assertEqual(report.applied, [str(folder) for folder in folders])
+        self.assertEqual(report.failed, {})
+        for folder in folders:
+            self.assertEqual(read_custom_icon(folder), self.store.icon_uri(self.store.get(str(folder)).digest))
+
+    def test_identical_icons_share_one_stored_file(self):
+        folders = [self.make_folder("a"), self.make_folder("b")]
+        self.service.apply_many(folders, STAR)
+        self.assertEqual(self.store.get(str(folders[0])).digest, self.store.get(str(folders[1])).digest)
+
+    def test_a_missing_folder_fails_without_stopping_the_others(self):
+        good, other = self.make_folder("a"), self.make_folder("b")
+        missing = self.root / "missing"
+        report = self.service.apply_many([good, missing, other], STAR)
+        self.assertEqual(report.applied, [str(good), str(other)])
+        self.assertEqual(list(report.failed), [str(missing)])
+        self.assertIsNotNone(self.store.get(str(other)))
+
+    def test_no_folder_means_an_empty_report(self):
+        report = self.service.apply_many([], STAR)
+        self.assertEqual((report.applied, report.failed), ([], {}))
+
+    def test_an_invalid_setting_fails_every_folder(self):
+        folders = [self.make_folder("a"), self.make_folder("b")]
+        report = self.service.apply_many(folders, Settings(glyph_name="star-symbolic", size=99.0))
+        self.assertEqual(report.applied, [])
+        self.assertEqual(len(report.failed), 2)
+
+
 class PhosphorTests(ServiceTestCase):
     def test_a_phosphor_pictogram_is_applied_and_tinted(self):
         folder = self.make_folder()

@@ -139,6 +139,12 @@ class ResetReport:
 
 
 @dataclass
+class ApplyReport:
+    applied: list[str] = field(default_factory=list)
+    failed: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
 class RegenerationReport:
     updated: list[str] = field(default_factory=list)
     unchanged: list[str] = field(default_factory=list)
@@ -249,6 +255,15 @@ class Service:
             if old_copy != glyph_copy:
                 self._store.release_glyph(old_copy)
         return entry
+
+    def apply_many(self, folders: list[Path | str], settings: Settings) -> ApplyReport:
+        report = ApplyReport()
+        for folder in folders:
+            try:
+                report.applied.append(self.apply(folder, settings).folder)
+            except CusticonError as error:
+                report.failed[str(folder)] = str(error)
+        return report
 
     def reset(self, folder: Path | str) -> str:
         key, entry = self._locate(folder)

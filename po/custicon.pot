@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 19:00+0100\n"
+"POT-Creation-Date: 2026-11-14 19:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -104,6 +104,18 @@ msgstr ""
 
 msgid "Apply"
 msgstr ""
+
+#, python-format
+msgid "%d folder"
+msgid_plural "%d folders"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "Apply to %d Folder"
+msgid_plural "Apply to %d Folders"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "No pictogram chosen"
 msgstr ""
@@ -519,10 +531,12 @@ msgid "Custicon customizes folders, not files."
 msgstr ""
 
 #, python-format
-msgid "Custicon opens one folder at a time: “%s” was opened."
-msgstr ""
+msgid "%d item ignored: not a usable folder"
+msgid_plural "%d items ignored: not usable folders"
+msgstr[0] ""
+msgstr[1] ""
 
-msgid "Choose a Folder"
+msgid "Choose Folders"
 msgstr ""
 
 msgid "SVG and PNG images"
@@ -531,14 +545,35 @@ msgstr ""
 msgid "Choose a Pictogram File"
 msgstr ""
 
+#, python-format
+msgid "%d folder customized"
+msgid_plural "%d folders customized"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%d folder could not be customized"
+msgid_plural "%d folders could not be customized"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Some Icons Could Not Be Applied"
+msgstr ""
+
+#, python-format
+msgid "Icon applied to %d folder. Press F5 in Nautilus to see it."
+msgid_plural "Icon applied to %d folders. Press F5 in Nautilus to see it."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Got It"
+msgstr ""
+
 msgid "Could Not Apply the Icon"
 msgstr ""
 
 #, python-format
 msgid "Icon applied to “%s”. Press F5 in Nautilus to see it."
-msgstr ""
-
-msgid "Got It"
 msgstr ""
 
 #, python-format

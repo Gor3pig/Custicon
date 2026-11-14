@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 19:00+0100\n"
+"POT-Creation-Date: 2026-11-14 19:33+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -104,6 +104,18 @@ msgstr "Rétablir les valeurs par défaut"
 
 msgid "Apply"
 msgstr "Appliquer"
+
+#, python-format
+msgid "%d folder"
+msgid_plural "%d folders"
+msgstr[0] "%d dossier"
+msgstr[1] "%d dossiers"
+
+#, python-format
+msgid "Apply to %d Folder"
+msgid_plural "Apply to %d Folders"
+msgstr[0] "Appliquer à %d dossier"
+msgstr[1] "Appliquer à %d dossiers"
 
 msgid "No pictogram chosen"
 msgstr "Aucun pictogramme choisi"
@@ -534,17 +546,45 @@ msgid "Custicon customizes folders, not files."
 msgstr "Custicon personnalise des dossiers, pas des fichiers."
 
 #, python-format
-msgid "Custicon opens one folder at a time: “%s” was opened."
-msgstr "Custicon n’ouvre qu’un dossier à la fois : « %s » a été ouvert."
+msgid "%d item ignored: not a usable folder"
+msgid_plural "%d items ignored: not usable folders"
+msgstr[0] "%d élément ignoré : ce n’est pas un dossier utilisable"
+msgstr[1] "%d éléments ignorés : ce ne sont pas des dossiers utilisables"
 
-msgid "Choose a Folder"
-msgstr "Choisir un dossier"
+msgid "Choose Folders"
+msgstr "Choisir des dossiers"
 
 msgid "SVG and PNG images"
 msgstr "Images SVG et PNG"
 
 msgid "Choose a Pictogram File"
 msgstr "Choisir un fichier de pictogramme"
+
+#, python-format
+msgid "%d folder customized"
+msgid_plural "%d folders customized"
+msgstr[0] "%d dossier personnalisé"
+msgstr[1] "%d dossiers personnalisés"
+
+#, python-format
+msgid "%d folder could not be customized"
+msgid_plural "%d folders could not be customized"
+msgstr[0] "%d dossier n’a pas pu être personnalisé"
+msgstr[1] "%d dossiers n’ont pas pu être personnalisés"
+
+msgid "Some Icons Could Not Be Applied"
+msgstr "Certaines icônes n’ont pas pu être appliquées"
+
+#, python-format
+msgid "Icon applied to %d folder. Press F5 in Nautilus to see it."
+msgid_plural "Icon applied to %d folders. Press F5 in Nautilus to see it."
+msgstr[0] ""
+"Icône appliquée à %d dossier. Appuyez sur F5 dans Nautilus pour la voir."
+msgstr[1] ""
+"Icône appliquée à %d dossiers. Appuyez sur F5 dans Nautilus pour la voir."
+
+msgid "Got It"
+msgstr "Compris"
 
 msgid "Could Not Apply the Icon"
 msgstr "Impossible d’appliquer l’icône"
@@ -553,9 +593,6 @@ msgstr "Impossible d’appliquer l’icône"
 msgid "Icon applied to “%s”. Press F5 in Nautilus to see it."
 msgstr ""
 "Icône appliquée à « %s ». Appuyez sur F5 dans Nautilus pour l’afficher."
-
-msgid "Got It"
-msgstr "Compris"
 
 #, python-format
 msgid "Forget “%s”?"
