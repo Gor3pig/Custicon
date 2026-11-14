@@ -516,10 +516,17 @@ class MainWindow(Adw.ApplicationWindow):
         picker = PickerDialog(
             self._service.icon_theme(),
             draft.glyph_name,
-            lambda name: self.editor.update_glyph(self.editor.draft.with_glyph_name(name)),
+            self._on_glyph_chosen,
             self._service.icon_sets(),
+            folder_name(draft.folder),
+            self._service.picker_memory(),
+            self._service.set_favorite,
         )
         picker.present(self)
+
+    def _on_glyph_chosen(self, name: str) -> None:
+        self._service.remember_glyph(name)
+        self.editor.update_glyph(self.editor.draft.with_glyph_name(name))
 
     def _browse_glyph(self) -> None:
         images = Gtk.FileFilter()

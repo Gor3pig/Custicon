@@ -412,7 +412,7 @@ class PickerTests(WindowTestCase):
         dialog._on_choose(None)
         self.assertEqual(chosen, ["star-symbolic"])
 
-    def test_a_query_without_result_disables_choosing_nothing_new(self):
+    def test_a_query_without_result_says_so(self):
         from custicon.ui.picker import PickerDialog
 
         dialog = PickerDialog(self.service.icon_theme("Blue"), None, lambda name: None)
@@ -421,31 +421,65 @@ class PickerTests(WindowTestCase):
         self.assertEqual(dialog._names, [])
         self.assertEqual(dialog.status.get_text(), "No pictogram found")
 
-
-class PhosphorPickerTests(WindowTestCase):
-    def dialog(self, current=None, chosen=None):
+    def test_the_count_of_results_is_shown(self):
         from custicon.ui.picker import PickerDialog
 
-        return PickerDialog(self.service.icon_theme("Blue"), current, (chosen if chosen is not None else []).append)
+        dialog = PickerDialog(self.service.icon_theme("Blue"), None, lambda name: None)
+        self.assertEqual(dialog.status.get_text(), "2 pictograms found")
+        dialog.search.set_text("hea")
+        settle(lambda: dialog._names == ["heart-symbolic"])
+        self.assertEqual(dialog.status.get_text(), "1 pictogram found")
 
+
+class PickerCase(WindowTestCase):
+    def dialog(self, current=None, chosen=None, language="en", folder_name="", recent=(), favorites=(), on_favorite=None):
+        from unittest import mock
+
+        from custicon import iconsets
+        from custicon.service import PickerMemory
+        from custicon.ui.picker import PickerDialog
+
+        patcher = mock.patch.object(iconsets, "current_language", return_value=language)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return PickerDialog(
+            self.service.icon_theme("Blue"),
+            current,
+            (chosen if chosen is not None else []).append,
+            self.service.icon_sets(),
+            folder_name,
+            PickerMemory(tuple(recent), tuple(favorites)),
+            on_favorite or (lambda name, favorite: True),
+        )
+
+    def toggles(self, dialog):
+        group = dialog.set_toggle
+        return [group.get_toggle(index).get_name() for index in range(group.get_n_toggles())]
+
+    def show(self, dialog, key):
+        dialog.set_toggle.set_active_name(key)
+        settle(lambda: dialog._names and dialog._names[0] != "star-symbolic")
+
+    def search(self, dialog, text, expected_first=None):
+        dialog.search.set_text(text)
+        settle(lambda: bool(dialog._names) and (expected_first is None or dialog._names[0] == expected_first))
+
+
+class PhosphorPickerTests(PickerCase):
     def test_the_theme_set_is_shown_first(self):
         dialog = self.dialog()
         self.assertEqual(dialog.set_toggle.get_active_name(), "theme")
         self.assertEqual(sorted(dialog._names), ["heart-symbolic", "star-symbolic"])
 
-    def test_switching_to_phosphor_lists_its_icons(self):
+    def test_switching_to_phosphor_lists_the_whole_set_without_a_cap(self):
         dialog = self.dialog()
-        dialog.set_toggle.set_active_name("phosphor")
-        settle(lambda: dialog._names and dialog._names[0].startswith("phosphor:"))
+        self.show(dialog, "phosphor")
+        self.assertEqual(len(dialog._names), 1512)
         self.assertTrue(all(name.startswith("phosphor:") for name in dialog._names))
-        self.assertEqual(len(dialog._names), 200)
-        dialog.search.set_text("house")
-        settle(lambda: dialog._names[:1] == ["phosphor:house"])
-        self.assertEqual(dialog._names[0], "phosphor:house")
 
     def test_the_search_applies_to_the_active_set(self):
         dialog = self.dialog()
-        dialog.set_toggle.set_active_name("phosphor")
+        self.show(dialog, "phosphor")
         dialog.search.set_text("acor")
         settle(lambda: dialog._names == ["phosphor:acorn"])
         self.assertEqual(dialog._names, ["phosphor:acorn"])
@@ -458,11 +492,16 @@ class PhosphorPickerTests(WindowTestCase):
         settle(lambda: dialog._names == ["phosphor:acorn"])
         self.assertEqual(dialog._names, ["phosphor:acorn"])
 
+    def test_a_word_known_to_the_dictionary_and_to_the_names_lists_each_pictogram_once(self):
+        dialog = self.dialog()
+        self.show(dialog, "phosphor")
+        self.search(dialog, "camera", "phosphor:camera")
+        self.assertEqual(len(dialog._names), len(set(dialog._names)))
+
     def test_the_search_understands_french_in_phosphor(self):
         dialog = self.dialog()
-        dialog.set_toggle.set_active_name("phosphor")
-        dialog.search.set_text("maison")
-        settle(lambda: dialog._names[:1] == ["phosphor:house"])
+        self.show(dialog, "phosphor")
+        self.search(dialog, "maison", "phosphor:house")
         self.assertEqual(dialog._names[0], "phosphor:house")
         self.assertIn("phosphor:garage", dialog._names)
         self.assertNotIn("phosphor:acorn", dialog._names)
@@ -470,48 +509,107 @@ class PhosphorPickerTests(WindowTestCase):
     def test_a_phosphor_choice_is_reported_with_its_prefix(self):
         chosen = []
         dialog = self.dialog(chosen=chosen)
-        dialog.set_toggle.set_active_name("phosphor")
-        dialog.search.set_text("acor")
-        settle(lambda: dialog._names == ["phosphor:acorn"])
-        dialog._on_activated(None, dialog.flow.get_child_at_index(0))
+        self.show(dialog, "phosphor")
+        self.search(dialog, "acor", "phosphor:acorn")
+        dialog._on_activated(0)
         self.assertEqual(chosen, ["phosphor:acorn"])
 
-    def test_the_current_phosphor_icon_opens_its_set(self):
+    def test_the_current_phosphor_icon_opens_its_set_and_is_selected(self):
         dialog = self.dialog(current="phosphor:acorn")
         self.assertEqual(dialog.set_toggle.get_active_name(), "phosphor")
         self.assertIn("phosphor:acorn", dialog._names)
+        self.assertEqual(dialog.selected_name(), "phosphor:acorn")
+        self.assertEqual(dialog.grid.get_model().get_selected(), dialog._names.index("phosphor:acorn"))
         self.assertTrue(dialog.choose_button.get_sensitive())
 
-    def test_switching_sets_keeps_the_query(self):
+
+class CategoryTests(PickerCase):
+    def categories(self, dialog):
+        model = dialog.category_row.get_model()
+        return [model.get_string(index) for index in range(model.get_n_items())]
+
+    def choose(self, dialog, label):
+        dialog.category_row.set_selected(self.categories(dialog).index(label))
+
+    def test_the_theme_has_no_categories(self):
         dialog = self.dialog()
-        dialog.search.set_text("star")
-        settle(lambda: dialog._names == ["star-symbolic"])
-        dialog.set_toggle.set_active_name("phosphor")
-        settle(lambda: dialog._names and dialog._names[0].startswith("phosphor:"))
-        self.assertTrue(any("star" in name for name in dialog._names))
-        self.assertEqual(dialog.search.get_text(), "star")
+        self.assertFalse(dialog.category_row.get_visible())
+
+    def test_phosphor_offers_its_categories_after_all(self):
+        dialog = self.dialog()
+        self.show(dialog, "phosphor")
+        self.assertTrue(dialog.category_row.get_visible())
+        labels = self.categories(dialog)
+        self.assertEqual(labels[0], "All")
+        for wanted in ("Nature", "Development", "Games", "Weather"):
+            self.assertIn(wanted, labels)
+
+    def test_a_category_filters_the_list(self):
+        dialog = self.dialog()
+        self.show(dialog, "phosphor")
+        self.choose(dialog, "Nature")
+        settle(lambda: len(dialog._names) < 1512)
+        expected = self.service.icon_sets()["phosphor"].names_in_category("nature")
+        self.assertEqual(sorted(dialog._names), sorted(expected))
+
+    def test_a_query_typed_first_is_kept_when_a_category_is_chosen(self):
+        dialog = self.dialog()
+        self.show(dialog, "phosphor")
+        self.search(dialog, "tree")
+        settle(lambda: len(dialog._names) < 100)
+        self.choose(dialog, "Nature")
+        settle(lambda: all(name in self.service.icon_sets()["phosphor"].names_in_category("nature") for name in dialog._names) and dialog._names)
+        self.assertIn("phosphor:tree", dialog._names)
+        self.assertLess(len(dialog._names), 50)
+
+    def test_a_category_and_a_query_combine(self):
+        dialog = self.dialog()
+        self.show(dialog, "phosphor")
+        self.choose(dialog, "Nature")
+        self.search(dialog, "tree")
+        settle(lambda: all(name in self.service.icon_sets()["phosphor"].names_in_category("nature") for name in dialog._names))
+        self.assertIn("phosphor:tree", dialog._names)
+        self.assertNotIn("phosphor:tree-structure", dialog._names)
+
+    def test_all_brings_the_whole_set_back(self):
+        dialog = self.dialog()
+        self.show(dialog, "phosphor")
+        self.choose(dialog, "Nature")
+        settle(lambda: len(dialog._names) < 1512)
+        self.choose(dialog, "All")
+        settle(lambda: len(dialog._names) == 1512)
+        self.assertEqual(len(dialog._names), 1512)
+
+    def test_changing_the_set_resets_the_category(self):
+        dialog = self.dialog()
+        self.show(dialog, "phosphor")
+        self.choose(dialog, "Nature")
+        settle(lambda: len(dialog._names) < 1512)
+        dialog.set_toggle.set_active_name("emoji")
+        settle(lambda: dialog._names and dialog._names[0].startswith("emoji:"))
+        self.assertEqual(dialog.category_row.get_selected(), 0)
+        self.assertEqual(len(dialog._names), 1595)
+
+    def test_the_brands_have_no_categories(self):
+        dialog = self.dialog()
+        self.show(dialog, "brands")
+        self.assertFalse(dialog.category_row.get_visible())
+
+    def test_the_labels_are_translated_through_gettext(self):
+        from custicon.ui.picker import CATEGORY_LABELS
+
+        for identifier in ("arrows", "brand", "commerce", "communication", "design", "development", "editor", "finance", "games", "health", "map", "media", "nature", "objects", "office", "people", "system", "weather", "smileys", "food", "travel", "activities", "symbols", "flags"):
+            self.assertIn(identifier, CATEGORY_LABELS)
+
+    def test_every_category_of_the_sets_has_a_label(self):
+        from custicon.ui.picker import CATEGORY_LABELS
+
+        for key in ("phosphor", "emoji"):
+            for identifier in self.service.icon_sets()[key].categories():
+                self.assertIn(identifier, CATEGORY_LABELS, identifier)
 
 
-class IconSetPickerTests(WindowTestCase):
-    def dialog(self, current=None, chosen=None, language="en"):
-        from unittest import mock
-
-        from custicon import iconsets
-        from custicon.ui.picker import PickerDialog
-
-        patcher = mock.patch.object(iconsets, "current_language", return_value=language)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        return PickerDialog(self.service.icon_theme("Blue"), current, (chosen if chosen is not None else []).append)
-
-    def toggles(self, dialog):
-        group = dialog.set_toggle
-        return [group.get_toggle(index).get_name() for index in range(group.get_n_toggles())]
-
-    def show(self, dialog, key):
-        dialog.set_toggle.set_active_name(key)
-        settle(lambda: dialog._names and dialog._names[0] != "star-symbolic")
-
+class IconSetPickerTests(PickerCase):
     def test_every_source_is_offered(self):
         self.assertEqual(self.toggles(self.dialog()), ["theme", "phosphor", "emoji", "brands"])
 
@@ -519,58 +617,25 @@ class IconSetPickerTests(WindowTestCase):
         dialog = self.dialog()
         self.show(dialog, "emoji")
         self.assertTrue(all(name.startswith("emoji:") for name in dialog._names))
-        dialog.search.set_text("rocket")
-        settle(lambda: dialog._names[:1] == ["emoji:rocket"])
+        self.search(dialog, "rocket", "emoji:rocket")
         self.assertEqual(dialog._names[0], "emoji:rocket")
 
     def test_emoji_are_searched_in_french_without_accents(self):
         dialog = self.dialog(language="fr")
         self.show(dialog, "emoji")
-        dialog.search.set_text("medaille")
+        self.search(dialog, "medaille")
         settle(lambda: "emoji:1st-place-medal" in dialog._names)
         self.assertIn("emoji:1st-place-medal", dialog._names)
-        dialog.search.set_text("chat")
+        self.search(dialog, "chat")
         settle(lambda: any("cat" in name for name in dialog._names))
         self.assertTrue(any("cat" in name for name in dialog._names))
 
     def test_brand_logos_are_searched_by_name(self):
         dialog = self.dialog()
         self.show(dialog, "brands")
-        dialog.search.set_text("github")
-        settle(lambda: dialog._names[:1] == ["brand:github"])
+        self.assertGreaterEqual(len(dialog._names), 3400)
+        self.search(dialog, "github", "brand:github")
         self.assertEqual(dialog._names[0], "brand:github")
-
-    def test_the_phosphor_french_words_are_not_applied_to_the_other_sets(self):
-        dialog = self.dialog(language="fr")
-        self.show(dialog, "brands")
-        dialog.search.set_text("maison")
-        settle(lambda: not dialog._names)
-        self.assertEqual(dialog._names, [])
-
-    def test_an_emoji_choice_is_reported_with_its_prefix(self):
-        chosen = []
-        dialog = self.dialog(chosen=chosen)
-        self.show(dialog, "emoji")
-        dialog.search.set_text("rocket")
-        settle(lambda: dialog._names[:1] == ["emoji:rocket"])
-        dialog._on_activated(None, dialog.flow.get_child_at_index(0))
-        self.assertEqual(chosen, ["emoji:rocket"])
-
-    def test_the_current_icon_opens_its_own_set(self):
-        for current, key in (("emoji:rocket", "emoji"), ("brand:github", "brands"), ("phosphor:acorn", "phosphor"), ("star-symbolic", "theme")):
-            dialog = self.dialog(current=current)
-            self.assertEqual(dialog.set_toggle.get_active_name(), key, current)
-
-    def test_the_tooltips_name_the_pictograms_in_the_desktop_language(self):
-        dialog = self.dialog(language="fr")
-        self.show(dialog, "emoji")
-        dialog.search.set_text("2nd place")
-        settle(lambda: dialog._names[:1] == ["emoji:2nd-place-medal"])
-        self.assertEqual(dialog.flow.get_child_at_index(0).get_tooltip_text(), "médaille d’argent")
-
-    def test_the_status_names_the_selected_pictogram(self):
-        dialog = self.dialog(current="emoji:2nd-place-medal", language="fr")
-        self.assertIn("médaille d’argent", dialog.status.get_text())
 
     def test_the_theme_words_are_only_used_for_the_theme_and_phosphor_has_its_own(self):
         dialog = self.dialog(language="fr")
@@ -583,13 +648,37 @@ class IconSetPickerTests(WindowTestCase):
         dialog.set_toggle.set_active_name("theme")
         self.assertIn("go-home", dialog._fragments("accueil"))
 
-    def test_selecting_a_pictogram_shows_its_name_in_the_status(self):
+    def test_an_emoji_choice_is_reported_with_its_prefix(self):
+        chosen = []
+        dialog = self.dialog(chosen=chosen)
+        self.show(dialog, "emoji")
+        self.search(dialog, "rocket", "emoji:rocket")
+        dialog._on_activated(0)
+        self.assertEqual(chosen, ["emoji:rocket"])
+
+    def test_the_current_icon_opens_its_own_set(self):
+        for current, key in (("emoji:rocket", "emoji"), ("brand:github", "brands"), ("phosphor:acorn", "phosphor"), ("star-symbolic", "theme")):
+            dialog = self.dialog(current=current)
+            self.assertEqual(dialog.set_toggle.get_active_name(), key, current)
+
+    def test_the_names_are_given_in_the_desktop_language(self):
+        dialog = self.dialog(language="fr")
+        self.assertEqual(dialog.label_of("emoji:2nd-place-medal"), "médaille d’argent")
+        self.assertEqual(dialog.label_of("phosphor:acorn"), "acorn")
+        self.assertEqual(self.dialog(language="en").label_of("emoji:2nd-place-medal"), "2nd place medal")
+
+    def test_the_footer_names_the_selected_pictogram(self):
+        dialog = self.dialog(current="emoji:2nd-place-medal", language="fr")
+        self.assertEqual(dialog.selection_label.get_text(), "médaille d’argent")
+
+    def test_selecting_a_pictogram_updates_the_footer_and_the_choose_button(self):
         dialog = self.dialog(language="fr")
         self.show(dialog, "emoji")
-        dialog.search.set_text("2nd place")
-        settle(lambda: dialog._names[:1] == ["emoji:2nd-place-medal"])
-        dialog.flow.select_child(dialog.flow.get_child_at_index(0))
-        self.assertEqual(dialog.status.get_text(), "médaille d’argent")
+        self.search(dialog, "2nd place", "emoji:2nd-place-medal")
+        self.assertFalse(dialog.choose_button.get_sensitive())
+        dialog.select(0)
+        self.assertEqual(dialog.selection_label.get_text(), "médaille d’argent")
+        self.assertTrue(dialog.choose_button.get_sensitive())
 
     def test_choosing_without_a_selection_does_nothing(self):
         chosen = []
@@ -609,12 +698,132 @@ class IconSetPickerTests(WindowTestCase):
                 self.window.editor.update_glyph(self.window.editor.draft.with_glyph_name("emoji:2nd-place-medal"))
             self.assertEqual(self.window.editor.system_row.get_subtitle(), expected)
 
-    def test_the_picker_of_the_window_is_given_the_registry(self):
-        self.window.add_folder(self.make_folder())
+    def test_the_picker_of_the_window_is_given_the_registry_and_the_memory(self):
+        self.window.add_folder(self.make_folder("Photos"))
         settle()
         self.window._choose_glyph()
         settle()
-        self.assertIs(self.window.get_visible_dialog()._sets, self.service.icon_sets())
+        picker = self.window.get_visible_dialog()
+        self.assertIs(picker._sets, self.service.icon_sets())
+        self.assertTrue(any(name.startswith("phosphor:") for name in picker.suggestion_names))
+
+    def test_the_recent_pictograms_are_offered_again_by_the_picker_of_the_window(self):
+        self.window.add_folder(self.make_folder("Docs"))
+        settle()
+        self.service.remember_glyph("phosphor:acorn")
+        self.window._choose_glyph()
+        settle()
+        self.assertEqual(self.window.get_visible_dialog().recent_names, ["phosphor:acorn"])
+
+    def test_a_favorite_set_in_the_picker_of_the_window_is_saved(self):
+        self.window.add_folder(self.make_folder("Docs"))
+        settle()
+        self.window._choose_glyph()
+        settle()
+        picker = self.window.get_visible_dialog()
+        picker.pick_name("emoji:rocket")
+        picker.favorite_button.set_active(True)
+        self.assertEqual(self.service.picker_memory().favorites, ("emoji:rocket",))
+        self.window._choose_glyph()
+        settle()
+        self.assertIn("emoji:rocket", self.window.get_visible_dialog().favorite_names)
+
+    def test_choosing_from_the_window_remembers_the_pictogram(self):
+        self.window.add_folder(self.make_folder("Docs"))
+        settle()
+        self.window._choose_glyph()
+        settle()
+        picker = self.window.get_visible_dialog()
+        picker.set_toggle.set_active_name("phosphor")
+        settle(lambda: picker._names and picker._names[0].startswith("phosphor:"))
+        picker.search.set_text("acor")
+        settle(lambda: picker._names == ["phosphor:acorn"])
+        picker._on_activated(0)
+        settle()
+        self.assertEqual(self.service.picker_memory().recent[0], "phosphor:acorn")
+        self.assertEqual(self.window.editor.draft.glyph_name, "phosphor:acorn")
+
+
+class SidebarTests(PickerCase):
+    def test_suggestions_come_from_the_name_of_the_folder(self):
+        dialog = self.dialog(folder_name="Photos")
+        self.assertIn("phosphor:camera", dialog.suggestion_names)
+        self.assertTrue(dialog.suggestions_box.get_visible())
+
+    def test_a_folder_without_a_meaningful_name_has_no_suggestions(self):
+        dialog = self.dialog(folder_name="xqzvw")
+        self.assertEqual(dialog.suggestion_names, [])
+        self.assertFalse(dialog.suggestions_box.get_visible())
+
+    def test_recents_and_favorites_are_listed_and_hidden_when_empty(self):
+        empty = self.dialog()
+        self.assertFalse(empty.recent_box.get_visible())
+        self.assertFalse(empty.favorites_box.get_visible())
+        dialog = self.dialog(recent=("phosphor:house", "emoji:rocket"), favorites=("brand:github",))
+        self.assertEqual(dialog.recent_names, ["phosphor:house", "emoji:rocket"])
+        self.assertEqual(dialog.favorite_names, ["brand:github"])
+        self.assertTrue(dialog.recent_box.get_visible())
+        self.assertTrue(dialog.favorites_box.get_visible())
+
+    def test_a_remembered_name_that_no_longer_exists_is_skipped(self):
+        dialog = self.dialog(recent=("phosphor:house", "phosphor:vanished", "emoji:vanished", "gone-symbolic"), favorites=("brand:vanished",))
+        self.assertEqual(dialog.recent_names, ["phosphor:house"])
+        self.assertEqual(dialog.favorite_names, [])
+
+    def test_clicking_a_remembered_pictogram_selects_it(self):
+        dialog = self.dialog(recent=("phosphor:house",))
+        dialog.pick_name("phosphor:house")
+        self.assertEqual(dialog.selected_name(), "phosphor:house")
+        self.assertTrue(dialog.choose_button.get_sensitive())
+        self.assertEqual(dialog.selection_label.get_text(), "house")
+
+    def test_picking_a_name_of_the_current_list_highlights_it_in_the_grid(self):
+        dialog = self.dialog()
+        self.show(dialog, "phosphor")
+        dialog.pick_name("phosphor:house")
+        self.assertEqual(dialog.grid.get_model().get_selected(), dialog._names.index("phosphor:house"))
+
+    def test_the_favorite_button_follows_the_selection(self):
+        calls = []
+        dialog = self.dialog(favorites=("phosphor:house",), on_favorite=lambda name, favorite: calls.append((name, favorite)) or True)
+        self.assertFalse(dialog.favorite_button.get_sensitive())
+        dialog.pick_name("phosphor:house")
+        self.assertTrue(dialog.favorite_button.get_sensitive())
+        self.assertTrue(dialog.favorite_button.get_active())
+        dialog.pick_name("emoji:rocket")
+        self.assertFalse(dialog.favorite_button.get_active())
+
+    def test_toggling_the_favorite_reports_it_and_updates_the_list(self):
+        calls = []
+        dialog = self.dialog(on_favorite=lambda name, favorite: calls.append((name, favorite)) or True)
+        dialog.pick_name("emoji:rocket")
+        dialog.favorite_button.set_active(True)
+        self.assertEqual(calls, [("emoji:rocket", True)])
+        self.assertEqual(dialog.favorite_names, ["emoji:rocket"])
+        self.assertTrue(dialog.favorites_box.get_visible())
+        dialog.favorite_button.set_active(False)
+        self.assertEqual(calls[-1], ("emoji:rocket", False))
+        self.assertEqual(dialog.favorite_names, [])
+        self.assertFalse(dialog.favorites_box.get_visible())
+
+    def test_a_failed_save_does_not_change_the_list(self):
+        dialog = self.dialog(on_favorite=lambda name, favorite: False)
+        dialog.pick_name("emoji:rocket")
+        dialog.favorite_button.set_active(True)
+        self.assertEqual(dialog.favorite_names, [])
+        self.assertFalse(dialog.favorite_button.get_active())
+
+    def test_selecting_in_the_grid_updates_the_favorite_state(self):
+        dialog = self.dialog(favorites=("emoji:rocket",))
+        self.show(dialog, "emoji")
+        self.search(dialog, "rocket", "emoji:rocket")
+        dialog.select(0)
+        self.assertTrue(dialog.favorite_button.get_active())
+
+    def test_the_sidebar_is_hidden_on_a_narrow_window(self):
+        dialog = self.dialog(folder_name="Photos")
+        self.assertTrue(dialog.sidebar.get_visible())
+        self.assertGreaterEqual(dialog.get_content_width(), 640)
 
 
 class ColorModeUiTests(WindowTestCase):

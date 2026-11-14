@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 17:32+0100\n"
+"POT-Creation-Date: 2026-11-14 18:12+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -255,7 +255,85 @@ msgid_plural "%d folders could not be updated"
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "Arrows"
+msgstr ""
+
+msgid "Logos"
+msgstr ""
+
+msgid "Commerce"
+msgstr ""
+
+msgid "Communication"
+msgstr ""
+
+msgid "Design"
+msgstr ""
+
+msgid "Development"
+msgstr ""
+
+msgid "Editor"
+msgstr ""
+
+msgid "Finance"
+msgstr ""
+
+msgid "Games"
+msgstr ""
+
+msgid "Health"
+msgstr ""
+
+msgid "Maps"
+msgstr ""
+
+msgid "Media"
+msgstr ""
+
+msgid "Nature"
+msgstr ""
+
+msgid "Objects"
+msgstr ""
+
+msgid "Office"
+msgstr ""
+
+msgid "People"
+msgstr ""
+
+msgid "System"
+msgstr ""
+
+msgid "Weather"
+msgstr ""
+
+msgid "Smileys"
+msgstr ""
+
+msgid "Food"
+msgstr ""
+
+msgid "Travel"
+msgstr ""
+
+msgid "Activities"
+msgstr ""
+
+msgid "Symbols"
+msgstr ""
+
+msgid "Flags"
+msgstr ""
+
 msgid "Choose a Pictogram"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Choose"
 msgstr ""
 
 msgid "Search by name, in English or French (example: camera, musique)"
@@ -270,7 +348,20 @@ msgstr ""
 msgid "Brands"
 msgstr ""
 
-msgid "Choose"
+#, python-format
+msgid "Suggestions for “%s”"
+msgstr ""
+
+msgid "Recent"
+msgstr ""
+
+msgid "Favorites"
+msgstr ""
+
+msgid "Add to Favorites"
+msgstr ""
+
+msgid "All"
 msgstr ""
 
 #, python-format
@@ -280,6 +371,9 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid "No pictogram found"
+msgstr ""
+
+msgid "Remove from Favorites"
 msgstr ""
 
 msgid "Custicon cannot see your home folder"
@@ -355,9 +449,6 @@ msgid "Could Not Read the Saved Data"
 msgstr ""
 
 msgid "Forget This Folder"
-msgstr ""
-
-msgid "Cancel"
 msgstr ""
 
 #, python-format

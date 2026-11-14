@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 17:32+0100\n"
+"POT-Creation-Date: 2026-11-14 18:12+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -256,8 +256,86 @@ msgid_plural "%d folders could not be updated"
 msgstr[0] "%d dossier n’a pas pu être mis à jour"
 msgstr[1] "%d dossiers n’ont pas pu être mis à jour"
 
+msgid "Arrows"
+msgstr "Flèches"
+
+msgid "Logos"
+msgstr "Logos"
+
+msgid "Commerce"
+msgstr "Commerce"
+
+msgid "Communication"
+msgstr "Communication"
+
+msgid "Design"
+msgstr "Design"
+
+msgid "Development"
+msgstr "Développement"
+
+msgid "Editor"
+msgstr "Éditeur"
+
+msgid "Finance"
+msgstr "Finance"
+
+msgid "Games"
+msgstr "Jeux"
+
+msgid "Health"
+msgstr "Santé"
+
+msgid "Maps"
+msgstr "Cartes"
+
+msgid "Media"
+msgstr "Médias"
+
+msgid "Nature"
+msgstr "Nature"
+
+msgid "Objects"
+msgstr "Objets"
+
+msgid "Office"
+msgstr "Bureautique"
+
+msgid "People"
+msgstr "Personnes"
+
+msgid "System"
+msgstr "Système"
+
+msgid "Weather"
+msgstr "Météo"
+
+msgid "Smileys"
+msgstr "Visages"
+
+msgid "Food"
+msgstr "Nourriture"
+
+msgid "Travel"
+msgstr "Voyages"
+
+msgid "Activities"
+msgstr "Activités"
+
+msgid "Symbols"
+msgstr "Symboles"
+
+msgid "Flags"
+msgstr "Drapeaux"
+
 msgid "Choose a Pictogram"
 msgstr "Choisir un pictogramme"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Choose"
+msgstr "Choisir"
 
 msgid "Search by name, in English or French (example: camera, musique)"
 msgstr ""
@@ -272,8 +350,21 @@ msgstr "Émoji"
 msgid "Brands"
 msgstr "Marques"
 
-msgid "Choose"
-msgstr "Choisir"
+#, python-format
+msgid "Suggestions for “%s”"
+msgstr "Suggestions pour « %s »"
+
+msgid "Recent"
+msgstr "Récents"
+
+msgid "Favorites"
+msgstr "Favoris"
+
+msgid "Add to Favorites"
+msgstr "Ajouter aux favoris"
+
+msgid "All"
+msgstr "Toutes"
 
 #, python-format
 msgid "%d pictogram found"
@@ -283,6 +374,9 @@ msgstr[1] "%d pictogrammes trouvés"
 
 msgid "No pictogram found"
 msgstr "Aucun pictogramme trouvé"
+
+msgid "Remove from Favorites"
+msgstr "Retirer des favoris"
 
 msgid "Custicon cannot see your home folder"
 msgstr "Custicon ne voit pas votre dossier personnel"
@@ -362,9 +456,6 @@ msgstr "Impossible de lire les données enregistrées"
 
 msgid "Forget This Folder"
 msgstr "Oublier ce dossier"
-
-msgid "Cancel"
-msgstr "Annuler"
 
 #, python-format
 msgid "Live preview with the folder icon of the current theme (%s)."
