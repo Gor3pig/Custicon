@@ -26,10 +26,10 @@ DIALOG_SCREENS = ("picker", "phosphor", "about", "confirm", "report")
 WIDE = (1000, 720)
 NARROW = (400, 720)
 FOLDERS = (
-    ("Projets", "applications-engineering-symbolic"),
-    ("Musique", "applications-multimedia-symbolic"),
-    ("Photos", "camera-photo-symbolic"),
-    ("Archives", "user-bookmarks-symbolic"),
+    ("Projets", "applications-engineering-symbolic", "#33d17a"),
+    ("Musique", "phosphor:music-notes", "#9141ac"),
+    ("Photos", "phosphor:camera", "#e66100"),
+    ("Archives", "user-bookmarks-symbolic", None),
 )
 USER_ICON = "file:///usr/share/icons/Adwaita/scalable/places/folder-documents.svg"
 
@@ -45,12 +45,12 @@ class Demo:
         self.folders: dict[str, Path] = {}
 
     def create(self, populate: bool = True) -> None:
-        for name, glyph in FOLDERS:
+        for name, glyph, tint in FOLDERS:
             folder = self.root / name
             folder.mkdir()
             self.folders[name] = folder
             if populate:
-                self.service.apply(folder, Settings(glyph_name=glyph))
+                self.service.apply(folder, Settings(glyph_name=glyph, folder_tint=tint))
 
     def break_some(self) -> None:
         self.folders["Musique"].rmdir()
