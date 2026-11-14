@@ -1,9 +1,10 @@
+import colorsys
 import math
 
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Adw, Gdk, Gtk
+from gi.repository import Adw, Gdk, GLib, GObject, Gtk
 
 from ..color import is_hex_color
 from ..i18n import _
@@ -86,6 +87,84 @@ def draw_swatch(context, width: int, height: int, color: str | None, symbol: str
         context.stroke()
 
 
+RAINBOW_WEDGES = 72
+WEDGE_OVERLAP = 0.08
+CENTER_GAP = 0.55
+CENTER_DOT = 0.42
+
+
+def draw_rainbow(context, width: int, height: int, chosen: str | None) -> None:
+    radius = min(width, height) / 2 - 1
+    center_x, center_y = width / 2, height / 2
+    step = 2 * math.pi / RAINBOW_WEDGES
+    for index in range(RAINBOW_WEDGES):
+        red, green, blue = colorsys.hsv_to_rgb(index / RAINBOW_WEDGES, 0.85, 0.95)
+        context.set_source_rgb(red, green, blue)
+        context.move_to(center_x, center_y)
+        context.arc(center_x, center_y, radius, index * step, (index + 1) * step + WEDGE_OVERLAP)
+        context.close_path()
+        context.fill()
+    context.arc(center_x, center_y, radius, 0, 2 * math.pi)
+    context.set_source_rgba(0, 0, 0, 0.28)
+    context.set_line_width(1)
+    context.stroke()
+    if chosen is not None:
+        context.arc(center_x, center_y, radius * CENTER_GAP, 0, 2 * math.pi)
+        context.set_source_rgb(1, 1, 1)
+        context.fill()
+        red, green, blue = (int(chosen[index : index + 2], 16) / 255 for index in (1, 3, 5))
+        context.arc(center_x, center_y, radius * CENTER_DOT, 0, 2 * math.pi)
+        context.set_source_rgb(red, green, blue)
+        context.fill_preserve()
+        context.set_source_rgba(0, 0, 0, 0.28)
+        context.stroke()
+
+
+class CustomSwatch(Gtk.Button):
+    __gtype_name__ = "CusticonCustomSwatch"
+    rgba = GObject.Property(type=Gdk.RGBA)
+
+    def __init__(self):
+        super().__init__(valign=Gtk.Align.CENTER)
+        self.add_css_class("flat")
+        self.add_css_class("palette-swatch")
+        self._chosen = False
+        self._area = Gtk.DrawingArea(content_width=SWATCH_SIZE, content_height=SWATCH_SIZE)
+        self._area.set_draw_func(self._draw)
+        self.set_child(self._area)
+        self.connect("clicked", self._on_clicked)
+        self.connect("notify::rgba", lambda *_args: self._area.queue_draw())
+
+    def _draw(self, _area, context, width, height) -> None:
+        draw_rainbow(context, width, height, hex_of(self.rgba) if self._chosen and self.rgba is not None else None)
+
+    def set_rgba(self, color: Gdk.RGBA) -> None:
+        self.rgba = color
+
+    def get_rgba(self) -> Gdk.RGBA:
+        return self.rgba
+
+    def set_chosen(self, chosen: bool) -> None:
+        if chosen != self._chosen:
+            self._chosen = chosen
+            self._area.queue_draw()
+
+    def is_chosen(self) -> bool:
+        return self._chosen
+
+    def _on_clicked(self, _button) -> None:
+        dialog = Gtk.ColorDialog(with_alpha=False)
+        root = self.get_root()
+        dialog.choose_rgba(root if isinstance(root, Gtk.Window) else None, self.rgba, None, self._on_chosen)
+
+    def _on_chosen(self, dialog, result) -> None:
+        try:
+            color = dialog.choose_rgba_finish(result)
+        except GLib.Error:
+            return
+        self.set_rgba(color)
+
+
 class CustomChoice:
     def __init__(self, palette: "Palette"):
         self._palette = palette
@@ -116,10 +195,10 @@ class Palette(Adw.WrapBox):
         self._add("accent", self._accent, "accent", _("System Accent"))
         for color, name in PALETTE_COLORS:
             self._add(color, color, None, name)
-        self.custom_button = Gtk.ColorDialogButton(dialog=Gtk.ColorDialog(with_alpha=False), valign=Gtk.Align.CENTER)
+        self.custom_button = CustomSwatch()
         self.custom_button.set_rgba(rgba_of(DEFAULT_CUSTOM))
         self.custom_button.set_tooltip_text(_("Custom"))
-        self.custom_button.add_css_class("palette-swatch")
+        self.custom_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Custom")])
         self.custom_button.connect("notify::rgba", self._on_custom_color)
         self.append(self.custom_button)
         self._custom_choice = CustomChoice(self)
@@ -201,6 +280,7 @@ class Palette(Adw.WrapBox):
                 if button.get_active():
                     button.add_css_class("selected-swatch")
                 self._areas[key].queue_draw()
+            self.custom_button.set_chosen(self.custom_is_active())
             if self.custom_is_active():
                 self.custom_button.add_css_class("selected-swatch")
             else:

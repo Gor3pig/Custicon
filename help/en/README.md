@@ -99,7 +99,7 @@ The right column sets the rendering.
   - The crossed swatch (**None**): the folder keeps the color of your icon theme.
   - **System Accent**: the folder takes the accent color chosen in the GNOME settings.
   - The nine colors of the palette (blue, teal, green, yellow, orange, red, pink, purple, slate).
-  - The last swatch (**Custom**) opens a color chooser.
+  - The last swatch, a round rainbow (**Custom**), opens a color chooser and then shows the chosen color in its center.
 
   The relief of the folder (its light and dark areas) is kept, and the theme file is never modified.
   A gray, a white or a black gives a desaturated folder rather than a vivid color.

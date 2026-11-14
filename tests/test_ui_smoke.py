@@ -963,6 +963,165 @@ class PaletteTests(unittest.TestCase):
         self.assertEqual(palette.get_accessible_role(), Gtk.AccessibleRole.GROUP)
 
 
+@unittest.skipUnless(DISPLAY_AVAILABLE, "needs a display")
+class CustomSwatchTests(unittest.TestCase):
+    def setUp(self):
+        from custicon.ui import palette as palette_module
+
+        Adw.init()
+        self.module = palette_module
+        self.swatch = palette_module.CustomSwatch()
+
+    def render(self, chosen, size=48):
+        import cairo
+
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
+        self.module.draw_rainbow(cairo.Context(surface), size, size, chosen)
+        surface.flush()
+        data = bytes(surface.get_data())
+
+        def at(x, y):
+            offset = y * surface.get_stride() + x * 4
+            return data[offset + 2], data[offset + 1], data[offset], data[offset + 3]
+
+        return at
+
+    def test_the_swatch_keeps_the_color_it_is_given(self):
+        self.swatch.set_rgba(rgba_from_hex("#123456"))
+        self.assertEqual(hex_from_rgba(self.swatch.get_rgba()), "#123456")
+
+    def test_a_new_color_is_announced(self):
+        seen = []
+        self.swatch.connect("notify::rgba", lambda *_args: seen.append(hex_from_rgba(self.swatch.get_rgba())))
+        self.swatch.set_rgba(rgba_from_hex("#abcdef"))
+        self.assertEqual(seen, ["#abcdef"])
+
+    def test_the_swatch_starts_not_chosen(self):
+        self.assertFalse(self.swatch.is_chosen())
+
+    def test_the_chosen_state_can_be_set_and_cleared(self):
+        self.swatch.set_chosen(True)
+        self.assertTrue(self.swatch.is_chosen())
+        self.swatch.set_chosen(False)
+        self.assertFalse(self.swatch.is_chosen())
+
+    def test_without_a_chosen_color_the_whole_disc_is_a_rainbow(self):
+        at = self.render(None)
+        colors = {at(24 + dx, 24 + dy)[:3] for dx, dy in ((18, 0), (-18, 0), (0, 18), (0, -18), (13, 13), (-13, -13))}
+        self.assertGreaterEqual(len(colors), 4)
+        self.assertGreaterEqual(at(24 + 6, 24 + 1)[3], 240)
+
+    def test_there_is_no_see_through_seam_between_the_sectors(self):
+        import math
+
+        at = self.render(None, 96)
+        for degrees in range(0, 360, 5):
+            x = 48 + round(36 * math.cos(math.radians(degrees)))
+            y = 48 + round(36 * math.sin(math.radians(degrees)))
+            self.assertGreaterEqual(at(x, y)[3], 250, degrees)
+
+    def test_the_corners_stay_transparent(self):
+        at = self.render(None)
+        self.assertEqual(at(0, 0)[3], 0)
+        self.assertEqual(at(47, 47)[3], 0)
+
+    def test_a_chosen_color_fills_the_center(self):
+        at = self.render("#112233")
+        self.assertEqual(at(24, 24)[:3], (0x11, 0x22, 0x33))
+
+    def test_a_white_gap_separates_the_center_from_the_rainbow(self):
+        at = self.render("#112233")
+        gap = int(23 * self.module.CENTER_GAP) - 1
+        self.assertEqual(at(24 + gap, 24)[:3], (255, 255, 255))
+
+    def test_the_rainbow_ring_stays_around_a_chosen_color(self):
+        at = self.render("#112233")
+        ring = at(24 + 20, 24)
+        self.assertNotEqual(ring[:3], (255, 255, 255))
+        self.assertNotEqual(ring[:3], (0x11, 0x22, 0x33))
+        self.assertEqual(ring[3], 255)
+
+    def test_the_rainbow_covers_every_hue_around_the_ring(self):
+        at = self.render(None, 96)
+        import colorsys
+        import math
+
+        hues = set()
+        for degrees in range(0, 360, 20):
+            x = 48 + round(40 * math.cos(math.radians(degrees)))
+            y = 48 + round(40 * math.sin(math.radians(degrees)))
+            red, green, blue, _alpha = at(x, y)
+            hues.add(round(colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)[0] * 12) % 12)
+        self.assertGreaterEqual(len(hues), 10)
+
+    def draw_swatch(self, size=48):
+        import cairo
+
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
+        self.swatch._draw(None, cairo.Context(surface), size, size)
+        surface.flush()
+        data = bytes(surface.get_data())
+        offset = (size // 2) * surface.get_stride() + (size // 2) * 4
+        return data[offset + 2], data[offset + 1], data[offset]
+
+    def test_the_drawn_swatch_shows_its_color_only_when_it_is_the_chosen_one(self):
+        self.swatch.set_rgba(rgba_from_hex("#112233"))
+        self.assertNotEqual(self.draw_swatch(), (0x11, 0x22, 0x33))
+        self.swatch.set_chosen(True)
+        self.assertEqual(self.draw_swatch(), (0x11, 0x22, 0x33))
+
+    def test_the_drawn_center_follows_a_new_color(self):
+        self.swatch.set_chosen(True)
+        self.swatch.set_rgba(rgba_from_hex("#112233"))
+        self.swatch.set_rgba(rgba_from_hex("#445566"))
+        self.assertEqual(self.draw_swatch(), (0x44, 0x55, 0x66))
+
+    def test_a_click_opens_the_color_dialog_with_the_current_color(self):
+        self.swatch.set_rgba(rgba_from_hex("#445566"))
+        with mock.patch.object(Gtk.ColorDialog, "choose_rgba") as choose:
+            self.swatch.emit("clicked")
+        choose.assert_called_once()
+        self.assertEqual(hex_from_rgba(choose.call_args.args[1]), "#445566")
+
+    def test_the_chosen_color_becomes_the_color_of_the_swatch(self):
+        dialog = mock.Mock()
+        dialog.choose_rgba_finish.return_value = rgba_from_hex("#778899")
+        self.swatch._on_chosen(dialog, None)
+        self.assertEqual(hex_from_rgba(self.swatch.get_rgba()), "#778899")
+
+    def test_a_cancelled_dialog_changes_nothing(self):
+        self.swatch.set_rgba(rgba_from_hex("#445566"))
+        dialog = mock.Mock()
+        dialog.choose_rgba_finish.side_effect = GLib.Error("dismissed")
+        self.swatch._on_chosen(dialog, None)
+        self.assertEqual(hex_from_rgba(self.swatch.get_rgba()), "#445566")
+
+    def test_the_palette_marks_the_swatch_only_for_a_custom_color(self):
+        from custicon.ui.palette import Palette
+
+        palette = Palette("Color", "none")
+        self.assertFalse(palette.custom_button.is_chosen())
+        palette.choose_color("#e62d42")
+        self.assertFalse(palette.custom_button.is_chosen())
+        palette.set_state("custom", "#123456")
+        self.assertTrue(palette.custom_button.is_chosen())
+        palette.choose_base()
+        self.assertFalse(palette.custom_button.is_chosen())
+
+    def test_the_palette_reads_the_swatch_color_back(self):
+        from custicon.ui.palette import Palette
+
+        palette = Palette("Color", "none")
+        palette.custom_button.set_rgba(rgba_from_hex("#0a141e"))
+        self.assertEqual(palette.state(), ("custom", "#0a141e"))
+        self.assertTrue(palette.custom_button.is_chosen())
+
+    def test_the_swatch_is_named_for_assistive_technology(self):
+        from custicon.ui.palette import Palette
+
+        self.assertEqual(Palette("Color", "none").custom_button.get_tooltip_text(), "Custom")
+
+
 class ColorModeUiTests(WindowTestCase):
     def setUp(self):
         super().setUp()

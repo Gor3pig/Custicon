@@ -99,7 +99,7 @@ La colonne de droite règle le rendu.
   - La pastille barrée (**Aucune**) : le dossier garde la couleur de votre thème d’icônes.
   - **Accent du système** : le dossier prend la couleur d’accent choisie dans les paramètres de GNOME.
   - Les neuf couleurs de la palette (bleu, sarcelle, vert, jaune, orange, rouge, rose, violet, ardoise).
-  - La dernière pastille (**Personnalisée**) ouvre un sélecteur de couleur.
+  - La dernière pastille, un rond arc-en-ciel (**Personnalisée**), ouvre un sélecteur de couleur puis affiche la couleur choisie en son centre.
 
   Le relief du dossier (ses zones claires et sombres) est conservé, et le fichier du thème n’est jamais modifié.
   Un gris, un blanc ou un noir donne un dossier désaturé plutôt qu’une couleur franche.

@@ -17,7 +17,7 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
@@ -104,6 +104,13 @@ def show_choosing(window, demo) -> bool:
     return False
 
 
+def show_custom(window) -> bool:
+    editor = window.editor
+    editor.folder_tint_palette.custom_button.set_rgba(rgba_from_hex("#8e2de2"))
+    editor.color_palette.custom_button.set_rgba(rgba_from_hex("#00a58e"))
+    return False
+
+
 def show_about(window) -> bool:
     window.get_application().activate_action("about", None)
     return False
@@ -138,6 +145,9 @@ def arrange(screen: str, window, demo: Demo) -> None:
         GLib.timeout_add(DIALOG_DELAY_MS, show_set, window, key, query)
     if screen == "tint":
         GLib.timeout_add(DIALOG_DELAY_MS, show_tint, window)
+    if screen == "custom":
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, show_custom, window)
     if screen == "about":
         GLib.timeout_add(DIALOG_DELAY_MS, show_about, window)
     if screen == "confirm":
