@@ -1,0 +1,77 @@
+name: Flatpak repository
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: flatpak-repository
+  cancel-in-progress: false
+
+env:
+  SIGNING_KEY_ID: 897E1A060AF19D57220C551EC81061E987D5F150
+
+jobs:
+  publish:
+    name: Publish the signed Flatpak repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Install the tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends flatpak ostree
+
+      - name: Download the package of the latest release
+        run: |
+          mkdir "$RUNNER_TEMP/release"
+          gh release download --pattern 'custicon-*.flatpak*' --dir "$RUNNER_TEMP/release"
+          cd "$RUNNER_TEMP/release"
+          test "$(ls custicon-*.flatpak | wc -l)" = 1
+          sha256sum --check custicon-*.flatpak.sha256
+
+      - name: Assemble the published files
+        run: |
+          mkdir -p _site/images
+          cp build-aux/custicon.flatpakref build-aux/custicon.flatpakrepo build-aux/custicon.gpg _site/
+          cp data/icons/custicon-64x64.png _site/images/
+
+      - name: Build the signed Flatpak repository
+        env:
+          SIGNING_KEY: ${{ secrets.FLATPAK_REPO_SIGNING_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "The FLATPAK_REPO_SIGNING_KEY secret is missing"
+            exit 1
+          fi
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          install -d -m 700 "$GNUPGHOME"
+          printf '%s\n' "$SIGNING_KEY" | gpg --batch --import
+          build-aux/flatpak-repo.sh "$RUNNER_TEMP"/release/custicon-*.flatpak _site/repo "$SIGNING_KEY_ID"
+          rm -rf "$GNUPGHOME"
+
+      - name: Upload the files
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: _site
+
+      - name: Publish on GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346

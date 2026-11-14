@@ -80,6 +80,40 @@ validate_metainfo() {
     appstreamcli validate --no-net --explain "$workdir/$APP_ID.metainfo.xml"
 }
 
+flatpak_repository_files_match() {
+    local failed=0 key url file fingerprint
+    key=$(base64 -w0 build-aux/custicon.gpg)
+    url=$(sed -n 's/^Url=//p' build-aux/custicon.flatpakrepo)
+    for file in build-aux/custicon.flatpakref build-aux/custicon.flatpakrepo; do
+        if [ "$(sed -n 's/^GPGKey=//p' "$file")" != "$key" ]; then
+            printf '%s: the key is not the one of build-aux/custicon.gpg\n' "$file"
+            failed=1
+        fi
+        if [ "$(sed -n 's/^Url=//p' "$file")" != "$url" ]; then
+            printf '%s: the repository address differs from custicon.flatpakrepo\n' "$file"
+            failed=1
+        fi
+    done
+    if [ "$(sed -n 's/^Name=//p' build-aux/custicon.flatpakref)" != "$APP_ID" ]; then
+        printf 'custicon.flatpakref: the application name is not %s\n' "$APP_ID"
+        failed=1
+    fi
+    if ! grep -qxF 'Branch=master' build-aux/custicon.flatpakref; then
+        printf 'custicon.flatpakref: the branch must be master\n'
+        failed=1
+    fi
+    if ! grep -qF -- "--repo-url=$url" .github/workflows/release.yml; then
+        printf 'release.yml: the bundle must embed the repository address %s\n' "$url"
+        failed=1
+    fi
+    fingerprint=$(gpg --show-keys --with-colons build-aux/custicon.gpg | sed -n 's/^fpr:::::::::\([0-9A-F]*\):$/\1/p' | head -n 1)
+    if [ -z "$fingerprint" ] || ! grep -qxF "  SIGNING_KEY_ID: $fingerprint" .github/workflows/pages.yml; then
+        printf 'pages.yml: SIGNING_KEY_ID must be the fingerprint of build-aux/custicon.gpg (%s)\n' "$fingerprint"
+        failed=1
+    fi
+    return $failed
+}
+
 validate_manifest() {
     python3 -c "import json,sys; json.load(open('build-aux/$APP_ID.json'))"
 }
@@ -177,6 +211,7 @@ step "Versions match" versions_match
 step "Desktop entry" validate_desktop_file
 step "AppStream metainfo" validate_metainfo
 step "Flatpak manifest" validate_manifest
+step "Flatpak repository files" flatpak_repository_files_match
 step "Translatable files are listed" translatable_files_are_listed
 step "Translations are complete" translations_are_complete
 step "French guillemets" french_guillemets_use_non_breaking_spaces

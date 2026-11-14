@@ -24,7 +24,7 @@ jobs:
             set -euo pipefail
             dnf install -y --setopt=install_weak_deps=False \
               git findutils python3-gobject python3-cairo gobject-introspection gtk4 libadwaita librsvg2 \
-              gettext desktop-file-utils appstream glib2 gvfs dbus-daemon dejavu-sans-fonts
+              gettext desktop-file-utils appstream glib2 gvfs dbus-daemon dejavu-sans-fonts gnupg2
             git config --system --add safe.directory "*"
             git clone --quiet /src /work
             cd /work
