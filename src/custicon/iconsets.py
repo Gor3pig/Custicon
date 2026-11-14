@@ -1,12 +1,10 @@
 import json
 from pathlib import Path
 
-import gi
-
-gi.require_version("Gtk", "4.0")
-from gi.repository import Gio, GLib, Gtk
+from gi.repository import GLib
 
 from .errors import IconNotFoundError
+from .symbolic import SymbolicSvg
 from .textutil import normalize_text
 
 PHOSPHOR_PREFIX = "phosphor:"
@@ -157,7 +155,7 @@ class IconSet:
         return self.file(name)
 
     def paintable(self, name: str, size: int, scale: int = 1):
-        return Gtk.IconPaintable.new_for_file(Gio.File.new_for_path(str(self.file(name))), size, scale)
+        return SymbolicSvg(self.file(name), size)
 
 
 class PhosphorSet(IconSet):

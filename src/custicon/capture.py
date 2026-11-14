@@ -17,13 +17,13 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
 DIALOG_SETTLE_MS = 3200
-DIALOG_SCREENS = ("picker", "phosphor", "emoji", "brands", "about", "confirm", "report")
-SET_SCREENS = {"phosphor": ("phosphor", ""), "emoji": ("emoji", "chat"), "brands": ("brands", "git")}
+DIALOG_SCREENS = ("darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report")
+SET_SCREENS = {"darkpicker": ("emoji", "chat"), "phosphor": ("phosphor", ""), "emoji": ("emoji", "chat"), "brands": ("brands", "git")}
 WIDE = (1000, 720)
 NARROW = (400, 720)
 FOLDERS = (
@@ -113,7 +113,7 @@ def arrange(screen: str, window, demo: Demo) -> None:
     size = NARROW if screen == "narrow" else WIDE
     window.set_default_size(*size)
     Gtk.Settings.get_default().set_property("gtk-enable-animations", False)
-    scheme = Adw.ColorScheme.FORCE_DARK if screen == "dark" else Adw.ColorScheme.FORCE_LIGHT
+    scheme = Adw.ColorScheme.FORCE_DARK if screen in ("dark", "darkpicker") else Adw.ColorScheme.FORCE_LIGHT
     Adw.StyleManager.get_default().set_color_scheme(scheme)
     if screen in ("states", "report"):
         window.reload(select=str(demo.folders["Archives"]))
