@@ -54,6 +54,18 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.4.1" date="2026-11-14">
+      <description>
+        <p>A faster interface, readable in dark mode, and a window that remembers its size.</p>
+        <ul>
+          <li>Custicon now asks for GPU acceleration by default, so the interface is drawn by your graphics card</li>
+          <li>The bundled pictograms (Phosphor, emoji, logos) follow the text color and are readable in the dark style</li>
+          <li>The folder list and the picker are lighter: regaining focus and switching sets are quicker</li>
+          <li>The main preview is smaller, and the window opens at a size that shows everything, then remembers its size and whether it was maximized</li>
+          <li>The help explains how to restore a permission with Flatseal or for an installation for all users</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.4.0" date="2026-11-14">
       <description>
         <p>Many more pictograms, a roomier editor and several folders at once.</p>
