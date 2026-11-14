@@ -1,6 +1,8 @@
-import re
 import base64
+import re
+import shutil
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest import mock
 
@@ -199,6 +201,66 @@ class PhosphorTests(ServiceTestCase):
         self.theme = "Green"
         report = self.service.regenerate_all()
         self.assertEqual(len(report.updated), 1)
+
+
+class PhosphorRevisionTests(ServiceTestCase):
+    def stale_entry(self, folder):
+        entry = self.service.apply(folder, Settings(glyph_name="phosphor:acorn"))
+        old = dict(entry.settings)
+        old.pop("glyph_revision", None)
+        self.store.put(replace(entry, settings=old))
+
+    def test_the_revision_of_the_set_is_stored_with_a_phosphor_pictogram(self):
+        entry = self.service.apply(self.make_folder(), Settings(glyph_name="phosphor:acorn"))
+        self.assertEqual(entry.settings["glyph_revision"], self.service.phosphor_set().revision)
+
+    def test_other_pictograms_store_no_revision(self):
+        entry = self.service.apply(self.make_folder(), STAR)
+        self.assertIsNone(entry.settings["glyph_revision"])
+
+    def test_an_invalid_revision_is_refused(self):
+        for value in ("2", True, 1.5, [2]):
+            with self.subTest(value=value), self.assertRaises(InvalidSettingsError):
+                Settings(glyph_name="phosphor:acorn", glyph_revision=value).validate()
+
+    def test_nothing_is_outdated_right_after_applying_a_phosphor_pictogram(self):
+        self.service.apply(self.make_folder(), Settings(glyph_name="phosphor:acorn"))
+        self.assertEqual(self.service.outdated(), [])
+
+    def test_an_icon_made_with_an_older_set_is_outdated(self):
+        folder = self.make_folder()
+        self.stale_entry(folder)
+        self.assertEqual(self.service.outdated(), [str(folder.resolve())])
+
+    def test_an_icon_made_with_another_revision_is_outdated(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, Settings(glyph_name="phosphor:acorn"))
+        self.store.put(replace(entry, settings={**entry.settings, "glyph_revision": 1}))
+        self.assertEqual(self.service.outdated(), [str(folder.resolve())])
+
+    def test_only_phosphor_pictograms_follow_the_revision(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, STAR)
+        old = dict(entry.settings)
+        old.pop("glyph_revision", None)
+        self.store.put(replace(entry, settings=old))
+        self.assertEqual(self.service.outdated(), [])
+
+    def test_regenerating_brings_the_icon_up_to_date(self):
+        folder = self.make_folder()
+        self.stale_entry(folder)
+        self.service.regenerate_all()
+        self.assertEqual(self.service.outdated(), [])
+        self.assertEqual(self.store.get(str(folder.resolve())).settings["glyph_revision"], self.service.phosphor_set().revision)
+
+    def test_a_missing_folder_with_an_old_icon_is_not_reported(self):
+        folder = self.make_folder()
+        self.stale_entry(folder)
+        shutil.rmtree(folder)
+        self.assertEqual(self.service.outdated(), [])
+
+    def test_the_revision_is_not_part_of_the_remembered_appearance(self):
+        self.assertNotIn("glyph_revision", service_module.APPEARANCE_FIELDS)
 
 
 class ResetTests(ServiceTestCase):

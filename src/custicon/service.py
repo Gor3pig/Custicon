@@ -55,6 +55,7 @@ class Settings:
     glyph_copy: str | None = None
     folder_tint: str | None = None
     folder_tint_accent: bool = False
+    glyph_revision: int | None = None
 
     def validate(self) -> None:
         for text in (self.glyph_name, self.glyph_file, self.glyph_text, self.color, self.glyph_copy, self.folder_tint):
@@ -62,6 +63,8 @@ class Settings:
                 raise InvalidSettingsError("invalid text in the settings")
         if not isinstance(self.tint, bool) or not isinstance(self.accent, bool):
             raise InvalidSettingsError("invalid tint or accent setting")
+        if self.glyph_revision is not None and (isinstance(self.glyph_revision, bool) or not isinstance(self.glyph_revision, int)):
+            raise InvalidSettingsError("invalid pictogram set revision")
         if not isinstance(self.folder_tint_accent, bool):
             raise InvalidSettingsError("invalid folder tint setting")
         if self.folder_tint is not None and not is_hex_color(self.folder_tint):
@@ -184,6 +187,12 @@ class Service:
         )
         return BuiltIcon(compose(folder_file, glyph_file, style), color, name, folder_file, folder_tint)
 
+    def _glyph_revision(self, settings: Settings) -> int | None:
+        return self._phosphor.revision if is_phosphor(settings.glyph_name) else None
+
+    def _set_is_stale(self, entry: Entry) -> bool:
+        return is_phosphor(entry.settings.get("glyph_name")) and entry.settings.get("glyph_revision") != self._phosphor.revision
+
     def folder_preview(self, settings: Settings, theme_name: str | None = None) -> tuple[str | None, str | None]:
         folder_tint = self._accent_color() if settings.folder_tint_accent else settings.folder_tint
         if folder_tint is None:
@@ -209,6 +218,7 @@ class Service:
                 settings,
                 glyph_copy=glyph_copy,
                 folder_tint=built.folder_tint if settings.folder_tint_accent else settings.folder_tint,
+                glyph_revision=self._glyph_revision(settings),
             ).to_dict()
             entry = Entry(key, digest, built.theme, built.color, stored, previous)
             self._store.put(entry)
@@ -406,7 +416,7 @@ class Service:
         for entry in self._store.all().values():
             if self._status(entry) != STATUS_OK:
                 continue
-            if entry.theme != theme:
+            if entry.theme != theme or self._set_is_stale(entry):
                 stale.append(entry.folder)
             else:
                 follows_glyph = entry.settings.get("accent") is True
