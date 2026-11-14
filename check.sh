@@ -206,7 +206,7 @@ interface_tests() {
     sleep 1
     XDG_RUNTIME_DIR="$runtime" GDK_BACKEND=broadway BROADWAY_DISPLAY="$display" \
         CUSTICON_REQUIRE_METADATA=1 CUSTICON_REQUIRE_DISPLAY=1 with_session_bus \
-        python3 -W ignore -m unittest tests.test_ui_smoke
+        python3 -W ignore -m unittest tests.test_ui_smoke tests.test_website
     local status=$?
     kill "$server" 2>/dev/null
     return $status

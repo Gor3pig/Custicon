@@ -22,12 +22,13 @@
   <meta property="og:image:height" content="720">
   <meta property="og:image:alt" content="The main window of Custicon, with a folder tinted green and its pictogram">
   <meta name="twitter:card" content="summary_large_image">
+  <script src="language.js"></script>
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
 <body data-close-label="Close" data-copied-label="Copied">
   <div class="wrap top">
-    <p class="language"><strong>English</strong> · <a href="fr/" hreflang="fr" lang="fr">Français</a></p>
+    <p class="language"><strong>English</strong> · <a href="fr/" hreflang="fr" lang="fr" data-language="fr">Français</a></p>
   </div>
 
   <header class="wrap hero">
@@ -48,20 +49,25 @@
 
     <section class="wrap">
       <h2>What is Custicon?</h2>
-      <div class="intro">
-        <p>Nautilus shows the Documents, Music and Pictures folders with a small pictogram in the middle. <strong>Custicon lets you do the same for any folder.</strong></p>
-        <p>The pictogram sits on the real folder icon of your current icon theme, not on an imitation, so the result follows your theme. Change theme, and one action updates every icon. You can also tint the folder itself.</p>
-      </div>
+      <div class="intro"><p>Nautilus shows the Documents, Music and Pictures folders with a small pictogram in the middle. <strong>Custicon lets you do the same for any folder.</strong></p><p>The pictogram sits on the real folder icon of your current icon theme, not on an imitation, so the result follows your theme. Change theme, and one action updates every icon. You can also tint the folder itself.</p></div>
     </section>
 
     <section class="wrap">
       <h2>What Custicon does</h2>
-      <div class="cards"><article class="card"><h3>Choose</h3><p>A pictogram from your icon theme, from 1,500 Phosphor icons, 1,600 emoji or 3,400 brand logos bundled with Custicon, found by name in English or French. Or your own SVG or PNG file, or a few letters.</p></article><article class="card"><h3>Adjust</h3><p>Automatic or chosen color, size and position, with a live preview at four sizes.</p></article><article class="card"><h3>Tint</h3><p>Give the folder itself any color, or the accent color of your system. The light and dark areas of the folder are kept.</p></article><article class="card"><h3>Remove</h3><p>The folder gets back exactly the icon it had before, and a removal can be undone for a few seconds.</p></article><article class="card"><h3>Regenerate</h3><p>After a change of theme or accent color, one click updates every icon you made.</p></article><article class="card"><h3>Respect</h3><p>Nothing is ever written in your folders. The icon lives in the metadata that Nautilus already reads.</p></article></div>
+      <div class="cards"><article class="card"><h3>Choose</h3><p>Over 6,000 pictograms: 1,500 Phosphor icons, 1,600 emoji and 3,400 brand logos, plus your icon theme, your own SVG or PNG file or a few letters. Suggestions follow the folder name.</p></article><article class="card"><h3>Adjust</h3><p>Pick the color in a palette, then set the size and position. Drag the pictogram on the preview and scroll to resize it.</p></article><article class="card"><h3>Tint</h3><p>Give the folder itself any color, or the accent color of your system. The light and dark areas of the folder are kept.</p></article><article class="card"><h3>Group</h3><p>Customize several folders at once, with the same pictogram and the same look, or tick folders in the list to restyle them together.</p></article><article class="card"><h3>Regenerate</h3><p>After a change of theme or accent color, one click updates every icon you made.</p></article><article class="card"><h3>Respect</h3><p>Nothing is ever written in your folders. The icon lives in the metadata that Nautilus already reads, and a removed icon gives the folder back exactly the one it had.</p></article></div>
+    </section>
+
+    <section class="wrap">
+      <h2>From an ordinary folder to your own</h2>
+      <p class="intro">Three steps, and the folder is yours.</p>
+      <div class="journey"><article><a class="zoom picture" href="images/en-phosphor.webp"><img src="images/en-phosphor.webp" alt="Or pick one of the 1,500 Phosphor icons" width="1000" height="720" loading="lazy"></a><div class="text"><span class="step">1 · Choose</span><h3>Pick a pictogram</h3><p>Search your icon theme, Phosphor, emoji or logos, in English or French.</p></div></article><article><a class="zoom picture" href="images/en-tint.webp"><img src="images/en-tint.webp" alt="Tint the folder and keep its shading" width="1000" height="720" loading="lazy"></a><div class="text"><span class="step">2 · Color</span><h3>Choose its color</h3><p>Tint the folder from the palette, then set the size and the position of the pictogram.</p></div></article><article><a class="zoom picture" href="images/en-main.webp"><img src="images/en-main.webp" alt="The main window of Custicon, with a folder tinted green and its pictogram" width="1000" height="720" loading="lazy"></a><div class="text"><span class="step">3 · Apply</span><h3>Apply it</h3><p>One click, then press F5 in Nautilus to see the result.</p></div></article></div>
     </section>
 
     <section class="wrap">
       <h2>A closer look</h2>
-      <div class="shots"><figure><a class="zoom" href="images/en-picker.webp"><img src="images/en-picker.webp" alt="Search the icons of your theme, in English or in French" width="1000" height="720" loading="lazy"></a><figcaption>Search the icons of your theme, in English or in French</figcaption></figure><figure><a class="zoom" href="images/en-phosphor.webp"><img src="images/en-phosphor.webp" alt="Or pick one of the bundled Phosphor icons" width="1000" height="720" loading="lazy"></a><figcaption>Or pick one of the bundled Phosphor icons</figcaption></figure><figure><a class="zoom" href="images/en-tint.webp"><img src="images/en-tint.webp" alt="Tint the folder and keep its shading" width="1000" height="720" loading="lazy"></a><figcaption>Tint the folder and keep its shading</figcaption></figure><figure><a class="zoom" href="images/en-states.webp"><img src="images/en-states.webp" alt="Follow every customized folder and find the ones that moved" width="1000" height="720" loading="lazy"></a><figcaption>Follow every customized folder and find the ones that moved</figcaption></figure></div>
+      <div class="carousel" data-label-previous="Previous image" data-label-next="Next image" data-label-pause="Pause the slideshow" data-label-play="Resume the slideshow" data-label-held="Paused while you look." data-label-calm="Automatic scrolling is turned off by your settings. The ▶ button turns it on." data-label-image="Image {n} of {total}" data-label-slide="slide" data-label-carousel="carousel" data-label-screenshots="Custicon screenshots">
+        <div class="stage"><div class="stack"><figure class="slide" data-thumb="images/thumb-en-picker.webp"><a class="zoom" href="images/en-picker.webp"><img src="images/en-picker.webp" alt="Search the icons of your theme, in English or in French" width="1000" height="720" loading="lazy"></a><figcaption aria-hidden="true">Search the icons of your theme, in English or in French</figcaption></figure><figure class="slide" data-thumb="images/thumb-en-phosphor.webp"><a class="zoom" href="images/en-phosphor.webp"><img src="images/en-phosphor.webp" alt="Or pick one of the 1,500 Phosphor icons" width="1000" height="720" loading="lazy"></a><figcaption aria-hidden="true">Or pick one of the 1,500 Phosphor icons</figcaption></figure><figure class="slide" data-thumb="images/thumb-en-emoji.webp"><a class="zoom" href="images/en-emoji.webp"><img src="images/en-emoji.webp" alt="Emoji, found by name, in English or in French" width="1000" height="720" loading="lazy"></a><figcaption aria-hidden="true">Emoji, found by name, in English or in French</figcaption></figure><figure class="slide" data-thumb="images/thumb-en-brands.webp"><a class="zoom" href="images/en-brands.webp"><img src="images/en-brands.webp" alt="Brand logos, for the folders of your projects" width="1000" height="720" loading="lazy"></a><figcaption aria-hidden="true">Brand logos, for the folders of your projects</figcaption></figure><figure class="slide" data-thumb="images/thumb-en-tint.webp"><a class="zoom" href="images/en-tint.webp"><img src="images/en-tint.webp" alt="Tint the folder and keep its shading" width="1000" height="720" loading="lazy"></a><figcaption aria-hidden="true">Tint the folder and keep its shading</figcaption></figure><figure class="slide" data-thumb="images/thumb-en-choosing.webp"><a class="zoom" href="images/en-choosing.webp"><img src="images/en-choosing.webp" alt="Tick several folders and restyle them together" width="1000" height="720" loading="lazy"></a><figcaption aria-hidden="true">Tick several folders and restyle them together</figcaption></figure><figure class="slide" data-thumb="images/thumb-en-states.webp"><a class="zoom" href="images/en-states.webp"><img src="images/en-states.webp" alt="Follow every customized folder and find the ones that moved" width="1000" height="720" loading="lazy"></a><figcaption aria-hidden="true">Follow every customized folder and find the ones that moved</figcaption></figure></div></div>
+      </div>
     </section>
 
     <section class="wrap">
@@ -89,7 +95,7 @@
 
   <footer class="wrap">
     <nav><a href="https://github.com/Gor3pig/Custicon/blob/main/help/en/README.md">User guide</a><a href="https://github.com/Gor3pig/Custicon/releases">All releases</a><a href="https://github.com/Gor3pig/Custicon">Source code</a><a href="https://github.com/Gor3pig/Custicon/issues">Report a bug or suggest an idea</a></nav>
-    <p>Custicon is free software, released under the <a href="https://github.com/Gor3pig/Custicon/blob/main/COPYING">GNU GPL v3 or later</a>. Its bundled Phosphor icons are under the MIT license.</p>
+    <p>Custicon is free software, released under the <a href="https://github.com/Gor3pig/Custicon/blob/main/COPYING">GNU GPL v3 or later</a>. Its bundled Phosphor icons and Fluent emoji are under the MIT license, its Simple Icons logos under CC0. The brands remain the trademarks of their owners.</p>
   </footer>
 </body>
 </html>
