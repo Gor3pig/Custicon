@@ -134,6 +134,9 @@ Le [guide d’utilisation](docs/guide.md) décrit chaque étape. En résumé :
 2. Choisir un pictogramme et régler l’apparence, en regardant l’aperçu.
 3. **Appliquer**, puis appuyer sur **F5** dans la fenêtre de Nautilus pour voir le changement.
 
+On peut aussi ouvrir un dossier directement depuis Nautilus (clic droit, **Ouvrir avec Custicon**), enregistrer des styles,
+choisir la couleur d’accent du système, ou poser des lettres comme pictogramme. Tout est détaillé dans le guide.
+
 Nautilus n’actualise pas ses icônes tout seul : F5 est nécessaire après chaque application, retrait ou régénération.
 
 ## Développement

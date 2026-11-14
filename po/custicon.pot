@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 23:18+0100\n"
+"POT-Creation-Date: 2026-11-13 23:44+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -581,6 +581,12 @@ msgstr ""
 msgid "Regenerate every icon after a change of icon theme"
 msgstr ""
 
+msgid "Save named styles, or use letters and symbols as a pictogram"
+msgstr ""
+
+msgid "Open a folder from Nautilus with a right click"
+msgstr ""
+
 msgid "The content of your folders is never modified"
 msgstr ""
 
@@ -590,12 +596,18 @@ msgid ""
 "a folder is never written."
 msgstr ""
 
-msgid "Finer controls, remembered settings and a more compact list."
+msgid "New ways to customize and to manage folders."
 msgstr ""
 
 msgid ""
-"The size and position sliders move by half a percent and use the available "
-"width"
+"Choose the color of the pictogram: automatic, the accent color of your "
+"system, or your own"
+msgstr ""
+
+msgid "Use letters or symbols as a pictogram"
+msgstr ""
+
+msgid "Save the appearance as named styles, and export or import them"
 msgstr ""
 
 msgid ""
@@ -603,7 +615,25 @@ msgid ""
 "and can still be changed"
 msgstr ""
 
-msgid "The list of customized folders uses smaller icons"
+msgid ""
+"Open a folder in Custicon from Nautilus, with a drag and drop, or from the "
+"command line"
+msgstr ""
+
+msgid "Search pictograms in French, and search your customized folders"
+msgstr ""
+
+msgid ""
+"Find a folder that was moved or renamed, undo a removal, and remove all "
+"icons at once"
+msgstr ""
+
+msgid ""
+"A banner offers to regenerate the icons when the icon theme or the accent "
+"color changed"
+msgstr ""
+
+msgid "Finer sliders and a more compact list of folders"
 msgstr ""
 
 msgid ""

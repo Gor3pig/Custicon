@@ -21,13 +21,15 @@ Le code est dans `src/custicon/`. La logique ne dépend de GTK que pour la réso
 
 | Module | Rôle |
 |---|---|
-| `themes.py` | Résolution des icônes avec `Gtk.IconTheme`, lecture du thème actif par le portail de réglages, recherche de pictogrammes. |
+| `themes.py` | Résolution des icônes avec `Gtk.IconTheme`, lecture du thème actif et de la couleur d’accent par le portail de réglages, recherche de pictogrammes. |
+| `textglyph.py` | Conversion de 1 à 3 caractères en tracé SVG (Pango et cairo), pour les pictogrammes en lettres. |
+| `keywords.py`, `textutil.py` | Dictionnaire hors ligne mots français vers fragments de noms du thème, et normalisation sans accents ni casse. |
 | `render.py` | Rendu des SVG et des PNG avec librsvg et cairo. |
 | `color.py` | Couleur de la face du dossier et teinte automatique plus foncée. |
 | `compose.py` | Assemblage du SVG final, recoloration du pictogramme, nettoyage des fichiers fournis. |
 | `metadata.py` | Lecture, écriture et suppression de `metadata::custom-icon`, avec relecture. |
-| `store.py` | Registre JSON et images générées, rangées par empreinte du contenu. |
-| `service.py` | Appliquer, réinitialiser, régénérer, lister. Seul point d’entrée de l’interface. |
+| `store.py` | Registre JSON, images générées rangées par empreinte du contenu, copies des pictogrammes, apparence mémorisée (`defaults.json`) et styles (`styles.json`). |
+| `service.py` | Appliquer, réinitialiser (un dossier ou tous), annuler un retrait, retrouver un dossier déplacé, régénérer, styles, nettoyage. Seul point d’entrée de l’interface. |
 | `environment.py` | Adaptation à l’exécution dans un bac à sable Flatpak. |
 | `ui/` | Fenêtre, éditeur, sélecteur de pictogramme et logique de présentation. |
 | `app.py`, `capture.py` | Application, et mode capture d’écran sans affichage. |
@@ -137,3 +139,16 @@ de données) et écrit une métadonnée dans les dossiers de l’utilisateur. Ce
   d’échec ; l’icône d’origine de l’utilisateur n’est jamais perdue. Le registre est écrit de façon atomique,
   doublé d’une sauvegarde, et validé à la lecture.
 - **Nettoyage prudent** : une image n’est supprimée que si aucun dossier ne la référence.
+
+## Fonctions ajoutées après la 1.0
+
+- **Couleur d’accent** : `Settings.accent` (exclusif avec une couleur choisie). L’accent est lu par le portail (`org.freedesktop.appearance`,
+  `accent-color`), avec un bleu par défaut. `Service.outdated()` liste les dossiers dont le thème ou l’accent suivi a changé depuis
+  la génération, ce qui commande le bandeau de régénération.
+- **Pictogramme en texte** : le texte est converti en SVG vectoriel avant l’enregistrement, puis rangé comme une copie de pictogramme.
+  La régénération réutilise cette copie et ne dépend donc pas de la police.
+- **Styles et apparence mémorisée** : deux fichiers JSON du dossier de données, validés strictement à la lecture ; un fichier abîmé
+  donne les valeurs d’origine sans erreur. L’export écrit directement le fichier choisi, car le sélecteur du bac à sable ne donne
+  accès qu’à ce fichier.
+- **Retrouver un dossier** : le registre est modifié avant la métadonnée, comme pour `apply`, avec retour arrière ; l’icône d’origine est conservée.
+- **Ouverture depuis Nautilus** : `HANDLES_OPEN`, `MimeType=inode/directory` et `Exec=custicon %F`. Une seule instance, qui réutilise sa fenêtre.

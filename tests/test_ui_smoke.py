@@ -840,6 +840,7 @@ class ResetAllUiTests(WindowTestCase):
         self.assertIsNone(read_custom_icon(second))
         self.assertEqual(self.window.stack.get_visible_child_name(), "empty")
         self.assertIsNotNone(self.window.get_visible_dialog())
+        self.assertIn("F5", self.window.get_visible_dialog().get_body())
 
     def test_a_pending_folder_is_dropped(self):
         self.add_and_apply()
