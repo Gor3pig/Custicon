@@ -492,6 +492,131 @@ class PhosphorPickerTests(WindowTestCase):
         self.assertEqual(dialog.search.get_text(), "star")
 
 
+class IconSetPickerTests(WindowTestCase):
+    def dialog(self, current=None, chosen=None, language="en"):
+        from unittest import mock
+
+        from custicon import iconsets
+        from custicon.ui.picker import PickerDialog
+
+        patcher = mock.patch.object(iconsets, "current_language", return_value=language)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return PickerDialog(self.service.icon_theme("Blue"), current, (chosen if chosen is not None else []).append)
+
+    def toggles(self, dialog):
+        group = dialog.set_toggle
+        return [group.get_toggle(index).get_name() for index in range(group.get_n_toggles())]
+
+    def show(self, dialog, key):
+        dialog.set_toggle.set_active_name(key)
+        settle(lambda: dialog._names and dialog._names[0] != "star-symbolic")
+
+    def test_every_source_is_offered(self):
+        self.assertEqual(self.toggles(self.dialog()), ["theme", "phosphor", "emoji", "brands"])
+
+    def test_emoji_are_listed_and_searched_in_english(self):
+        dialog = self.dialog()
+        self.show(dialog, "emoji")
+        self.assertTrue(all(name.startswith("emoji:") for name in dialog._names))
+        dialog.search.set_text("rocket")
+        settle(lambda: dialog._names[:1] == ["emoji:rocket"])
+        self.assertEqual(dialog._names[0], "emoji:rocket")
+
+    def test_emoji_are_searched_in_french_without_accents(self):
+        dialog = self.dialog(language="fr")
+        self.show(dialog, "emoji")
+        dialog.search.set_text("medaille")
+        settle(lambda: "emoji:1st-place-medal" in dialog._names)
+        self.assertIn("emoji:1st-place-medal", dialog._names)
+        dialog.search.set_text("chat")
+        settle(lambda: any("cat" in name for name in dialog._names))
+        self.assertTrue(any("cat" in name for name in dialog._names))
+
+    def test_brand_logos_are_searched_by_name(self):
+        dialog = self.dialog()
+        self.show(dialog, "brands")
+        dialog.search.set_text("github")
+        settle(lambda: dialog._names[:1] == ["brand:github"])
+        self.assertEqual(dialog._names[0], "brand:github")
+
+    def test_the_phosphor_french_words_are_not_applied_to_the_other_sets(self):
+        dialog = self.dialog(language="fr")
+        self.show(dialog, "brands")
+        dialog.search.set_text("maison")
+        settle(lambda: not dialog._names)
+        self.assertEqual(dialog._names, [])
+
+    def test_an_emoji_choice_is_reported_with_its_prefix(self):
+        chosen = []
+        dialog = self.dialog(chosen=chosen)
+        self.show(dialog, "emoji")
+        dialog.search.set_text("rocket")
+        settle(lambda: dialog._names[:1] == ["emoji:rocket"])
+        dialog._on_activated(None, dialog.flow.get_child_at_index(0))
+        self.assertEqual(chosen, ["emoji:rocket"])
+
+    def test_the_current_icon_opens_its_own_set(self):
+        for current, key in (("emoji:rocket", "emoji"), ("brand:github", "brands"), ("phosphor:acorn", "phosphor"), ("star-symbolic", "theme")):
+            dialog = self.dialog(current=current)
+            self.assertEqual(dialog.set_toggle.get_active_name(), key, current)
+
+    def test_the_tooltips_name_the_pictograms_in_the_desktop_language(self):
+        dialog = self.dialog(language="fr")
+        self.show(dialog, "emoji")
+        dialog.search.set_text("2nd place")
+        settle(lambda: dialog._names[:1] == ["emoji:2nd-place-medal"])
+        self.assertEqual(dialog.flow.get_child_at_index(0).get_tooltip_text(), "médaille d’argent")
+
+    def test_the_status_names_the_selected_pictogram(self):
+        dialog = self.dialog(current="emoji:2nd-place-medal", language="fr")
+        self.assertIn("médaille d’argent", dialog.status.get_text())
+
+    def test_the_theme_words_are_only_used_for_the_theme_and_phosphor_has_its_own(self):
+        dialog = self.dialog(language="fr")
+        self.show(dialog, "emoji")
+        self.assertEqual(dialog._fragments("maison"), [])
+        self.show(dialog, "brands")
+        self.assertEqual(dialog._fragments("maison"), [])
+        self.show(dialog, "phosphor")
+        self.assertEqual(dialog._fragments("maison")[:1], ["house"])
+        dialog.set_toggle.set_active_name("theme")
+        self.assertIn("go-home", dialog._fragments("accueil"))
+
+    def test_selecting_a_pictogram_shows_its_name_in_the_status(self):
+        dialog = self.dialog(language="fr")
+        self.show(dialog, "emoji")
+        dialog.search.set_text("2nd place")
+        settle(lambda: dialog._names[:1] == ["emoji:2nd-place-medal"])
+        dialog.flow.select_child(dialog.flow.get_child_at_index(0))
+        self.assertEqual(dialog.status.get_text(), "médaille d’argent")
+
+    def test_choosing_without_a_selection_does_nothing(self):
+        chosen = []
+        dialog = self.dialog(chosen=chosen)
+        dialog._on_choose(None)
+        self.assertEqual(chosen, [])
+
+    def test_the_row_of_the_editor_names_the_pictogram_with_its_set(self):
+        from unittest import mock
+
+        from custicon import iconsets
+
+        self.window.add_folder(self.make_folder())
+        settle()
+        for language, expected in (("fr", "médaille d’argent (Émoji)"), ("en", "2nd place medal (Emoji)")):
+            with mock.patch.object(iconsets, "current_language", return_value=language):
+                self.window.editor.update_glyph(self.window.editor.draft.with_glyph_name("emoji:2nd-place-medal"))
+            self.assertEqual(self.window.editor.system_row.get_subtitle(), expected)
+
+    def test_the_picker_of_the_window_is_given_the_registry(self):
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.window._choose_glyph()
+        settle()
+        self.assertIs(self.window.get_visible_dialog()._sets, self.service.icon_sets())
+
+
 class ColorModeUiTests(WindowTestCase):
     def setUp(self):
         super().setUp()
@@ -688,7 +813,7 @@ class TextGlyphUiTests(WindowTestCase):
         settle()
         picker = self.window.get_visible_dialog()
         self.assertIsNotNone(picker)
-        self.assertIs(picker._phosphor, self.service.phosphor_set())
+        self.assertIs(picker._sets, self.service.icon_sets())
 
     def test_typing_a_text_clears_the_other_sources_in_the_rows(self):
         self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
@@ -1215,6 +1340,33 @@ class AboutAndHelpTests(WindowTestCase):
         self.assertEqual(dialog.get_support_url(), "https://github.com/Gor3pig/Custicon/blob/main/help/en/README.md")
         self.assertTrue(dialog.get_comments())
         self.assertTrue(dialog.get_translator_credits())
+
+    def test_the_legal_sections_credit_every_bundled_set(self):
+        from custicon.ui.about import legal_sections
+
+        sections = legal_sections()
+        self.assertEqual([title for title, _copyright, _kind, _text in sections], ["Phosphor Icons", "Fluent Emoji", "Simple Icons", "Unicode CLDR"])
+        by_title = {title: (copyright, kind, text) for title, copyright, kind, text in sections}
+        self.assertEqual(by_title["Phosphor Icons"][1], Gtk.License.MIT_X11)
+        self.assertEqual(by_title["Fluent Emoji"], ("© Microsoft Corporation", Gtk.License.MIT_X11, None))
+        self.assertEqual(by_title["Simple Icons"][1], Gtk.License.CUSTOM)
+        self.assertIn("CC0", by_title["Simple Icons"][2])
+        self.assertIn("trademarks", by_title["Simple Icons"][2])
+        self.assertEqual(by_title["Unicode CLDR"][1], Gtk.License.CUSTOM)
+        self.assertIn("UNICODE LICENSE V3", by_title["Unicode CLDR"][2])
+        self.assertIn("Unicode, Inc.", by_title["Unicode CLDR"][0])
+
+    def test_a_missing_license_file_does_not_break_the_dialog(self):
+        from pathlib import Path
+        from unittest import mock
+
+        from custicon.ui import about as about_module
+
+        with mock.patch.object(about_module, "CLDR_LICENSE", Path("/nonexistent/LICENSE-CLDR")):
+            sections = about_module.legal_sections()
+        cldr = {title: (copyright_line, text) for title, copyright_line, _kind, text in sections}["Unicode CLDR"]
+        self.assertEqual(cldr[0], "© Unicode, Inc.")
+        self.assertTrue(cldr[1])
 
     def test_the_about_dialog_shows_the_release_notes_of_this_version(self):
         from custicon.config import VERSION

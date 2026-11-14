@@ -517,7 +517,7 @@ class MainWindow(Adw.ApplicationWindow):
             self._service.icon_theme(),
             draft.glyph_name,
             lambda name: self.editor.update_glyph(self.editor.draft.with_glyph_name(name)),
-            self._service.phosphor_set(),
+            self._service.icon_sets(),
         )
         picker.present(self)
 

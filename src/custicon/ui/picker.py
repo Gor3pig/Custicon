@@ -5,7 +5,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from ..i18n import _, ngettext
-from ..iconsets import PhosphorSet, is_phosphor
+from .. import iconsets
 from ..keywords import PHOSPHOR_KEYWORDS, english_fragments
 from ..themes import IconTheme
 
@@ -16,11 +16,12 @@ RESULT_LIMIT = 200
 
 
 class PickerDialog(Adw.Dialog):
-    def __init__(self, theme: IconTheme, current: str | None, on_chosen, phosphor: PhosphorSet | None = None):
+    def __init__(self, theme: IconTheme, current: str | None, on_chosen, icon_sets: iconsets.IconSets | None = None):
         super().__init__(title=_("Choose a Pictogram"), content_width=640, content_height=560)
         self._theme = theme
-        self._phosphor = phosphor or PhosphorSet()
-        self._active = "phosphor" if is_phosphor(current) else "theme"
+        self._sets = icon_sets or iconsets.default_sets()
+        current_set = self._sets.for_name(current)
+        self._active = current_set.key if current_set else "theme"
         self._on_chosen = on_chosen
         self._selected = current
         self._timer = 0
@@ -37,7 +38,8 @@ class PickerDialog(Adw.Dialog):
 
         self.set_toggle = Adw.ToggleGroup(halign=Gtk.Align.CENTER)
         self.set_toggle.add(Adw.Toggle(name="theme", label=_("Icon theme")))
-        self.set_toggle.add(Adw.Toggle(name="phosphor", label="Phosphor"))
+        for key, label in (("phosphor", "Phosphor"), ("emoji", _("Emoji")), ("brands", _("Brands"))):
+            self.set_toggle.add(Adw.Toggle(name=key, label=label))
         self.set_toggle.set_active_name(self._active)
         self.set_toggle.connect("notify::active-name", self._on_set_changed)
         box.append(self.set_toggle)
@@ -76,8 +78,12 @@ class PickerDialog(Adw.Dialog):
         self._active = self.set_toggle.get_active_name() or "theme"
         self._populate(self.search.get_text())
 
+    def _label(self, name: str) -> str:
+        icon_set = self._sets.for_name(name)
+        return icon_set.label(name, iconsets.current_language()) if icon_set and icon_set.key != "phosphor" else name
+
     def _source(self):
-        return self._phosphor if self._active == "phosphor" else self._theme
+        return self._sets[self._active] if self._active in list(self._sets) else self._theme
 
     def _on_search_changed(self, _entry) -> None:
         if self._timer:
@@ -103,23 +109,29 @@ class PickerDialog(Adw.Dialog):
             image.set_margin_bottom(14)
             cell = Gtk.FlowBoxChild()
             cell.set_child(image)
-            cell.set_tooltip_text(name)
+            cell.set_tooltip_text(self._label(name))
             cell.icon_name = name
             self.flow.append(cell)
             if name == self._selected:
                 self.flow.select_child(cell)
         if self._names:
             count = len(self._names)
-            self.status.set_text(self._selected or ngettext("%d pictogram found", "%d pictograms found", count) % count)
+            self.status.set_text(self._label(self._selected) if self._selected else ngettext("%d pictogram found", "%d pictograms found", count) % count)
         else:
             self.status.set_text(_("No pictogram found"))
         self.choose_button.set_sensitive(bool(self._selected))
 
+    def _fragments(self, query: str) -> list[str]:
+        if self._active == "phosphor":
+            return english_fragments(query, PHOSPHOR_KEYWORDS)
+        if self._active == "theme":
+            return english_fragments(query)
+        return []
+
     def _search(self, query: str) -> list[str]:
         source = self._source()
-        table = PHOSPHOR_KEYWORDS if self._active == "phosphor" else None
         names = source.symbolic_names(query, limit=RESULT_LIMIT)
-        for fragment in english_fragments(query, table):
+        for fragment in self._fragments(query):
             if len(names) >= RESULT_LIMIT:
                 break
             names.extend(name for name in source.symbolic_names(fragment, limit=RESULT_LIMIT) if name not in names)
@@ -129,7 +141,7 @@ class PickerDialog(Adw.Dialog):
         children = self.flow.get_selected_children()
         if children:
             self._selected = children[0].icon_name
-            self.status.set_text(self._selected)
+            self.status.set_text(self._label(self._selected))
         self.choose_button.set_sensitive(bool(self._selected))
 
     def _on_activated(self, _flow, child) -> None:
