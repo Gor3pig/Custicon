@@ -13,7 +13,7 @@
 
 [English](README.md) · **Français**
 
-[Guide d’utilisation](help/fr/README.md) · [Fonctions](#fonctions) · [Principes](#principes) · [Installation](#installation) · [Développement](#développement)
+[Site](https://gor3pig.github.io/Custicon/fr/) · [Guide d’utilisation](help/fr/README.md) · [Fonctions](#fonctions) · [Principes](#principes) · [Installation](#installation) · [Développement](#développement)
 
 <img src="data/screenshots/fr-main.png" alt="La fenêtre principale de Custicon" width="820">
 
