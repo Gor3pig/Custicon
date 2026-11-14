@@ -8,6 +8,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gtk
 
 from ..i18n import _
+from ..iconsets import display_name
 from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
 from ..textglyph import MAX_CHARACTERS
 from .draft import Draft
@@ -307,7 +308,7 @@ class Editor(Gtk.Box):
         self._refresh_actions()
 
     def _show_widgets(self, draft: Draft) -> None:
-        self.system_row.set_subtitle(draft.glyph_name or _("No pictogram chosen"))
+        self.system_row.set_subtitle(display_name(draft.glyph_name) if draft.glyph_name else _("No pictogram chosen"))
         self.file_row.set_subtitle(Path(draft.glyph_file).name if draft.glyph_file else _("No file chosen"))
         if self.text_row.get_text() != (draft.glyph_text or ""):
             self.text_row.set_text(draft.glyph_text or "")

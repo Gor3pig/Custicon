@@ -5,7 +5,8 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from ..i18n import _, ngettext
-from ..keywords import english_fragments
+from ..iconsets import PhosphorSet, is_phosphor
+from ..keywords import PHOSPHOR_KEYWORDS, english_fragments
 from ..themes import IconTheme
 
 COLUMNS = 8
@@ -15,9 +16,11 @@ RESULT_LIMIT = 200
 
 
 class PickerDialog(Adw.Dialog):
-    def __init__(self, theme: IconTheme, current: str | None, on_chosen):
+    def __init__(self, theme: IconTheme, current: str | None, on_chosen, phosphor: PhosphorSet | None = None):
         super().__init__(title=_("Choose a Pictogram"), content_width=640, content_height=560)
         self._theme = theme
+        self._phosphor = phosphor or PhosphorSet()
+        self._active = "phosphor" if is_phosphor(current) else "theme"
         self._on_chosen = on_chosen
         self._selected = current
         self._timer = 0
@@ -31,6 +34,13 @@ class PickerDialog(Adw.Dialog):
         self.search = Gtk.SearchEntry(placeholder_text=_("Search by name, in English or French (example: camera, musique)"))
         self.search.connect("search-changed", self._on_search_changed)
         box.append(self.search)
+
+        self.set_toggle = Adw.ToggleGroup(halign=Gtk.Align.CENTER)
+        self.set_toggle.add(Adw.Toggle(name="theme", label=_("Icon theme")))
+        self.set_toggle.add(Adw.Toggle(name="phosphor", label="Phosphor"))
+        self.set_toggle.set_active_name(self._active)
+        self.set_toggle.connect("notify::active-name", self._on_set_changed)
+        box.append(self.set_toggle)
 
         self.flow = Gtk.FlowBox(
             selection_mode=Gtk.SelectionMode.SINGLE,
@@ -62,6 +72,13 @@ class PickerDialog(Adw.Dialog):
         self.set_focus(self.search)
         self._populate("")
 
+    def _on_set_changed(self, *_args) -> None:
+        self._active = self.set_toggle.get_active_name() or "theme"
+        self._populate(self.search.get_text())
+
+    def _source(self):
+        return self._phosphor if self._active == "phosphor" else self._theme
+
     def _on_search_changed(self, _entry) -> None:
         if self._timer:
             GLib.source_remove(self._timer)
@@ -80,7 +97,7 @@ class PickerDialog(Adw.Dialog):
             child = following
         self._names = self._search(query)
         for name in self._names:
-            image = Gtk.Image.new_from_paintable(self._theme.paintable(name, CELL_SIZE))
+            image = Gtk.Image.new_from_paintable(self._source().paintable(name, CELL_SIZE))
             image.set_pixel_size(CELL_SIZE)
             image.set_margin_top(14)
             image.set_margin_bottom(14)
@@ -99,11 +116,13 @@ class PickerDialog(Adw.Dialog):
         self.choose_button.set_sensitive(bool(self._selected))
 
     def _search(self, query: str) -> list[str]:
-        names = self._theme.symbolic_names(query, limit=RESULT_LIMIT)
-        for fragment in english_fragments(query):
+        source = self._source()
+        table = PHOSPHOR_KEYWORDS if self._active == "phosphor" else None
+        names = source.symbolic_names(query, limit=RESULT_LIMIT)
+        for fragment in english_fragments(query, table):
             if len(names) >= RESULT_LIMIT:
                 break
-            names.extend(name for name in self._theme.symbolic_names(fragment, limit=RESULT_LIMIT) if name not in names)
+            names.extend(name for name in source.symbolic_names(fragment, limit=RESULT_LIMIT) if name not in names)
         return names[:RESULT_LIMIT]
 
     def _on_selection_changed(self, _flow) -> None:

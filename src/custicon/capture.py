@@ -16,12 +16,12 @@ from .metadata import write_custom_icon
 from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationReport, Service, Settings
 from .store import Store
 
-SCREENS = ("main", "empty", "picker", "states", "report", "dark", "narrow", "confirm", "new", "toast")
+SCREENS = ("main", "empty", "picker", "phosphor", "states", "report", "dark", "narrow", "confirm", "new", "toast")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
-DIALOG_SETTLE_MS = 2600
-DIALOG_SCREENS = ("picker", "confirm", "report")
+DIALOG_SETTLE_MS = 3200
+DIALOG_SCREENS = ("picker", "phosphor", "confirm", "report")
 WIDE = (1000, 720)
 NARROW = (400, 720)
 FOLDERS = (
@@ -65,6 +65,19 @@ class Demo:
         shutil.rmtree(self.root, ignore_errors=True)
 
 
+def show_phosphor(window) -> bool:
+    window._choose_glyph()
+    GLib.timeout_add(DIALOG_DELAY_MS, switch_to_phosphor, window)
+    return False
+
+
+def switch_to_phosphor(window) -> bool:
+    dialog = window.get_visible_dialog()
+    if dialog is not None:
+        dialog.set_toggle.set_active_name("phosphor")
+    return False
+
+
 def arrange(screen: str, window, demo: Demo) -> None:
     size = NARROW if screen == "narrow" else WIDE
     window.set_default_size(*size)
@@ -73,7 +86,7 @@ def arrange(screen: str, window, demo: Demo) -> None:
     Adw.StyleManager.get_default().set_color_scheme(scheme)
     if screen in ("states", "report"):
         window.reload(select=str(demo.folders["Archives"]))
-    if screen == "main" or screen == "dark" or screen == "toast" or screen == "picker" or screen == "confirm":
+    if screen == "main" or screen == "dark" or screen == "toast" or screen == "picker" or screen == "phosphor" or screen == "confirm":
         window.reload(select=str(demo.folders["Projets"]))
     if screen == "narrow":
         window.reload(select=str(demo.folders["Projets"]))
@@ -84,6 +97,8 @@ def arrange(screen: str, window, demo: Demo) -> None:
         window.add_folder(new_folder)
     if screen == "picker":
         GLib.timeout_add(DIALOG_DELAY_MS, window._choose_glyph)
+    if screen == "phosphor":
+        GLib.timeout_add(DIALOG_DELAY_MS, show_phosphor, window)
     if screen == "confirm":
         GLib.timeout_add(DIALOG_DELAY_MS, window._confirm_remove)
     if screen == "toast":

@@ -422,6 +422,73 @@ class PickerTests(WindowTestCase):
         self.assertEqual(dialog.status.get_text(), "No pictogram found")
 
 
+class PhosphorPickerTests(WindowTestCase):
+    def dialog(self, current=None, chosen=None):
+        from custicon.ui.picker import PickerDialog
+
+        return PickerDialog(self.service.icon_theme("Blue"), current, (chosen if chosen is not None else []).append)
+
+    def test_the_theme_set_is_shown_first(self):
+        dialog = self.dialog()
+        self.assertEqual(dialog.set_toggle.get_active_name(), "theme")
+        self.assertEqual(sorted(dialog._names), ["heart-symbolic", "star-symbolic"])
+
+    def test_switching_to_phosphor_lists_its_icons(self):
+        dialog = self.dialog()
+        dialog.set_toggle.set_active_name("phosphor")
+        settle(lambda: dialog._names and dialog._names[0].startswith("phosphor:"))
+        self.assertTrue(all(name.startswith("phosphor:") for name in dialog._names))
+        self.assertIn("phosphor:house", dialog._names)
+
+    def test_the_search_applies_to_the_active_set(self):
+        dialog = self.dialog()
+        dialog.set_toggle.set_active_name("phosphor")
+        dialog.search.set_text("acor")
+        settle(lambda: dialog._names == ["phosphor:acorn"])
+        self.assertEqual(dialog._names, ["phosphor:acorn"])
+
+    def test_switching_sets_keeps_the_typed_query(self):
+        dialog = self.dialog()
+        dialog.search.set_text("acor")
+        settle(lambda: dialog._names == [])
+        dialog.set_toggle.set_active_name("phosphor")
+        settle(lambda: dialog._names == ["phosphor:acorn"])
+        self.assertEqual(dialog._names, ["phosphor:acorn"])
+
+    def test_the_search_understands_french_in_phosphor(self):
+        dialog = self.dialog()
+        dialog.set_toggle.set_active_name("phosphor")
+        dialog.search.set_text("maison")
+        settle(lambda: dialog._names[:1] == ["phosphor:house"])
+        self.assertEqual(dialog._names[0], "phosphor:house")
+        self.assertIn("phosphor:garage", dialog._names)
+        self.assertNotIn("phosphor:acorn", dialog._names)
+
+    def test_a_phosphor_choice_is_reported_with_its_prefix(self):
+        chosen = []
+        dialog = self.dialog(chosen=chosen)
+        dialog.set_toggle.set_active_name("phosphor")
+        dialog.search.set_text("acor")
+        settle(lambda: dialog._names == ["phosphor:acorn"])
+        dialog._on_activated(None, dialog.flow.get_child_at_index(0))
+        self.assertEqual(chosen, ["phosphor:acorn"])
+
+    def test_the_current_phosphor_icon_opens_its_set(self):
+        dialog = self.dialog(current="phosphor:acorn")
+        self.assertEqual(dialog.set_toggle.get_active_name(), "phosphor")
+        self.assertIn("phosphor:acorn", dialog._names)
+        self.assertTrue(dialog.choose_button.get_sensitive())
+
+    def test_switching_sets_keeps_the_query(self):
+        dialog = self.dialog()
+        dialog.search.set_text("star")
+        settle(lambda: dialog._names == ["star-symbolic"])
+        dialog.set_toggle.set_active_name("phosphor")
+        settle(lambda: dialog._names and dialog._names[0].startswith("phosphor:"))
+        self.assertTrue(any("star" in name for name in dialog._names))
+        self.assertEqual(dialog.search.get_text(), "star")
+
+
 class ColorModeUiTests(WindowTestCase):
     def setUp(self):
         super().setUp()
@@ -520,6 +587,17 @@ class TextGlyphUiTests(WindowTestCase):
         self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
         self.assertEqual(self.editor.text_row.get_text(), "")
         self.assertIsNone(self.editor.draft.glyph_text)
+
+    def test_a_phosphor_icon_is_named_with_its_set_in_the_row(self):
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("phosphor:acorn"))
+        self.assertEqual(self.editor.system_row.get_subtitle(), "acorn (Phosphor)")
+
+    def test_the_picker_opened_from_the_window_offers_phosphor(self):
+        self.window._choose_glyph()
+        settle()
+        picker = self.window.get_visible_dialog()
+        self.assertIsNotNone(picker)
+        self.assertIs(picker._phosphor, self.service.phosphor_set())
 
     def test_typing_a_text_clears_the_other_sources_in_the_rows(self):
         self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))

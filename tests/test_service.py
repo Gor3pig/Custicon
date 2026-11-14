@@ -174,6 +174,33 @@ class ApplyTests(ServiceTestCase):
         self.assertEqual(self.store.all(), {})
 
 
+class PhosphorTests(ServiceTestCase):
+    def test_a_phosphor_pictogram_is_applied_and_tinted(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, Settings(glyph_name="phosphor:acorn", color="#ff8800"))
+        self.assertEqual(entry.settings["glyph_name"], "phosphor:acorn")
+        text = self.store.icon_path(entry.digest).read_text()
+        inner = base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)", text).group(1)).decode()
+        self.assertIn("#ff8800", inner)
+
+    def test_a_phosphor_icon_does_not_depend_on_the_theme(self):
+        blue = self.service.build(Settings(glyph_name="phosphor:acorn", color="#ff8800"), "Blue")
+        green = self.service.build(Settings(glyph_name="phosphor:acorn", color="#ff8800"), "Green")
+        self.assertNotEqual(blue.svg, green.svg)
+        self.assertEqual(blue.color, green.color)
+
+    def test_an_unknown_phosphor_icon_is_refused_without_falling_back(self):
+        with self.assertRaises(IconNotFoundError):
+            self.service.build(Settings(glyph_name="phosphor:nothing-here"))
+
+    def test_a_phosphor_icon_is_regenerated(self):
+        folder = self.make_folder()
+        self.service.apply(folder, Settings(glyph_name="phosphor:acorn"))
+        self.theme = "Green"
+        report = self.service.regenerate_all()
+        self.assertEqual(len(report.updated), 1)
+
+
 class ResetTests(ServiceTestCase):
     def test_reset_removes_the_icon_when_there_was_none_before(self):
         folder = self.make_folder()

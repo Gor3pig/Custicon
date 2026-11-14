@@ -2,7 +2,8 @@ import subprocess
 import unittest
 from pathlib import Path
 
-from custicon.keywords import KEYWORDS, MINIMUM_LENGTH, english_fragments
+from custicon.iconsets import PhosphorSet
+from custicon.keywords import KEYWORDS, MINIMUM_LENGTH, PHOSPHOR_KEYWORDS, english_fragments
 from custicon.textutil import normalize_text
 
 ADWAITA = Path("/usr/share/icons/Adwaita/symbolic")
@@ -84,3 +85,24 @@ class TextNormalizationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PhosphorKeywordTests(unittest.TestCase):
+    def test_every_key_is_plain_lowercase_text_with_fragments(self):
+        for key, fragments in PHOSPHOR_KEYWORDS.items():
+            self.assertEqual(key, normalize_text(key), key)
+            self.assertGreaterEqual(len(key), MINIMUM_LENGTH, key)
+            self.assertTrue(fragments, key)
+            self.assertEqual(len(set(fragments)), len(fragments), key)
+
+    def test_every_fragment_matches_a_phosphor_pictogram(self):
+        names = PhosphorSet().all_names()
+        missing = [(key, fragment) for key, fragments in PHOSPHOR_KEYWORDS.items() for fragment in fragments if not any(fragment in name for name in names)]
+        self.assertEqual(missing, [])
+
+    def test_the_phosphor_table_is_used_when_given(self):
+        self.assertEqual(english_fragments("maison", PHOSPHOR_KEYWORDS), ["house", "garage", "couch"])
+        self.assertNotEqual(english_fragments("maison", PHOSPHOR_KEYWORDS), english_fragments("maison"))
+
+    def test_the_default_table_is_unchanged(self):
+        self.assertEqual(english_fragments("musique"), ["audio", "folder-music", "multimedia"])

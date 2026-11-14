@@ -506,7 +506,12 @@ class MainWindow(Adw.ApplicationWindow):
         draft = self.editor.draft
         if draft is None:
             return
-        picker = PickerDialog(self._service.icon_theme(), draft.glyph_name, lambda name: self.editor.update_glyph(self.editor.draft.with_glyph_name(name)))
+        picker = PickerDialog(
+            self._service.icon_theme(),
+            draft.glyph_name,
+            lambda name: self.editor.update_glyph(self.editor.draft.with_glyph_name(name)),
+            self._service.phosphor_set(),
+        )
         picker.present(self)
 
     def _browse_glyph(self) -> None:
