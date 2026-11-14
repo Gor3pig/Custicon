@@ -1,21 +1,23 @@
 <div align="center">
 
-<img src="data/icons/custicon-256x256.png" alt="Custicon" width="128" height="128">
+<img src="data/icons/custicon-256x256.png" alt="Custicon" width="160" height="160">
 
 # Custicon
 
 **A pictogram on the icon of your folders, in Nautilus.**
 
+*Your folders, recognizable at a glance.*
+
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-3584e4?style=for-the-badge)](COPYING)
 [![GNOME](https://img.shields.io/badge/GNOME-51-4a86cf?style=for-the-badge&logo=gnome&logoColor=white)](https://www.gnome.org)
 [![Python](https://img.shields.io/badge/Python-GTK4%20%C2%B7%20libadwaita-e66100?style=for-the-badge&logo=python&logoColor=white)](https://pygobject.gnome.org)
-[![Flatpak](https://img.shields.io/badge/Flatpak-package-9141ac?style=for-the-badge&logo=flatpak&logoColor=white)](https://flatpak.org)
+[![Latest release](https://img.shields.io/github/v/release/Gor3pig/Custicon?style=for-the-badge&label=version&color=9141ac&logo=flatpak&logoColor=white)](https://github.com/Gor3pig/Custicon/releases/latest)
 
 **English** · [Français](README.fr.md)
 
-[Website](https://gor3pig.github.io/Custicon/) · [User guide](help/en/README.md) · [Features](#features) · [Principles](#principles) · [Installation](#installation) · [Development](#development)
+[Website](https://gor3pig.github.io/Custicon/) · [User guide](help/en/README.md) · [Features](#features) · [Principles](#principles) · [Installation](#installation) · [Contributing](#contributing)
 
-<img src="data/screenshots/en-main.png" alt="The main window of Custicon" width="820">
+<img src="data/screenshots/en-main.png" alt="The main window of Custicon" width="860">
 
 </div>
 
@@ -25,9 +27,7 @@
 
 Nautilus shows the Documents, Music or Pictures folders with a small pictogram in the middle.
 **Custicon lets you do the same for any folder.**
-
-The pictogram is placed on the **real folder icon of your current icon theme**, not on an imitation.
-If you change theme, a single action updates all your icons. You can also tint the folder itself.
+The pictogram is placed on the real folder icon of your current icon theme, and the content of your folders is never touched.
 
 ## Features
 
@@ -35,12 +35,12 @@ If you change theme, a single action updates all your icons. You can also tint t
 <tr>
 <td width="33%" valign="top">
 
-**Choose**<br>A pictogram from your theme or from the bundled Phosphor set, found by name (in English or French), or your own SVG or PNG file.
+**Choose**<br>Over 6,000 pictograms: Phosphor, emoji, brand logos, your theme, your own file or letters. Suggestions follow the folder name.
 
 </td>
 <td width="33%" valign="top">
 
-**Adjust**<br>Automatic or free color, size and position, with a live preview.
+**Adjust**<br>Color from a palette, size and position. Drag the pictogram on the preview, scroll to resize it.
 
 </td>
 <td width="33%" valign="top">
@@ -52,7 +52,7 @@ If you change theme, a single action updates all your icons. You can also tint t
 <tr>
 <td width="33%" valign="top">
 
-**Remove**<br>The folder gets back exactly the icon it had before.
+**Group**<br>Customize several folders at once, with the same pictogram and look.
 
 </td>
 <td width="33%" valign="top">
@@ -62,7 +62,7 @@ If you change theme, a single action updates all your icons. You can also tint t
 </td>
 <td width="33%" valign="top">
 
-**Respect**<br>The content of your folders is never modified.
+**Undo**<br>A removed icon gives the folder back exactly the one it had before.
 
 </td>
 </tr>
@@ -74,116 +74,50 @@ If you change theme, a single action updates all your icons. You can also tint t
 
 **No file added to your folders** · **Fully local, no network** · **Faithful to your theme** · **Reversible**
 
-The icon is saved in the GVfs metadata that Nautilus already reads, and the generated image is stored
-in the data space of the application. Nothing is written into the folder itself.
-
 ## Installation
 
-Custicon is distributed as a Flatpak package.
+### 1. Set up Flatpak
 
-### From the Flatpak repository (recommended)
+Fedora, Linux Mint, Pop!_OS and many other distributions ship Flatpak already. On Ubuntu and a
+few others, follow the [official guide for your distribution](https://flathub.org/setup) first,
+then restart your session.
 
-Fedora, Linux Mint, Pop!_OS and many other distributions ship Flatpak already. On Ubuntu and a few others,
-follow the [official guide for your distribution](https://flathub.org/setup) first, then restart your session.
+### 2. Install Custicon
 
-Open [custicon.flatpakref](https://gor3pig.github.io/Custicon/custicon.flatpakref) with the Software app, or run this command:
+Open [custicon.flatpakref](https://gor3pig.github.io/Custicon/custicon.flatpakref) with the Software app, or
+run this command:
 
 ```sh
 flatpak install --user https://gor3pig.github.io/Custicon/custicon.flatpakref
-flatpak run io.github.gor3pig.Custicon
 ```
 
-Flatpak may offer to add Flathub to install the GNOME 51 platform. Without the `--user` option, the installation is system-wide.
+Flatpak may offer to add Flathub to install the GNOME 51 platform.
 
-Custicon is then updated like your other apps: the Software app offers each new version, or run `flatpak update`.
-Every update is signed.
+### 3. Stay up to date
 
-### From a release file
+Custicon is updated like your other apps: the Software app offers each new version, and every update is signed.
+The `.flatpak` file of each version is also attached to its [release](https://github.com/Gor3pig/Custicon/releases).
+More options (release file, uninstall, permissions) are in [docs/install.md](docs/install.md).
 
-The `custicon-X.Y.Z.flatpak` file attached to each [release](https://github.com/Gor3pig/Custicon/releases) is an alternative.
-It is not updated by itself:
+Custicon runs in the Flatpak sandbox with **read-only** access to your home folder, needed to know the real path of your folders.
+It has no network access and cannot modify your files.
 
-```sh
-sha256sum -c custicon-X.Y.Z.flatpak.sha256
-flatpak install --user custicon-X.Y.Z.flatpak
-```
+## User guide
 
-If you installed Custicon this way and want automatic updates, uninstall it with `flatpak uninstall io.github.gor3pig.Custicon`
-and install it again from the `.flatpakref` file above. Your styles and customized folders are kept, as long as you do not add `--delete-data`.
+The [user guide](help/en/README.md) walks you through everything Custicon can do. In the app, it
+also opens from the main menu or with <kbd>F1</kbd>.
 
-### From the sources
+## Contributing
 
-You need `flatpak`, `flatpak-builder` and the GNOME 51 platform from Flathub:
-
-```sh
-flatpak install flathub org.gnome.Platform//51 org.gnome.Sdk//51
-git clone https://github.com/Gor3pig/Custicon.git
-cd Custicon
-flatpak-builder --user --install --disable-rofiles-fuse --force-clean build-dir \
-    build-aux/io.github.gor3pig.Custicon.json
-flatpak run io.github.gor3pig.Custicon
-```
-
-The package is built from the files of the git repository (the last commit of the `main` branch).
-
-### Uninstall
-
-```sh
-flatpak uninstall --user io.github.gor3pig.Custicon
-```
-
-Before uninstalling, use **Remove Icon** on each customized folder: the generated images are stored in the
-data of the application and disappear with it if you add the `--delete-data` option.
-
-### Permissions
-
-Custicon runs in the Flatpak sandbox and only asks for what it needs: the display, **read-only** access to your home
-folder (to see the real path of your folders and read your icon themes) and communication with the GVfs metadata
-service, which writes the icon outside the sandbox. The content of your folders therefore cannot be modified by Custicon.
-It has no network access. Details are in [docs/architecture.md](docs/architecture.md) (in French).
-
-The app store flags this permission because it covers all your files in read mode. It is required: without the real
-path of the folder, GVfs saves the icon in a tree that Nautilus does not read. If access is missing, Custicon says so
-and gives the command `flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon`.
-If the message comes back, a permission override may be removing the access: see the
-[guide](help/en/README.md#questions-and-answers).
-
-## Usage
-
-The [user guide](help/en/README.md) describes every step. In short:
-
-1. **Add Folder** (Ctrl+O) and choose the folder to customize.
-2. Choose a pictogram and adjust the appearance, watching the preview.
-3. **Apply**, then press **F5** in the Nautilus window to see the change.
-
-You can also open a folder straight from Nautilus (right click, **Open With Custicon**), save styles, tint the folder,
-use the accent color of the system, or put letters as a pictogram. The guide covers it all, and **F1** opens it
-from the application.
-
-Nautilus does not refresh its icons by itself: F5 is needed after each apply, removal or regeneration.
-
-## Development
-
-Custicon is written in Python with GTK4 and Libadwaita. [docs/architecture.md](docs/architecture.md) (in French)
-presents the organization of the code. The `check.sh` script runs every check (tests, validation of the
-application files, translations):
-
-```sh
-./check.sh
-```
-
-It needs Python 3, PyGObject, GTK4, Libadwaita, librsvg, GVfs, `gettext`, `gpg`, `desktop-file-validate`
-and `appstreamcli`. The interface tests use `gtk4-broadwayd`, shipped with GTK4, and a session bus
-(`dbus-run-session` is used when there is none).
-
-Commit messages are written in English. Releases are described in [docs/publication.md](docs/publication.md).
-The project is developed on Fedora with GNOME 50.
+Custicon is free software and help is welcome: bug reports, ideas, translations and code.
+[docs/development.md](docs/development.md) explains how to build Custicon and submit a change,
+and [docs/architecture.md](docs/architecture.md) (in French) gives an overview of the code.
 
 ## Licenses
 
 Custicon is free software released under the [GNU GPL v3 or later](COPYING).
 
-The pictograms bundled with Custicon keep their own licenses:
+The bundled pictograms keep their own licenses:
 
 - Phosphor Icons, in `src/custicon/phosphor/`: © 2023 Phosphor Icons, [MIT license](src/custicon/phosphor/LICENSE).
 - Fluent Emoji (monochrome), in `src/custicon/emoji/`: © Microsoft Corporation, [MIT license](src/custicon/emoji/LICENSE). Their French names come from the Unicode CLDR, under the [Unicode License v3](src/custicon/emoji/LICENSE-CLDR).
