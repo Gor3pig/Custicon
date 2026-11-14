@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 from custicon import layout
 from custicon.color import parse_hex
-from custicon.compose import SVG_NS, GlyphStyle, compose
+from custicon.compose import SVG_NS, GlyphStyle, compose, tinted_folder_svg
 from custicon.errors import InvalidIconError
 from custicon.render import pixel, surface_from_svg
 
@@ -66,6 +66,90 @@ class ComposeTests(WorkspaceTestCase):
         surface = surface_from_svg(self.compose().encode(), 128)
         for found, wanted in zip(pixel(surface, 20, 100)[:3], parse_hex("#3366cc")):
             self.assertAlmostEqual(found, wanted, delta=0.02)
+
+    def test_the_folder_tint_recolors_the_folder_and_keeps_its_shading(self):
+        surface = surface_from_svg(self.compose(folder_tint="#e01b24").encode(), 128)
+        red, green, blue, alpha = pixel(surface, 20, 100)
+        self.assertGreater(red, blue + 0.2)
+        self.assertGreater(red, green + 0.2)
+        self.assertEqual(alpha, 1.0)
+
+    def test_the_folder_tint_keeps_the_light_and_dark_areas_of_the_folder(self):
+        folder = (
+            f'{SVG_OPEN} width="128" height="128" viewBox="0 0 128 128">'
+            '<rect width="64" height="128" fill="#203060"/><rect x="64" width="64" height="128" fill="#a0c0f0"/></svg>'
+        )
+        surface = surface_from_svg(self.compose(folder=folder, folder_tint="#e01b24").encode(), 128)
+        dark, light = pixel(surface, 10, 120), pixel(surface, 120, 120)
+        self.assertGreater(sum(light[:3]), sum(dark[:3]) + 0.5)
+        self.assertGreater(dark[0], dark[2])
+        self.assertGreater(light[0], light[2])
+
+    def test_a_tinted_folder_alone_is_available_for_sampling(self):
+        path = self.write("folder.svg", folder_svg("#3366cc"))
+        surface = surface_from_svg(tinted_folder_svg(path, "#e01b24"), 128)
+        red, green, blue, alpha = pixel(surface, 20, 100)
+        self.assertGreater(red, blue)
+        with self.assertRaises(InvalidIconError):
+            tinted_folder_svg(path, "red")
+
+    def test_the_folder_tint_does_not_fill_the_gaps_inside_the_folder_box(self):
+        folder = (
+            f'{SVG_OPEN} width="128" height="128" viewBox="0 0 128 128">'
+            '<rect x="8" y="16" width="40" height="40" fill="#3366cc"/>'
+            '<rect x="80" y="80" width="40" height="40" fill="#3366cc"/></svg>'
+        )
+        surface = surface_from_svg(self.compose(folder=folder, folder_tint="#e01b24").encode(), 128)
+        self.assertEqual(pixel(surface, 100, 30)[3], 0.0)
+        self.assertEqual(pixel(surface, 30, 100)[3], 0.0)
+        self.assertEqual(pixel(surface, 100, 100)[3], 1.0)
+
+    def test_the_folder_tint_leaves_the_glyph_color_alone(self):
+        surface = surface_from_svg(self.compose(color="#00ff00", folder_tint="#e01b24").encode(), 128)
+        red, green, blue, alpha = pixel(surface, 64, 76)
+        self.assertAlmostEqual(green, 1.0, delta=0.02)
+        self.assertAlmostEqual(red, 0.0, delta=0.02)
+
+    def test_the_folder_tint_keeps_transparent_areas_transparent(self):
+        surface = surface_from_svg(self.compose(folder_tint="#e01b24").encode(), 128)
+        self.assertEqual(pixel(surface, 2, 2)[3], 0.0)
+
+    def test_without_a_folder_tint_the_folder_is_not_filtered(self):
+        svg = self.compose()
+        self.assertNotIn("feBlend", svg)
+        self.assertNotIn("custicon-folder-tint", svg)
+
+    def test_the_folder_tint_does_not_collide_with_existing_ids(self):
+        folder = (
+            f'{SVG_OPEN} width="128" height="128" viewBox="0 0 128 128"><defs><filter id="custicon-folder-tint"/></defs>'
+            '<rect width="128" height="128" fill="#3366cc"/></svg>'
+        )
+        svg = self.compose(folder=folder, folder_tint="#e01b24")
+        ids = re.findall(r'\bid="([^"]+)"', svg)
+        self.assertEqual(sorted(ids), ["custicon-folder-tint", "custicon-folder-tint-2"])
+        self.assertIn('filter="url(#custicon-folder-tint-2)"', svg)
+
+    def test_the_folder_and_png_glyph_tints_use_distinct_filters(self):
+        glyph = solid_png((0.0, 0.0, 0.0))
+        svg = self.compose(glyph=glyph, folder_tint="#e01b24")
+        self.assertEqual(sorted(re.findall(r'\bid="([^"]+)"', svg)), ["custicon-folder-tint", "custicon-tint"])
+
+    def test_an_invalid_folder_tint_is_refused(self):
+        for value in ("red", "#12345", "url(#x)", 5):
+            with self.subTest(value=value), self.assertRaises(InvalidIconError):
+                self.compose(folder_tint=value)
+
+    def test_the_theme_folder_file_is_never_modified(self):
+        path = self.write("folder.svg", folder_svg("#3366cc"))
+        before = path.read_bytes()
+        compose(path, self.write("glyph.svg", glyph_svg()), GlyphStyle(color=RED, folder_tint="#e01b24"))
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_a_png_folder_can_be_tinted(self):
+        svg = self.compose(folder=solid_png((0.2, 0.4, 0.8)), folder_tint="#e01b24")
+        surface = surface_from_svg(svg.encode(), 128)
+        red, green, blue, alpha = pixel(surface, 10, 10)
+        self.assertGreater(red, blue)
 
     def test_composition_is_deterministic(self):
         self.assertEqual(self.compose(), self.compose())

@@ -6,7 +6,7 @@ from pathlib import Path
 import math
 
 from .color import auto_glyph_color, is_hex_color
-from .compose import GlyphStyle, compose
+from .compose import GlyphStyle, compose, tinted_folder_svg
 from .errors import (
     CusticonError,
     FolderError,
@@ -27,7 +27,7 @@ MIN_SIZE = 0.2
 MAX_SIZE = 3.0
 MAX_OFFSET = 0.5
 
-APPEARANCE_FIELDS = ("color", "accent", "size", "offset_x", "offset_y", "tint")
+APPEARANCE_FIELDS = ("color", "accent", "size", "offset_x", "offset_y", "tint", "folder_tint", "folder_tint_accent")
 
 STATUS_OK = "ok"
 STATUS_FOLDER_MISSING = "folder-missing"
@@ -53,13 +53,19 @@ class Settings:
     tint: bool = True
     accent: bool = False
     glyph_copy: str | None = None
+    folder_tint: str | None = None
+    folder_tint_accent: bool = False
 
     def validate(self) -> None:
-        for text in (self.glyph_name, self.glyph_file, self.glyph_text, self.color, self.glyph_copy):
+        for text in (self.glyph_name, self.glyph_file, self.glyph_text, self.color, self.glyph_copy, self.folder_tint):
             if text is not None and (not isinstance(text, str) or "\0" in text):
                 raise InvalidSettingsError("invalid text in the settings")
         if not isinstance(self.tint, bool) or not isinstance(self.accent, bool):
             raise InvalidSettingsError("invalid tint or accent setting")
+        if not isinstance(self.folder_tint_accent, bool):
+            raise InvalidSettingsError("invalid folder tint setting")
+        if self.folder_tint is not None and not is_hex_color(self.folder_tint):
+            raise InvalidSettingsError(f"invalid folder tint {self.folder_tint!r}")
         if self.accent and self.color is not None:
             raise InvalidSettingsError("choose either the system accent or a color")
         for number in (self.size, self.offset_x, self.offset_y):
@@ -100,6 +106,7 @@ class BuiltIcon:
     color: str
     theme: str
     folder_file: Path
+    folder_tint: str | None = None
 
 
 @dataclass(frozen=True)
@@ -164,15 +171,25 @@ class Service:
         folder_file = theme.folder_file()
         if glyph_file is None:
             glyph_file = self._glyph_source(theme, settings)
-        color = settings.color or (self._accent_color() if settings.accent else auto_glyph_color(folder_file))
+        folder_tint = self._accent_color() if settings.folder_tint_accent else settings.folder_tint
+        folder_data = None if folder_tint is None else tinted_folder_svg(folder_file, folder_tint)
+        color = settings.color or (self._accent_color() if settings.accent else auto_glyph_color(folder_file, folder_data))
         style = GlyphStyle(
             color=color,
             size=settings.size,
             offset_x=settings.offset_x,
             offset_y=settings.offset_y,
             tint=settings.tint if settings.glyph_file else True,
+            folder_tint=folder_tint,
         )
-        return BuiltIcon(compose(folder_file, glyph_file, style), color, name, folder_file)
+        return BuiltIcon(compose(folder_file, glyph_file, style), color, name, folder_file, folder_tint)
+
+    def folder_preview(self, settings: Settings, theme_name: str | None = None) -> tuple[str | None, str | None]:
+        folder_tint = self._accent_color() if settings.folder_tint_accent else settings.folder_tint
+        if folder_tint is None:
+            return None, None
+        folder_file = self._theme(theme_name or self._theme_name()).folder_file()
+        return tinted_folder_svg(folder_file, folder_tint).decode(), folder_tint
 
     def apply(self, folder: Path | str, settings: Settings) -> Entry:
         target = self._checked_folder(folder)
@@ -188,7 +205,11 @@ class Service:
                 previous = existing.previous if existing else None
             else:
                 previous = current
-            stored = replace(settings, glyph_copy=glyph_copy).to_dict()
+            stored = replace(
+                settings,
+                glyph_copy=glyph_copy,
+                folder_tint=built.folder_tint if settings.folder_tint_accent else settings.folder_tint,
+            ).to_dict()
             entry = Entry(key, digest, built.theme, built.color, stored, previous)
             self._store.put(entry)
         except CusticonError:
@@ -387,9 +408,15 @@ class Service:
                 continue
             if entry.theme != theme:
                 stale.append(entry.folder)
-            elif entry.settings.get("accent") is True:
+            else:
+                follows_glyph = entry.settings.get("accent") is True
+                follows_folder = entry.settings.get("folder_tint_accent") is True
+                if not (follows_glyph or follows_folder):
+                    continue
                 accent = accent or self._accent_color()
-                if entry.color != accent:
+                if (follows_glyph and entry.color != accent) or (
+                    follows_folder and entry.settings.get("folder_tint") != accent
+                ):
                     stale.append(entry.folder)
         return stale
 

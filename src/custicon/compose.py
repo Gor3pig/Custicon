@@ -39,6 +39,7 @@ UNIT_FACTORS = {"": 1.0, "px": 1.0, "pt": 4 / 3, "pc": 16.0, "mm": 96 / 25.4, "c
 EXTERNAL_URL = re.compile(r"url\(\s*(?!['\"]?\s*(?:#|data:image/))[^)]*\)", re.IGNORECASE)
 CSS_IMPORT = re.compile(r"@import[^;]*;?", re.IGNORECASE)
 TINT_FILTER_ID = "custicon-tint"
+FOLDER_TINT_FILTER_ID = "custicon-folder-tint"
 
 Box = tuple[float, float, float, float]
 
@@ -50,6 +51,7 @@ class GlyphStyle:
     offset_x: float = 0.0
     offset_y: float = 0.0
     tint: bool = True
+    folder_tint: str | None = None
 
 
 def svg_tag(name: str) -> str:
@@ -231,6 +233,48 @@ def tint_filter(color: str, filter_id: str) -> ET.Element:
     return defs
 
 
+def folder_tint_filter(color: str, filter_id: str) -> ET.Element:
+    defs = ET.Element(svg_tag("defs"))
+    tint = ET.SubElement(
+        defs,
+        svg_tag("filter"),
+        {
+            "id": filter_id,
+            "x": "0",
+            "y": "0",
+            "width": "100%",
+            "height": "100%",
+            "color-interpolation-filters": "sRGB",
+        },
+    )
+    ET.SubElement(tint, svg_tag("feFlood"), {"flood-color": color, "result": "tint"})
+    ET.SubElement(tint, svg_tag("feBlend"), {"in": "tint", "in2": "SourceGraphic", "mode": "color", "result": "blended"})
+    ET.SubElement(tint, svg_tag("feComposite"), {"in": "blended", "in2": "SourceAlpha", "operator": "in"})
+    return defs
+
+
+def tint_folder(folder: ET.Element, color: str, taken_ids: set[str]) -> None:
+    filter_id = unique_id(FOLDER_TINT_FILTER_ID, taken_ids)
+    group = ET.Element(svg_tag("g"), {"filter": f"url(#{filter_id})"})
+    group.extend(list(folder))
+    for child in list(folder):
+        folder.remove(child)
+    folder.append(folder_tint_filter(color, filter_id))
+    folder.append(group)
+
+
+def taken_ids_of(root: ET.Element) -> set[str]:
+    return {element.get("id") for element in root.iter() if element.get("id")}
+
+
+def tinted_folder_svg(folder_file: Path, color: str) -> bytes:
+    if not is_hex_color(color):
+        raise InvalidIconError(f"invalid color {color!r}")
+    folder = load_folder(folder_file)
+    tint_folder(folder, color, taken_ids_of(folder))
+    return (XML_HEADER + serialize(folder)).encode()
+
+
 def load_folder(path: Path) -> ET.Element:
     data = read_icon_bytes(path)
     root = raster_root(data) if is_png(data) else parse_svg(data)
@@ -262,6 +306,8 @@ def load_glyph(source: Path | bytes, style: GlyphStyle, taken_ids: set[str]) -> 
 def check_style(style: GlyphStyle) -> None:
     if not is_hex_color(style.color):
         raise InvalidIconError(f"invalid color {style.color!r}")
+    if style.folder_tint is not None and not is_hex_color(style.folder_tint):
+        raise InvalidIconError(f"invalid folder tint {style.folder_tint!r}")
     for value, limit in ((style.size, MAX_STYLE_SIZE), (style.offset_x, MAX_STYLE_OFFSET), (style.offset_y, MAX_STYLE_OFFSET)):
         if not isinstance(value, (int, float)) or not math.isfinite(value) or abs(value) > limit:
             raise InvalidIconError("the pictogram size or position is out of range")
@@ -272,7 +318,9 @@ def check_style(style: GlyphStyle) -> None:
 def compose(folder_file: Path, glyph: Path | bytes, style: GlyphStyle) -> str:
     check_style(style)
     folder = load_folder(folder_file)
-    taken_ids = {element.get("id") for element in folder.iter() if element.get("id")}
+    taken_ids = taken_ids_of(folder)
+    if style.folder_tint is not None:
+        tint_folder(folder, style.folder_tint, taken_ids)
     glyph_elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(glyph, style, taken_ids)
     folder_x, folder_y, folder_width, folder_height = box_of(folder)
 

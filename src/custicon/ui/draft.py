@@ -8,6 +8,7 @@ from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE, Settings
 from ..store import Entry
 
 DEFAULT_COLOR = "#3584e4"
+DEFAULT_FOLDER_TINT = "#e5a50a"
 
 
 def clean_number(value, lower: float, upper: float, default: float) -> float:
@@ -32,6 +33,8 @@ class Draft:
     size: float = 1.0
     offset_x: float = 0.0
     offset_y: float = 0.0
+    folder_tint_mode: str = "none"
+    folder_tint: str = DEFAULT_FOLDER_TINT
 
     @property
     def auto_color(self) -> bool:
@@ -60,13 +63,27 @@ class Draft:
                 changes["color"] = values["color"]
             else:
                 changes["color_mode"] = "auto"
+        if "folder_tint" in values or "folder_tint_accent" in values:
+            if values.get("folder_tint_accent") is True:
+                changes["folder_tint_mode"] = "accent"
+            elif values.get("folder_tint") is not None:
+                changes["folder_tint_mode"] = "custom"
+                changes["folder_tint"] = values["folder_tint"]
+            else:
+                changes["folder_tint_mode"] = "none"
         return replace(self, **changes)
 
     def with_default_appearance(self) -> "Draft":
-        return replace(self, color_mode="auto", size=1.0, offset_x=0.0, offset_y=0.0)
+        return replace(self, color_mode="auto", size=1.0, offset_x=0.0, offset_y=0.0, folder_tint_mode="none")
 
     def has_default_appearance(self) -> bool:
-        return self.auto_color and self.size == 1.0 and self.offset_x == 0.0 and self.offset_y == 0.0
+        return (
+            self.auto_color
+            and self.size == 1.0
+            and self.offset_x == 0.0
+            and self.offset_y == 0.0
+            and self.folder_tint_mode == "none"
+        )
 
     def appearance(self) -> dict:
         return {
@@ -76,6 +93,8 @@ class Draft:
             "offset_x": self.offset_x,
             "offset_y": self.offset_y,
             "tint": self.tint,
+            "folder_tint": self.folder_tint if self.folder_tint_mode == "custom" else None,
+            "folder_tint_accent": self.folder_tint_mode == "accent",
         }
 
     def to_settings(self) -> Settings:
@@ -89,6 +108,8 @@ class Draft:
             offset_x=self.offset_x,
             offset_y=self.offset_y,
             tint=self.tint,
+            folder_tint=self.folder_tint if self.folder_tint_mode == "custom" else None,
+            folder_tint_accent=self.folder_tint_mode == "accent",
         )
 
     @classmethod
@@ -99,6 +120,9 @@ class Draft:
         glyph_text = None if glyph_name or glyph_file else clean_text(settings.glyph_text)
         color = settings.color if is_hex_color(settings.color) else None
         accent = settings.accent is True and color is None
+        folder_tint = settings.folder_tint if is_hex_color(settings.folder_tint) else None
+        folder_accent = settings.folder_tint_accent is True
+        folder_mode = "accent" if folder_accent else ("none" if folder_tint is None else "custom")
         return cls(
             folder=Path(entry.folder),
             glyph_name=glyph_name,
@@ -110,4 +134,6 @@ class Draft:
             size=clean_number(settings.size, MIN_SIZE, MAX_SIZE, 1.0),
             offset_x=clean_number(settings.offset_x, -MAX_OFFSET, MAX_OFFSET, 0.0),
             offset_y=clean_number(settings.offset_y, -MAX_OFFSET, MAX_OFFSET, 0.0),
+            folder_tint_mode=folder_mode,
+            folder_tint=folder_tint or DEFAULT_FOLDER_TINT,
         )

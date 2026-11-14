@@ -17,6 +17,7 @@ from .format import display_path, folder_name, from_percent, percent_text, to_pe
 BIG_SIZE = 144
 SMALL_SIZES = (64, 48, 32)
 COLOR_MODES = ("auto", "accent", "custom")
+FOLDER_TINT_MODES = ("none", "accent", "custom")
 MAX_TEXT_LENGTH = MAX_CHARACTERS
 SLIDER_WIDTH = 150
 SLIDER_STEP = 0.5
@@ -179,6 +180,17 @@ class Editor(Gtk.Box):
         suffix.append(self.reset_button)
         group.set_header_suffix(suffix)
 
+        self.folder_tint_row = Adw.ComboRow(
+            title=_("Folder Tint"),
+            model=Gtk.StringList.new([_("None"), _("System Accent"), _("Custom")]),
+            use_markup=False,
+        )
+        self.folder_tint_row.connect("notify::selected", self._on_folder_tint_mode)
+        self.folder_tint_swatch = Gtk.ColorDialogButton(dialog=Gtk.ColorDialog(with_alpha=False), valign=Gtk.Align.CENTER)
+        self.folder_tint_swatch.connect("notify::rgba", self._on_folder_tint)
+        self.folder_tint_row.add_prefix(self.folder_tint_swatch)
+        group.add(self.folder_tint_row)
+
         self.color_row = Adw.ComboRow(
             title=_("Color"),
             model=Gtk.StringList.new([_("Automatic"), _("System Accent"), _("Custom")]),
@@ -314,6 +326,10 @@ class Editor(Gtk.Box):
             self.text_row.set_text(draft.glyph_text or "")
         self.tint_row.set_active(draft.tint)
         self.tint_row.set_sensitive(bool(draft.glyph_file))
+        self.folder_tint_row.set_selected(FOLDER_TINT_MODES.index(draft.folder_tint_mode))
+        self.folder_tint_swatch.set_rgba(rgba_from_hex(draft.folder_tint))
+        self.folder_tint_swatch.set_sensitive(draft.folder_tint_mode == "custom")
+        self.folder_tint_row.set_subtitle(self._folder_tint_subtitle(draft.folder_tint_mode, None))
         self.color_row.set_selected(COLOR_MODES.index(draft.color_mode))
         self.swatch.set_rgba(rgba_from_hex(draft.color))
         self.swatch.set_sensitive(draft.color_mode == "custom")
@@ -331,6 +347,18 @@ class Editor(Gtk.Box):
             self._loading = False
         self._refresh_actions()
         self._emit_change()
+
+    def set_computed_folder_tint(self, color: str | None) -> None:
+        mode = self._draft.folder_tint_mode if self._draft else "none"
+        self.folder_tint_row.set_subtitle(self._folder_tint_subtitle(mode, color))
+
+    @staticmethod
+    def _folder_tint_subtitle(mode: str, color: str | None) -> str:
+        if mode == "accent":
+            return _("The accent color of your system (%s)") % color if color else _("The accent color of your system")
+        if mode == "none":
+            return _("The folder keeps the color of your icon theme")
+        return ""
 
     def set_computed_color(self, color: str | None) -> None:
         mode = self._draft.color_mode if self._draft else "auto"
@@ -408,6 +436,17 @@ class Editor(Gtk.Box):
             self._update(color_mode=mode, color=hex_from_rgba(self.swatch.get_rgba()))
         else:
             self._update(color_mode=mode)
+
+    def _on_folder_tint_mode(self, row, _param) -> None:
+        if self._loading or self._draft is None:
+            return
+        mode = FOLDER_TINT_MODES[row.get_selected()]
+        self.folder_tint_swatch.set_sensitive(mode == "custom")
+        self.folder_tint_row.set_subtitle(self._folder_tint_subtitle(mode, None))
+        self._update(folder_tint_mode=mode)
+
+    def _on_folder_tint(self, button, _param) -> None:
+        self._update(folder_tint=hex_from_rgba(button.get_rgba()))
 
     def _on_color(self, button, _param) -> None:
         self._update(color=hex_from_rgba(button.get_rgba()))

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from .errors import InvalidIconError
 from .layout import FACE_X, FACE_Y, MIN_VISIBLE_ALPHA, SAMPLE_RADIUS, SAMPLE_SIZE
-from .render import pixel, surface_from_file
+from .render import pixel, surface_from_bytes, surface_from_file
 
 LIGHTNESS_FACTOR = 0.74
 SATURATION_FACTOR = 1.12
@@ -41,8 +41,11 @@ def average_visible(surface, x0: int, y0: int, x1: int, y1: int) -> Rgb | None:
     return tuple(t / weight for t in total)
 
 
-def face_color(folder_file: Path) -> Rgb:
-    surface = surface_from_file(folder_file, SAMPLE_SIZE)
+def face_color(folder_file: Path, folder_data: bytes | None = None) -> Rgb:
+    if folder_data is None:
+        surface = surface_from_file(folder_file, SAMPLE_SIZE)
+    else:
+        surface = surface_from_bytes(folder_data, SAMPLE_SIZE)
     cx, cy = round(FACE_X * SAMPLE_SIZE), round(FACE_Y * SAMPLE_SIZE)
     found = average_visible(
         surface, cx - SAMPLE_RADIUS, cy - SAMPLE_RADIUS, cx + SAMPLE_RADIUS + 1, cy + SAMPLE_RADIUS + 1
@@ -61,5 +64,5 @@ def darker_shade(rgb: Rgb) -> Rgb:
     )
 
 
-def auto_glyph_color(folder_file: Path) -> str:
-    return format_hex(darker_shade(face_color(folder_file)))
+def auto_glyph_color(folder_file: Path, folder_data: bytes | None = None) -> str:
+    return format_hex(darker_shade(face_color(folder_file, folder_data)))

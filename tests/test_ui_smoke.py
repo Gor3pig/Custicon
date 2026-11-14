@@ -12,7 +12,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk
 
-from custicon.ui.editor import hex_from_rgba
+from custicon.ui.editor import hex_from_rgba, rgba_from_hex
 from custicon.metadata import read_custom_icon, write_custom_icon
 from custicon.service import Service, Settings
 from custicon.errors import MetadataError, StoreError
@@ -525,6 +525,94 @@ class ColorModeUiTests(WindowTestCase):
         self.editor.color_row.set_selected(0)
         self.assertEqual(self.editor.draft.color_mode, "auto")
         self.assertFalse(self.editor.swatch.get_sensitive())
+
+
+class FolderTintUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.editor = self.window.editor
+
+    def test_the_folder_tint_row_offers_three_modes_and_starts_on_none(self):
+        self.assertEqual(self.editor.folder_tint_row.get_model().get_n_items(), 3)
+        self.assertEqual(self.editor.folder_tint_row.get_selected(), 0)
+        self.assertFalse(self.editor.folder_tint_swatch.get_sensitive())
+
+    def test_choosing_the_system_accent_updates_the_draft_and_locks_the_swatch(self):
+        self.editor.folder_tint_row.set_selected(1)
+        self.assertEqual(self.editor.draft.folder_tint_mode, "accent")
+        self.assertFalse(self.editor.folder_tint_swatch.get_sensitive())
+        self.assertTrue(self.editor.draft.to_settings().folder_tint_accent)
+
+    def test_the_custom_mode_unlocks_the_swatch_and_sends_its_color(self):
+        self.editor.folder_tint_row.set_selected(2)
+        self.assertTrue(self.editor.folder_tint_swatch.get_sensitive())
+        self.assertEqual(self.editor.draft.folder_tint_mode, "custom")
+        self.assertEqual(self.editor.draft.to_settings().folder_tint, self.editor.draft.folder_tint)
+        self.editor.folder_tint_swatch.set_rgba(rgba_from_hex("#112233"))
+        self.assertEqual(self.editor.draft.folder_tint, "#112233")
+
+    def test_going_back_to_none_removes_the_tint(self):
+        self.editor.folder_tint_row.set_selected(2)
+        self.editor.folder_tint_row.set_selected(0)
+        self.assertEqual(self.editor.draft.folder_tint_mode, "none")
+        self.assertIsNone(self.editor.draft.to_settings().folder_tint)
+
+    def test_the_computed_tint_is_shown_for_the_accent_mode(self):
+        self.editor.folder_tint_row.set_selected(1)
+        self.editor.set_computed_folder_tint("#ff0000")
+        self.assertIn("#ff0000", self.editor.folder_tint_row.get_subtitle())
+
+    def test_the_none_mode_explains_that_the_theme_color_is_kept(self):
+        self.assertNotEqual(self.editor.folder_tint_row.get_subtitle(), "")
+
+    def test_reset_removes_the_folder_tint(self):
+        self.editor.folder_tint_row.set_selected(2)
+        self.assertTrue(self.editor.reset_button.get_sensitive())
+        self.editor.reset_button.emit("clicked")
+        self.assertEqual(self.editor.folder_tint_row.get_selected(), 0)
+        self.assertEqual(self.editor.draft.folder_tint_mode, "none")
+
+    def test_the_preview_shows_the_tinted_folder_even_without_a_pictogram(self):
+        self.assertFalse(self.editor.draft.ready)
+        self.editor.folder_tint_row.set_selected(2)
+        self.window._render_preview()
+        self.assertIsNotNone(self.editor.big.get_paintable())
+        self.assertFalse(self.editor.apply_button.get_sensitive())
+
+    def test_the_preview_uses_the_plain_folder_without_a_tint_and_the_tinted_one_with_it(self):
+        from unittest import mock
+
+        from custicon.ui import window as window_module
+
+        with mock.patch.object(window_module, "texture_from_file", wraps=window_module.texture_from_file) as plain, \
+                mock.patch.object(window_module, "texture_from_svg_text", wraps=window_module.texture_from_svg_text) as tinted:
+            self.window._render_preview()
+            self.assertTrue(plain.called)
+            self.assertFalse(tinted.called)
+            plain.reset_mock()
+            self.editor.folder_tint_row.set_selected(2)
+            self.window._render_preview()
+            self.assertTrue(tinted.called)
+            self.assertFalse(plain.called)
+
+    def test_the_preview_reports_the_accent_with_a_pictogram(self):
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.editor.folder_tint_row.set_selected(1)
+        self.window._render_preview()
+        self.assertIn("#", self.editor.folder_tint_row.get_subtitle())
+
+    def test_applying_stores_the_folder_tint(self):
+        folder = self.editor.draft.folder
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.editor.folder_tint_row.set_selected(2)
+        self.editor.folder_tint_swatch.set_rgba(rgba_from_hex("#e01b24"))
+        self.window._apply()
+        settle()
+        stored = self.window._service.store.get(str(Path(folder).resolve()))
+        self.assertIsNotNone(stored)
+        self.assertEqual(stored.settings["folder_tint"], "#e01b24")
 
 
 class OutdatedBannerTests(WindowTestCase):

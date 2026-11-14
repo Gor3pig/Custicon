@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 10:36+0100\n"
+"POT-Creation-Date: 2026-11-14 10:42+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -48,17 +48,23 @@ msgstr "Apparence"
 msgid "Reset to Defaults"
 msgstr "Rétablir les valeurs par défaut"
 
-msgid "Color"
-msgstr "Couleur"
+msgid "Folder Tint"
+msgstr "Teinte du dossier"
 
-msgid "Automatic"
-msgstr "Automatique"
+msgid "None"
+msgstr "Aucune"
 
 msgid "System Accent"
 msgstr "Accent du système"
 
 msgid "Custom"
 msgstr "Personnalisée"
+
+msgid "Color"
+msgstr "Couleur"
+
+msgid "Automatic"
+msgstr "Automatique"
 
 msgid "Size"
 msgstr "Taille"
@@ -106,6 +112,9 @@ msgstr "La couleur d’accent de votre système (%s)"
 
 msgid "The accent color of your system"
 msgstr "La couleur d’accent de votre système"
+
+msgid "The folder keeps the color of your icon theme"
+msgstr "Le dossier garde la couleur de votre thème d’icônes"
 
 #, python-format
 msgid "A darker shade of the folder color (%s)"

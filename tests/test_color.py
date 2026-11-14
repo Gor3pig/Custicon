@@ -91,6 +91,13 @@ class FaceColorTests(WorkspaceTestCase):
         for channel, wanted in zip(found, parse_hex("#438de6")):
             self.assertAlmostEqual(channel, wanted, delta=0.06)
 
+    def test_auto_color_follows_the_folder_data_when_given(self):
+        path = self.write("folder.svg", folder_svg("#3366cc"))
+        tinted = folder_svg("#cc3333").encode()
+        found = parse_hex(auto_glyph_color(path, tinted))
+        self.assertGreater(found[0], found[2])
+        self.assertEqual(auto_glyph_color(path), auto_glyph_color(path, None))
+
 
 if __name__ == "__main__":
     unittest.main()

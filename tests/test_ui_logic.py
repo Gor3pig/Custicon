@@ -24,7 +24,7 @@ from custicon.service import (
     Settings,
 )
 from custicon.store import Entry
-from custicon.ui.draft import DEFAULT_COLOR, Draft
+from custicon.ui.draft import DEFAULT_COLOR, DEFAULT_FOLDER_TINT, Draft
 from custicon.ui.format import normalize_text, display_path, folder_name, from_percent, is_portal_path, is_text_path, percent_text, to_percent
 from custicon.ui.messages import banner_action, describe_error, report_lines, reset_report_lines, status_banner, status_label
 
@@ -73,7 +73,14 @@ class DraftTests(unittest.TestCase):
         self.assertFalse(draft.has_default_appearance())
 
     def test_each_appearance_field_breaks_the_default(self):
-        for changes in ({"color_mode": "custom"}, {"size": 1.1}, {"offset_x": 0.01}, {"offset_y": -0.01}):
+        for changes in (
+            {"color_mode": "custom"},
+            {"size": 1.1},
+            {"offset_x": 0.01},
+            {"offset_y": -0.01},
+            {"folder_tint_mode": "custom"},
+            {"folder_tint_mode": "accent"},
+        ):
             self.assertFalse(Draft(self.folder, **changes).has_default_appearance())
 
     def test_round_trip_through_an_entry(self):
@@ -317,6 +324,69 @@ class ColorModeTests(unittest.TestCase):
         self.assertFalse(replace(self.draft, color_mode="accent").has_default_appearance())
 
 
+class FolderTintDraftTests(unittest.TestCase):
+    def setUp(self):
+        self.draft = Draft(Path("/home/someone/Projects"), glyph_name="a-symbolic")
+
+    def entry(self, **settings):
+        return Entry("/f", "0" * 32, "Adwaita", "#438de6", {"glyph_name": "a-symbolic", **settings}, None)
+
+    def test_there_is_no_folder_tint_by_default(self):
+        settings = self.draft.to_settings()
+        self.assertEqual((settings.folder_tint, settings.folder_tint_accent), (None, False))
+        self.assertEqual(self.draft.folder_tint, DEFAULT_FOLDER_TINT)
+
+    def test_each_mode_is_sent_as_settings(self):
+        custom = replace(self.draft, folder_tint_mode="custom", folder_tint="#112233").to_settings()
+        self.assertEqual((custom.folder_tint, custom.folder_tint_accent), ("#112233", False))
+        accent = replace(self.draft, folder_tint_mode="accent", folder_tint="#112233").to_settings()
+        self.assertEqual((accent.folder_tint, accent.folder_tint_accent), (None, True))
+        accent.validate()
+
+    def test_the_appearance_carries_the_folder_tint(self):
+        appearance = replace(self.draft, folder_tint_mode="custom", folder_tint="#112233").appearance()
+        self.assertEqual((appearance["folder_tint"], appearance["folder_tint_accent"]), ("#112233", False))
+        appearance = replace(self.draft, folder_tint_mode="accent").appearance()
+        self.assertEqual((appearance["folder_tint"], appearance["folder_tint_accent"]), (None, True))
+
+    def test_remembered_values_restore_each_mode(self):
+        custom = self.draft.with_appearance({"folder_tint": "#ff8800", "folder_tint_accent": False})
+        self.assertEqual((custom.folder_tint_mode, custom.folder_tint), ("custom", "#ff8800"))
+        accent = self.draft.with_appearance({"folder_tint": None, "folder_tint_accent": True})
+        self.assertEqual(accent.folder_tint_mode, "accent")
+        none = replace(custom, folder_tint_mode="accent").with_appearance({"folder_tint": None, "folder_tint_accent": False})
+        self.assertEqual(none.folder_tint_mode, "none")
+
+    def test_an_older_appearance_without_the_fields_keeps_the_current_tint(self):
+        draft = replace(self.draft, folder_tint_mode="custom").with_appearance({"size": 1.2})
+        self.assertEqual(draft.folder_tint_mode, "custom")
+
+    def test_resetting_the_appearance_removes_the_tint(self):
+        draft = replace(self.draft, folder_tint_mode="custom").with_default_appearance()
+        self.assertEqual(draft.folder_tint_mode, "none")
+        self.assertTrue(draft.has_default_appearance())
+
+    def test_entries_reopen_in_the_right_mode(self):
+        self.assertEqual(Draft.from_entry(self.entry()).folder_tint_mode, "none")
+        custom = Draft.from_entry(self.entry(folder_tint="#00ff00"))
+        self.assertEqual((custom.folder_tint_mode, custom.folder_tint), ("custom", "#00ff00"))
+        accent = Draft.from_entry(self.entry(folder_tint="#00ff00", folder_tint_accent=True))
+        self.assertEqual((accent.folder_tint_mode, accent.folder_tint), ("accent", "#00ff00"))
+
+    def test_damaged_values_fall_back_to_no_tint(self):
+        for settings in ({"folder_tint": "green"}, {"folder_tint": 5}, {"folder_tint_accent": "yes"}):
+            with self.subTest(settings=settings):
+                draft = Draft.from_entry(self.entry(**settings))
+                self.assertEqual(draft.folder_tint_mode, "none")
+                self.assertEqual(draft.folder_tint, DEFAULT_FOLDER_TINT)
+
+    def test_round_trip_through_an_entry(self):
+        draft = replace(self.draft, folder_tint_mode="custom", folder_tint="#123456")
+        entry = Entry("/home/someone/Projects", "d", "Adwaita", "#438de6", draft.to_settings().to_dict(), None)
+        self.assertEqual(Draft.from_entry(entry).folder_tint_mode, "custom")
+        self.assertEqual(Draft.from_entry(entry).folder_tint, "#123456")
+
+
 class TextGlyphDraftTests(unittest.TestCase):
     def setUp(self):
         self.draft = Draft(Path("/home/someone/Projects"))
@@ -376,7 +446,9 @@ class AppearanceSnapshotTests(unittest.TestCase):
     def test_the_geometry_and_tint_are_included_without_the_pictogram(self):
         values = self.draft.appearance()
         self.assertEqual((values["size"], values["offset_x"], values["offset_y"], values["tint"]), (1.5, 0.1, -0.2, False))
-        self.assertEqual(set(values), {"color", "accent", "size", "offset_x", "offset_y", "tint"})
+        self.assertEqual(
+            set(values), {"color", "accent", "size", "offset_x", "offset_y", "tint", "folder_tint", "folder_tint_accent"}
+        )
 
 
 class SearchTextTests(unittest.TestCase):

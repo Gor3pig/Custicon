@@ -365,10 +365,16 @@ class MainWindow(Adw.ApplicationWindow):
                 built = self._service.build(draft.to_settings(), theme)
                 render = lambda size: texture_from_svg_text(built.svg, size * scale)
                 self.editor.set_computed_color(built.color)
+                self.editor.set_computed_folder_tint(built.folder_tint)
             else:
-                folder = self._service.folder_file(theme)
-                render = lambda size: texture_from_file(folder, size * scale)
+                folder_svg, folder_tint = self._service.folder_preview(draft.to_settings(), theme)
+                if folder_svg is None:
+                    folder = self._service.folder_file(theme)
+                    render = lambda size: texture_from_file(folder, size * scale)
+                else:
+                    render = lambda size: texture_from_svg_text(folder_svg, size * scale)
                 self.editor.set_computed_color(None)
+                self.editor.set_computed_folder_tint(folder_tint)
             self.editor.set_preview(render(BIG_SIZE), [render(size) for size in SMALL_SIZES], note)
             self.editor.set_blocked(False)
         except CusticonError as error:

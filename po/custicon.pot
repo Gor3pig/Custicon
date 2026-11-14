@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 10:36+0100\n"
+"POT-Creation-Date: 2026-11-14 10:42+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,16 +55,22 @@ msgstr ""
 msgid "Reset to Defaults"
 msgstr ""
 
-msgid "Color"
+msgid "Folder Tint"
 msgstr ""
 
-msgid "Automatic"
+msgid "None"
 msgstr ""
 
 msgid "System Accent"
 msgstr ""
 
 msgid "Custom"
+msgstr ""
+
+msgid "Color"
+msgstr ""
+
+msgid "Automatic"
 msgstr ""
 
 msgid "Size"
@@ -110,6 +116,9 @@ msgid "The accent color of your system (%s)"
 msgstr ""
 
 msgid "The accent color of your system"
+msgstr ""
+
+msgid "The folder keeps the color of your icon theme"
 msgstr ""
 
 #, python-format

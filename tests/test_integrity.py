@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 from custicon import environment
+from custicon.color import parse_hex
 from custicon import service as service_module
 from custicon import store as store_module
 from custicon.errors import FolderError, InvalidSettingsError, MetadataError, StoreError
@@ -407,7 +408,16 @@ class RememberedAppearanceTests(ServiceTestCase):
         self.service.remember_appearance(Settings(glyph_name="star-symbolic", color="#ff8800", size=1.5, offset_x=0.1, offset_y=-0.2, tint=False))
         self.assertEqual(
             self.service.remembered_appearance(),
-            {"color": "#ff8800", "accent": False, "size": 1.5, "offset_x": 0.1, "offset_y": -0.2, "tint": False},
+            {
+                "color": "#ff8800",
+                "accent": False,
+                "size": 1.5,
+                "offset_x": 0.1,
+                "offset_y": -0.2,
+                "tint": False,
+                "folder_tint": None,
+                "folder_tint_accent": False,
+            },
         )
         self.assertNotIn("glyph_name", self.store.load_defaults())
 
@@ -452,6 +462,59 @@ class AccentTests(ServiceTestCase):
         entry = self.service.apply(self.make_folder(), Settings(glyph_name="star-symbolic", accent=True))
         self.assertEqual(entry.color, "#ff0000")
         self.assertTrue(entry.settings["accent"])
+
+    def test_a_folder_tint_is_stored_and_changes_the_icon(self):
+        plain = self.service.build(STAR)
+        tinted = self.service.build(Settings(glyph_name="star-symbolic", folder_tint="#e01b24"))
+        self.assertNotEqual(plain.svg, tinted.svg)
+        self.assertEqual(tinted.folder_tint, "#e01b24")
+        self.assertIsNone(plain.folder_tint)
+
+    def test_the_automatic_glyph_color_follows_the_tinted_face(self):
+        plain = parse_hex(self.service.build(STAR).color)
+        tinted = parse_hex(self.service.build(Settings(glyph_name="star-symbolic", folder_tint="#e01b24")).color)
+        self.assertGreater(plain[2], plain[0])
+        self.assertGreater(tinted[0], tinted[2])
+
+    def test_the_accent_folder_tint_resolves_and_stores_the_accent(self):
+        entry = self.service.apply(self.make_folder(), Settings(glyph_name="star-symbolic", folder_tint_accent=True))
+        self.assertEqual(entry.settings["folder_tint"], "#ff0000")
+        self.assertTrue(entry.settings["folder_tint_accent"])
+
+    def test_the_folder_preview_is_only_built_when_there_is_a_tint(self):
+        self.assertEqual(self.service.folder_preview(STAR), (None, None))
+        svg, tint = self.service.folder_preview(Settings(glyph_name="star-symbolic", folder_tint="#e01b24"))
+        self.assertEqual(tint, "#e01b24")
+        self.assertIn("feBlend", svg)
+        svg, tint = self.service.folder_preview(Settings(glyph_name="star-symbolic", folder_tint_accent=True))
+        self.assertEqual(tint, "#ff0000")
+
+    def test_an_invalid_folder_tint_setting_is_refused(self):
+        for value in ("red", "#12345", 5, "#ff0000\0"):
+            with self.subTest(value=value), self.assertRaises(InvalidSettingsError):
+                Settings(glyph_name="star-symbolic", folder_tint=value).validate()
+        with self.assertRaises(InvalidSettingsError):
+            Settings(glyph_name="star-symbolic", folder_tint_accent="yes").validate()
+
+    def test_a_changed_accent_makes_an_accent_folder_tint_outdated(self):
+        following, fixed = self.make_folder("a"), self.make_folder("b")
+        self.service.apply(following, Settings(glyph_name="star-symbolic", folder_tint_accent=True))
+        self.service.apply(fixed, Settings(glyph_name="star-symbolic", folder_tint="#e01b24"))
+        self.assertEqual(self.service.outdated(), [])
+        self.accent = "#00ff00"
+        self.assertEqual(self.service.outdated(), [str(following.resolve())])
+
+    def test_regeneration_follows_the_accent_of_the_folder_tint(self):
+        folder = self.make_folder()
+        self.service.apply(folder, Settings(glyph_name="star-symbolic", folder_tint_accent=True))
+        self.accent = "#00ff00"
+        self.service.regenerate_all()
+        self.assertEqual(self.store.get(str(folder.resolve())).settings["folder_tint"], "#00ff00")
+        self.assertEqual(self.service.outdated(), [])
+
+    def test_the_folder_tint_is_part_of_the_remembered_appearance(self):
+        self.service.remember_appearance(Settings(glyph_name="star-symbolic", folder_tint="#e01b24"))
+        self.assertEqual(self.service.remembered_appearance()["folder_tint"], "#e01b24")
 
     def test_the_accent_and_a_manual_color_are_exclusive(self):
         with self.assertRaises(InvalidSettingsError):
