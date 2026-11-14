@@ -99,8 +99,8 @@ Custicon is updated like your other apps: the Software app offers each new versi
 The `.flatpak` file of each version is also attached to its [release](https://github.com/Gor3pig/Custicon/releases).
 More options (release file, uninstall, permissions) are in [docs/install.md](docs/install.md).
 
-Custicon runs in the Flatpak sandbox with **read-only** access to your home folder, needed to know the real path of your folders.
-It has no network access and cannot modify your files.
+Custicon runs in the Flatpak sandbox with access to your home folder, needed to know the real path of your folders.
+It has no network access and never modifies the content of your folders.
 
 ## User guide
 

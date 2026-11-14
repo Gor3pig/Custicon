@@ -258,17 +258,17 @@ and install it again from the `.flatpakref` file, keeping your styles and custom
 The installation commands are in the [README](../../README.md#installation).
 
 **Why does Custicon ask for access to my home folder?**
-For Nautilus to see the icon, Custicon has to know the real path of the folder. It only asks for
-**read** access to the home folder: the content of your folders cannot be modified by the application,
-and it has no network access. The icon is saved by the GVfs service of your session, outside the sandbox.
-The app store flags this permission because it covers all your files in read mode.
+For Nautilus to see the icon, Custicon has to know the real path of the folder. It asks for access to the home folder
+(read and write, because the read-only form did not work on every system, for example openSUSE Tumbleweed).
+Custicon never writes in your folders: the icon is saved by the GVfs service of your session, outside the sandbox,
+and it has no network access. The app store flags this permission because it covers all your files.
 
 **Custicon says it cannot see my home folder.**
 Access was removed or not granted. Allow it in Settings (Applications, then Custicon),
-in Flatseal (**All user files**, read only), or run in a terminal:
+in Flatseal (**All user files**), or run in a terminal:
 
 ```sh
-flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon
+flatpak override --user --filesystem=home io.github.gor3pig.Custicon
 ```
 
 then restart Custicon. This works for an installation for all users too (a per-user override applies to it).

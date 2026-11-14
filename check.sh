@@ -132,7 +132,7 @@ EXPECTED = [
     "--socket=wayland",
     "--nosocket=x11",
     "--device=dri",
-    "--filesystem=home:ro",
+    "--filesystem=home",
     "--talk-name=org.gtk.vfs.Metadata",
     "--talk-name=org.gtk.vfs.Daemon",
 ]

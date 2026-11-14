@@ -99,8 +99,8 @@ Custicon se met à jour comme vos autres applications : l’application Logicie
 Le fichier `.flatpak` de chaque version est aussi joint à sa [publication](https://github.com/Gor3pig/Custicon/releases).
 D’autres options (fichier de publication, désinstallation, permissions) sont dans [docs/install.md](docs/install.md) (en anglais).
 
-Custicon s’exécute dans le bac à sable Flatpak avec un accès en **lecture seule** à votre dossier personnel, nécessaire pour connaître
-le vrai chemin de vos dossiers. Il n’a aucun accès au réseau et ne peut pas modifier vos fichiers.
+Custicon s’exécute dans le bac à sable Flatpak avec un accès à votre dossier personnel, nécessaire pour connaître
+le vrai chemin de vos dossiers. Il n’a aucun accès au réseau et ne modifie jamais le contenu de vos dossiers.
 
 ## Guide d’utilisation
 

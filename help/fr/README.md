@@ -258,17 +258,17 @@ puis installez-la de nouveau depuis le fichier `.flatpakref`, en gardant vos sty
 Les commandes d’installation sont dans le [README](../../README.fr.md#installation).
 
 **Pourquoi Custicon demande-t-il l’accès à mon dossier personnel ?**
-Pour que Nautilus voie l’icône, Custicon doit connaître le vrai chemin du dossier. Il ne demande que la
-**lecture** du dossier personnel : le contenu de vos dossiers ne peut pas être modifié par l’application,
-et elle n’a aucun accès au réseau. L’icône est enregistrée par le service GVfs de votre session, hors du bac à sable.
-Le magasin d’applications signale cette permission, car elle concerne tous vos fichiers en lecture.
+Pour que Nautilus voie l’icône, Custicon doit connaître le vrai chemin du dossier. Il demande l’accès au
+dossier personnel (en lecture et écriture, car la forme en lecture seule ne fonctionnait pas partout, par exemple sur openSUSE Tumbleweed).
+Custicon n’écrit jamais dans vos dossiers : l’icône est enregistrée par le service GVfs de votre session, hors du bac à sable,
+et il n’a aucun accès au réseau. Le magasin d’applications signale cette permission, car elle concerne tous vos fichiers.
 
 **Custicon indique qu’il ne voit pas mon dossier personnel.**
 L’accès a été retiré ou n’a pas été accordé. Autorisez-le dans les Paramètres (Applications, puis Custicon),
-dans Flatseal (**Tous les fichiers de l’utilisateur**, en lecture seule), ou lancez dans un terminal :
+dans Flatseal (**Tous les fichiers de l’utilisateur**), ou lancez dans un terminal :
 
 ```sh
-flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon
+flatpak override --user --filesystem=home io.github.gor3pig.Custicon
 ```
 
 puis relancez Custicon. Cela convient aussi à une installation pour tous les utilisateurs (une surcharge de l’utilisateur s’y applique).

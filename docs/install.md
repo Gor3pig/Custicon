@@ -35,15 +35,15 @@ Custicon runs in the Flatpak sandbox and asks for exactly this, no more (`check.
 | `--socket=wayland`, `--socket=fallback-x11`, `--share=ipc` | Show the window (X11 only when Wayland is not available). |
 | `--nosocket=x11` | Keeps the permanent X11 socket out: some versions of Flatpak add it by themselves when a package asks for `fallback-x11`. |
 | `--device=dri` | Draw the interface with the graphics card. Without it GTK falls back to software drawing, which is slow. |
-| `--filesystem=home:ro` | **Read-only** access to the home folder, to know the real path of the folders and to read your icon themes. |
+| `--filesystem=home` | Access to the home folder, to know the real path of the folders and to read your icon themes. It is read and write because the read-only form (`home:ro`) did not work on every system (it failed on openSUSE Tumbleweed). |
 | `--talk-name=org.gtk.vfs.Metadata`, `org.gtk.vfs.Daemon` | Let the GVfs service of your session write the icon outside the sandbox. |
 
-The content of your folders cannot be modified by Custicon, and it has no network access.
+Custicon never writes in your folders: the icon is saved by the GVfs service of your session, and tests check that the content of a folder is unchanged. It has no network access.
 
-The app store flags the home folder permission because it covers all your files in read mode. It is required: without the real
+The app store flags the home folder permission because it covers all your files. It is required: without the real
 path of the folder, GVfs saves the icon in a tree that Nautilus does not read.
 
 A permission can always be removed by the user or the administrator (Flatseal, `flatpak override`, per user, global or system-wide).
 No setting of the package can prevent it. If access to the home folder is missing, Custicon says so and gives the command
-`flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon`, which also works for an installation for all users.
+`flatpak override --user --filesystem=home io.github.gor3pig.Custicon`, which also works for an installation for all users.
 If the message comes back, an override may be removing the access: see the [guide](../help/en/README.md#questions-and-answers).

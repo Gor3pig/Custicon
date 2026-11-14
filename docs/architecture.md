@@ -85,7 +85,7 @@ externes sont retirés, et la taille est limitée à 5 Mo.
 | `--socket=wayland`, `--socket=fallback-x11`, `--share=ipc` | Affichage GTK. |
 | `--nosocket=x11` | Empêche le socket X11 permanent : `flatpak build-finish` de Flatpak 1.16 (celui du CI) l’ajoute de lui-même quand `fallback-x11` est demandé, ce qui donnerait toujours accès à X11. À placer **après** les sockets. |
 | `--device=dri` | Accélération graphique : sans elle, GTK4 dessine en logiciel et l’interface devient lente (ajoutée en 1.4.1). |
-| `--filesystem=home:ro` | Voir le **vrai chemin** des dossiers, en **lecture seule**. L’application ne peut donc pas modifier le contenu de vos dossiers : seul le service GVfs de l’hôte écrit la métadonnée, hors du bac à sable. Un accès plus restreint est dangereux : le point de montage vu du bac à sable diffère alors de celui de l’hôte et GVfs écrit dans un arbre que Nautilus ne lit pas, sans erreur. Les dossiers de thèmes de l’hôte sont visibles sans cette permission. Le dossier de données de l’application reste accessible en écriture. |
+| `--filesystem=home` | Voir le **vrai chemin** des dossiers. Ce n’est plus en lecture seule depuis la 1.4.2 : `home:ro` (D-034) ne fonctionnait pas sur openSUSE Tumbleweed, alors que `home` oui (constaté par le demandeur, cause non élucidée). L’application n’écrit jamais dans les dossiers (des tests vérifient que leur contenu est inchangé) : seul le service GVfs de l’hôte écrit la métadonnée, hors du bac à sable. Un accès plus restreint est dangereux : le point de montage vu du bac à sable diffère alors de celui de l’hôte et GVfs écrit dans un arbre que Nautilus ne lit pas, sans erreur. Les dossiers de thèmes de l’hôte sont visibles sans cette permission. Le dossier de données de l’application reste accessible en écriture. |
 | `--talk-name=org.gtk.vfs.Metadata` et `org.gtk.vfs.Daemon` | Communiquer avec le démon de métadonnées de GVfs. Sans les deux, l’écriture est refusée. |
 
 Il n’y a pas d’accès au réseau, ni à `org.freedesktop.Flatpak` (pas d’évasion du bac à sable). `check.sh` fige la liste des `finish-args`. Un utilisateur ou un administrateur peut toujours retirer une permission par une surcharge (Flatseal, `flatpak override`, y compris globale ou système) : aucune option du manifeste n’y change rien, l’application détecte donc l’absence d’accès au dossier personnel et indique la commande.
@@ -137,7 +137,7 @@ Custicon lit des fichiers qu’il ne maîtrise pas (pictogrammes choisis, thème
 de données) et écrit une métadonnée dans les dossiers de l’utilisateur. Ce qui est garanti :
 
 - **Le contenu des dossiers n’est jamais modifié.** Seul l’attribut `metadata::custom-icon` est écrit, par le
-  service GVfs. Dans Flatpak, le dossier personnel est monté en lecture seule.
+  service GVfs. Dans Flatpak, le dossier personnel est accessible en écriture (D-061) : la garantie repose sur le code et sur les tests, plus sur un montage en lecture seule.
 - **Aucun accès au réseau**, et aucune donnée envoyée. Le rendu SVG ne lit rien hors de son propre dossier.
 - **Entrées bornées et refusées proprement** (voir « Composition ») : taille de fichier, dimensions des images,
   nombre d’éléments et profondeur des SVG, nombres non finis. Les scripts, objets étrangers et références

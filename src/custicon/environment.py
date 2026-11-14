@@ -7,7 +7,7 @@ HOST_DATA_VARIABLE = "HOST_XDG_DATA_HOME"
 DEFAULT_DATA_HOME = "~/.local/share"
 HOME_ACCESS = {"home", "host"}
 APP_DATA_FOLDER = ".var"
-FLATPAK_COMMAND = "flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon"
+FLATPAK_COMMAND = "flatpak override --user --filesystem=home io.github.gor3pig.Custicon"
 
 
 def in_sandbox() -> bool:

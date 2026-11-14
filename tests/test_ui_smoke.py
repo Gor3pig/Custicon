@@ -2646,7 +2646,7 @@ class PermissionHelpTests(WindowTestCase):
         settle()
         dialog = window.get_visible_dialog()
         self.assertIsNotNone(dialog)
-        self.assertEqual(dialog.get_extra_child().get_label(), "flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon")
+        self.assertEqual(dialog.get_extra_child().get_label(), "flatpak override --user --filesystem=home io.github.gor3pig.Custicon")
 
     def test_a_portal_path_without_access_opens_the_same_help(self):
         window = self.make_window(False)

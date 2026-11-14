@@ -999,7 +999,7 @@ class MainWindow(Adw.ApplicationWindow):
         dialog = Adw.AlertDialog(
             heading=_("Allow Access to Your Home Folder"),
             body=_(
-                "Custicon needs to see the real location of your folders. It only reads them: the content of a folder is never modified.\n\n"
+                "Custicon needs to see the real location of your folders. Custicon never modifies the content of a folder.\n\n"
                 "Allow access to the home folder in the Settings (Applications, then Custicon) or in Flatseal, or run this command in a terminal, then restart Custicon. It works for an installation for all users too:"
             ),
         )
