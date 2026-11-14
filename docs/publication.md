@@ -30,7 +30,7 @@ Un changement sous `data/website/` relance aussi la publication.
 - Le dépôt ne contient que la **dernière release** (`build-aux/flatpak-repo.sh`).
 - Les fichiers `build-aux/custicon.flatpakref` et `build-aux/custicon.flatpakrepo` portent l’adresse du dépôt et la **clé publique** (base64) ;
   `build-aux/custicon.gpg` est cette clé publique. L’étape « Flatpak repository files » de `./check.sh` vérifie qu’ils sont cohérents entre eux,
-  avec `release.yml` (le paquet intègre l’adresse du dépôt et la clé) et avec l’empreinte `SIGNING_KEY_ID` de `pages.yml`.
+  avec l’empreinte `SIGNING_KEY_ID` de `pages.yml`. Le paquet `.flatpak` de la release n’est pas signé : `release.yml` ne doit donc pas y embarquer l’adresse ni la clé du dépôt (`--repo-url`, `--gpg-keys`), sinon `flatpak install` le refuse. Il ne se met pas à jour seul ; les mises à jour viennent du `.flatpakref`.
 - La **clé privée** n’existe que dans le secret GitHub `FLATPAK_REPO_SIGNING_KEY` et dans une sauvegarde hors ligne du mainteneur.
   Si elle est perdue ou volée : créer une nouvelle clé, mettre à jour le secret, `custicon.gpg`, les deux fichiers de référence et `SIGNING_KEY_ID`,
   et demander aux utilisateurs de réinstaller Custicon depuis le nouveau `.flatpakref`.

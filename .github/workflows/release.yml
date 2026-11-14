@@ -82,7 +82,6 @@ jobs:
           flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse \
             --force-clean --repo=repo build build-aux/io.github.gor3pig.Custicon.json
           flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
-            --repo-url=https://gor3pig.github.io/Custicon/repo/ --gpg-keys=build-aux/custicon.gpg \
             repo "custicon-$VERSION.flatpak" io.github.gor3pig.Custicon
           sha256sum "custicon-$VERSION.flatpak" > "custicon-$VERSION.flatpak.sha256"
 

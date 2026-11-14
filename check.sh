@@ -109,8 +109,8 @@ flatpak_repository_files_match() {
             failed=1
         fi
     done
-    if ! grep -qF -- "--repo-url=$url" .github/workflows/release.yml; then
-        printf 'release.yml: the bundle must embed the repository address %s\n' "$url"
+    if grep -qE -- "--repo-url|--gpg-keys" .github/workflows/release.yml; then
+        printf 'release.yml: the bundle is not signed, so it must not embed the repository address or key\n'
         failed=1
     fi
     fingerprint=$(gpg --show-keys --with-colons build-aux/custicon.gpg | sed -n 's/^fpr:::::::::\([0-9A-F]*\):$/\1/p' | head -n 1)
