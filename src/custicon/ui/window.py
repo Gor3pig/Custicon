@@ -134,6 +134,7 @@ class MainWindow(Adw.ApplicationWindow):
         menu.append(_("Export Styles…"), "win.export-styles")
         menu.append(_("Import Styles…"), "win.import-styles")
         menu.append(_("Remove All Icons…"), "win.reset-all")
+        menu.append(_("Help"), "app.help")
         menu.append(_("About %s") % APP_NAME, "app.about")
         menu.append(_("Quit"), "app.quit")
         return menu

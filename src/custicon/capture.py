@@ -17,12 +17,12 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "tint", "states", "report", "dark", "narrow", "confirm", "new", "toast")
+SCREENS = ("main", "empty", "picker", "phosphor", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
 DIALOG_SETTLE_MS = 3200
-DIALOG_SCREENS = ("picker", "phosphor", "confirm", "report")
+DIALOG_SCREENS = ("picker", "phosphor", "about", "confirm", "report")
 WIDE = (1000, 720)
 NARROW = (400, 720)
 FOLDERS = (
@@ -86,6 +86,11 @@ def show_tint(window) -> bool:
     return False
 
 
+def show_about(window) -> bool:
+    window.get_application().activate_action("about", None)
+    return False
+
+
 def arrange(screen: str, window, demo: Demo) -> None:
     size = NARROW if screen == "narrow" else WIDE
     window.set_default_size(*size)
@@ -94,7 +99,7 @@ def arrange(screen: str, window, demo: Demo) -> None:
     Adw.StyleManager.get_default().set_color_scheme(scheme)
     if screen in ("states", "report"):
         window.reload(select=str(demo.folders["Archives"]))
-    if screen == "main" or screen == "dark" or screen == "toast" or screen == "picker" or screen == "phosphor" or screen == "confirm" or screen == "tint":
+    if screen == "main" or screen == "dark" or screen == "toast" or screen == "picker" or screen == "phosphor" or screen == "confirm" or screen == "tint" or screen == "about":
         window.reload(select=str(demo.folders["Projets"]))
     if screen == "narrow":
         window.reload(select=str(demo.folders["Projets"]))
@@ -109,6 +114,8 @@ def arrange(screen: str, window, demo: Demo) -> None:
         GLib.timeout_add(DIALOG_DELAY_MS, show_phosphor, window)
     if screen == "tint":
         GLib.timeout_add(DIALOG_DELAY_MS, show_tint, window)
+    if screen == "about":
+        GLib.timeout_add(DIALOG_DELAY_MS, show_about, window)
     if screen == "confirm":
         GLib.timeout_add(DIALOG_DELAY_MS, window._confirm_remove)
     if screen == "toast":

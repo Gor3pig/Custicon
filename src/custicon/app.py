@@ -10,10 +10,10 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from . import environment
-from .config import APP_ID, APP_NAME, VERSION
-from .i18n import _
+from .config import APP_ID
 from .service import Service
 from .store import Store
+from .ui.about import build_about_dialog, open_help
 from .ui.window import MainWindow
 
 DEV_ICONS = Path(__file__).resolve().parents[2] / "data" / "icons"
@@ -50,6 +50,7 @@ class Application(Adw.Application):
         register_development_icons()
         self._add_action("quit", self._on_quit, ["<Control>q"])
         self._add_action("about", self._on_about)
+        self._add_action("help", self._on_help, ["F1"])
         self.set_accels_for_action("win.add-folder", ["<Control>o"])
         self.set_accels_for_action("win.regenerate", ["<Control>r"])
         self.set_accels_for_action("win.search", ["<Control>f"])
@@ -79,10 +80,7 @@ class Application(Adw.Application):
         self.quit()
 
     def _on_about(self, *_args) -> None:
-        dialog = Adw.AboutDialog(
-            application_name=APP_NAME,
-            application_icon=APP_ID,
-            version=VERSION,
-            comments=_("Customize the icon of a folder in Nautilus."),
-        )
-        dialog.present(self.props.active_window)
+        build_about_dialog().present(self.props.active_window)
+
+    def _on_help(self, *_args) -> None:
+        open_help(self.props.active_window)

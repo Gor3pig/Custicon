@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 10:42+0100\n"
+"POT-Creation-Date: 2026-11-14 11:11+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,6 +19,9 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 msgid "Customize the icon of a folder in Nautilus."
+msgstr ""
+
+msgid "translator-credits"
 msgstr ""
 
 #, python-format
@@ -289,6 +292,9 @@ msgid "Import Styles…"
 msgstr ""
 
 msgid "Remove All Icons…"
+msgstr ""
+
+msgid "Help"
 msgstr ""
 
 #, python-format

@@ -1,4 +1,4 @@
-src/custicon/app.py
+src/custicon/ui/about.py
 src/custicon/ui/editor.py
 src/custicon/ui/format.py
 src/custicon/ui/messages.py

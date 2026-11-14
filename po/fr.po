@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 10:42+0100\n"
+"POT-Creation-Date: 2026-11-14 11:11+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -13,6 +13,9 @@ msgstr ""
 
 msgid "Customize the icon of a folder in Nautilus."
 msgstr "Personnalisez l’icône d’un dossier dans Nautilus."
+
+msgid "translator-credits"
+msgstr "Gor3pig"
 
 #, python-format
 msgid "%d px"
@@ -291,6 +294,9 @@ msgstr "Importer des styles…"
 
 msgid "Remove All Icons…"
 msgstr "Retirer toutes les icônes…"
+
+msgid "Help"
+msgstr "Aide"
 
 #, python-format
 msgid "About %s"

@@ -1188,6 +1188,77 @@ class OpenFilesTests(WindowTestCase):
         self.assertEqual(drops[0].get_actions(), Gdk.DragAction.COPY)
 
 
+class AboutAndHelpTests(WindowTestCase):
+    def application(self):
+        return ApplicationOpenTests.application(self)
+
+    def menu_actions(self):
+        menu = self.window._primary_menu()
+        return [menu.get_item_attribute_value(index, "action", None).get_string() for index in range(menu.get_n_items())]
+
+    def test_the_about_dialog_is_complete(self):
+        from custicon.config import APP_ID, APP_NAME, VERSION
+        from custicon.ui.about import build_about_dialog
+
+        dialog = build_about_dialog(["en_US", "en"], [])
+        self.assertEqual(dialog.get_application_name(), APP_NAME)
+        self.assertEqual(dialog.get_application_icon(), APP_ID)
+        self.assertEqual(dialog.get_version(), VERSION)
+        self.assertEqual(dialog.get_developer_name(), "Gor3pig")
+        self.assertEqual(dialog.get_license_type(), Gtk.License.GPL_3_0)
+        self.assertEqual(dialog.get_copyright(), "© 2026 Gor3pig")
+        self.assertEqual(dialog.get_website(), "https://github.com/Gor3pig/Custicon")
+        self.assertEqual(dialog.get_issue_url(), "https://github.com/Gor3pig/Custicon/issues")
+        self.assertEqual(dialog.get_support_url(), "https://github.com/Gor3pig/Custicon/blob/main/help/en/README.md")
+        self.assertTrue(dialog.get_comments())
+        self.assertTrue(dialog.get_translator_credits())
+
+    def test_the_about_dialog_shows_the_release_notes_of_this_version(self):
+        from custicon.config import VERSION
+        from custicon.ui.about import build_about_dialog
+
+        dialog = build_about_dialog(["en_US", "en"], [])
+        self.assertEqual(dialog.get_release_notes_version(), VERSION)
+        self.assertIn("<li>", dialog.get_release_notes())
+
+    def test_the_about_dialog_points_to_the_guide_in_the_desktop_language(self):
+        from custicon.ui.about import build_about_dialog
+
+        self.assertTrue(build_about_dialog(["fr_FR.UTF-8", "fr"], []).get_support_url().endswith("/help/fr/README.md"))
+
+    def test_the_about_action_presents_the_dialog_over_the_window(self):
+        application = self.application()
+        application.open([Gio.File.new_for_path(str(self.make_folder()))], "")
+        settle()
+        application.activate_action("about", None)
+        settle()
+        window = application.props.active_window
+        self.assertIsInstance(window.get_visible_dialog(), Adw.AboutDialog)
+
+    def test_the_help_action_opens_the_guide(self):
+        from unittest import mock
+
+        from custicon.ui import about as about_module
+
+        application = self.application()
+        application.activate()
+        settle()
+        with mock.patch.object(about_module.Gtk, "UriLauncher") as launcher:
+            application.activate_action("help", None)
+        launcher.new.assert_called_once()
+        self.assertIn("/help/", launcher.new.call_args.args[0])
+        launcher.new.return_value.launch.assert_called_once()
+
+    def test_f1_opens_the_help(self):
+        application = self.application()
+        self.assertEqual(application.get_accels_for_action("app.help"), ["F1"])
+
+    def test_the_main_menu_lists_help_before_about(self):
+        actions = self.menu_actions()
+        self.assertIn("app.help", actions)
+        self.assertLess(actions.index("app.help"), actions.index("app.about"))
+
+
 class ApplicationOpenTests(WindowTestCase):
     def application(self):
         from custicon.app import Application
