@@ -592,6 +592,30 @@ class RegenerationTests(ServiceTestCase):
         self.assertEqual(read_custom_icon(folder), self.store.icon_uri(self.store.get(str(folder)).digest))
 
 
+class WindowStateServiceTests(ServiceTestCase):
+    def test_nothing_is_remembered_at_first(self):
+        self.assertIsNone(self.service.window_state())
+
+    def test_a_remembered_window_comes_back(self):
+        self.assertTrue(self.service.remember_window(900, 700, True))
+        state = self.service.window_state()
+        self.assertEqual((state.width, state.height, state.maximized), (900, 700, True))
+
+    def test_an_unusable_size_is_not_remembered(self):
+        self.service.remember_window(900, 700, False)
+        self.assertFalse(self.service.remember_window(5, 700, False))
+        self.assertEqual(self.service.window_state().width, 900)
+
+    def test_a_write_failure_does_not_raise(self):
+        with mock.patch.object(self.store, "save_window", side_effect=StoreError("disk full")):
+            self.assertFalse(self.service.remember_window(900, 700, False))
+
+    def test_a_damaged_file_gives_nothing(self):
+        self.store.root.mkdir(parents=True, exist_ok=True)
+        self.store.window_path.write_text("{")
+        self.assertIsNone(self.service.window_state())
+
+
 class OutdatedWithKnownStatusTests(ServiceTestCase):
     def test_known_statuses_give_the_same_answer_as_a_fresh_reading(self):
         folder = self.make_folder()

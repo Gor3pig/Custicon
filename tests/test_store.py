@@ -2,7 +2,7 @@ import json
 import unittest
 
 from custicon.errors import StoreError
-from custicon.store import MAX_FAVORITES, MAX_NAME_LENGTH, MAX_RECENT, Entry, Store
+from custicon.store import MAX_FAVORITES, MAX_NAME_LENGTH, MAX_RECENT, MAX_WINDOW_SIZE, MIN_WINDOW_SIZE, Entry, Store
 
 from .support import WorkspaceTestCase
 
@@ -235,3 +235,81 @@ class PickerMemoryTests(WorkspaceTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class WindowStateStoreTests(WorkspaceTestCase):
+    def setUp(self):
+        self.root = self.make_workspace() / "data"
+        self.store = Store(self.root)
+
+    def write(self, text: str):
+        self.root.mkdir(parents=True, exist_ok=True)
+        self.store.window_path.write_text(text, encoding="utf-8")
+
+    def test_nothing_is_remembered_at_first(self):
+        self.assertIsNone(self.store.load_window())
+
+    def test_a_size_comes_back_as_saved(self):
+        self.store.save_window(800, 600, False)
+        self.assertEqual(self.store.load_window(), {"width": 800, "height": 600, "maximized": False})
+
+    def test_the_maximized_state_is_kept(self):
+        self.store.save_window(800, 600, True)
+        self.assertTrue(self.store.load_window()["maximized"])
+
+    def test_the_last_save_wins(self):
+        self.store.save_window(800, 600, False)
+        self.store.save_window(900, 700, True)
+        self.assertEqual(self.store.load_window(), {"width": 900, "height": 700, "maximized": True})
+
+    def test_the_file_is_named_after_the_window(self):
+        self.store.save_window(800, 600, False)
+        self.assertEqual(self.store.window_path.name, "window.json")
+        self.assertTrue(self.store.window_path.exists())
+
+    def test_no_temporary_file_is_left(self):
+        self.store.save_window(800, 600, False)
+        self.assertEqual(list(self.root.glob("*.tmp")), [])
+
+    def test_a_damaged_file_gives_nothing(self):
+        for text in ("", "not json", "[]", "null", '"text"', "{", '{"width": 800}', '{"height": 600}'):
+            with self.subTest(text=text):
+                self.write(text)
+                self.assertIsNone(self.store.load_window())
+
+    def test_sizes_that_are_not_whole_numbers_are_refused(self):
+        for width, height in (("800", 600), (800, "600"), (800.5, 600), (True, 600), (800, None), (None, None), ([800], 600)):
+            with self.subTest(width=width, height=height):
+                self.write(json.dumps({"width": width, "height": height, "maximized": False}))
+                self.assertIsNone(self.store.load_window())
+
+    def test_sizes_out_of_bounds_are_refused(self):
+        for width, height in ((MIN_WINDOW_SIZE - 1, 600), (800, MIN_WINDOW_SIZE - 1), (MAX_WINDOW_SIZE + 1, 600), (800, MAX_WINDOW_SIZE + 1), (-5, 600), (0, 0)):
+            with self.subTest(width=width, height=height):
+                self.write(json.dumps({"width": width, "height": height, "maximized": False}))
+                self.assertIsNone(self.store.load_window())
+
+    def test_the_limits_themselves_are_accepted(self):
+        for size in (MIN_WINDOW_SIZE, MAX_WINDOW_SIZE):
+            self.store.save_window(size, size, False)
+            self.assertEqual(self.store.load_window()["width"], size)
+
+    def test_a_maximized_value_that_is_not_true_means_not_maximized(self):
+        for value in ("true", 1, None, "yes", [True]):
+            with self.subTest(value=value):
+                self.write(json.dumps({"width": 800, "height": 600, "maximized": value}))
+                self.assertFalse(self.store.load_window()["maximized"])
+
+    def test_saving_an_unusable_size_is_refused_and_keeps_the_old_one(self):
+        self.store.save_window(800, 600, False)
+        for width, height in ((MIN_WINDOW_SIZE - 1, 600), (800, MAX_WINDOW_SIZE + 1), (True, 600), (800.0, 600)):
+            with self.subTest(width=width, height=height):
+                with self.assertRaises(StoreError):
+                    self.store.save_window(width, height, False)
+        self.assertEqual(self.store.load_window()["width"], 800)
+
+    def test_a_write_failure_is_reported(self):
+        self.root.mkdir(parents=True)
+        self.store.window_path.mkdir()
+        with self.assertRaises(StoreError):
+            self.store.save_window(800, 600, False)

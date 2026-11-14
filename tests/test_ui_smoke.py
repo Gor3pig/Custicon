@@ -1181,6 +1181,100 @@ class DirectManipulationTests(WindowTestCase):
         self.assertIn("EventControllerScroll", kinds)
 
 
+class WindowSizeTests(WindowTestCase):
+    def make_window(self):
+        from custicon.ui.window import MainWindow
+
+        window = MainWindow(shared_application(), self.service)
+        self.addCleanup(window.destroy)
+        return window
+
+    def test_a_first_launch_uses_the_default_size_fitted_to_the_screen(self):
+        from custicon.ui.windowstate import DEFAULT_HEIGHT, DEFAULT_WIDTH, fitted, screen_size
+
+        expected = fitted(DEFAULT_WIDTH, DEFAULT_HEIGHT, screen_size())
+        self.assertEqual(self.make_window().get_default_size(), expected)
+
+    def test_everything_is_visible_at_the_default_size(self):
+        window = self.make_window()
+        window.add_folder(self.make_folder("Photos"))
+        window.editor.update_glyph(window.editor.draft.with_glyph_name("star-symbolic"))
+        window.present()
+        settle(lambda: window.editor.scrolled.get_height() > 100)
+        settle(lambda: False, 0.5)
+        scrolled = window.editor.scrolled
+        content = scrolled.get_child().get_preferred_size()[1].height
+        self.assertLessEqual(content, scrolled.get_height() + 1, (content, scrolled.get_height()))
+        self.assertEqual(window.editor.columns.get_orientation(), Gtk.Orientation.HORIZONTAL)
+
+    def test_a_remembered_size_is_used(self):
+        self.service.remember_window(820, 610, False)
+        self.assertEqual(self.make_window().get_default_size(), (820, 610))
+
+    def test_a_remembered_size_too_big_for_the_screen_is_reduced(self):
+        from custicon.ui.windowstate import screen_size
+
+        screen = screen_size()
+        self.service.remember_window(9000, 9000, False)
+        width, height = self.make_window().get_default_size()
+        if screen is not None:
+            self.assertLess(width, screen[0])
+            self.assertLess(height, screen[1])
+
+    def test_a_remembered_maximized_window_is_maximized(self):
+        self.service.remember_window(820, 610, True)
+        with mock.patch.object(Adw.ApplicationWindow, "maximize") as maximize:
+            self.make_window()
+        maximize.assert_called_once()
+
+    def test_a_window_that_was_not_maximized_is_not_maximized(self):
+        self.service.remember_window(820, 610, False)
+        with mock.patch.object(Adw.ApplicationWindow, "maximize") as maximize:
+            self.make_window()
+        maximize.assert_not_called()
+
+    def test_closing_remembers_the_size(self):
+        window = self.make_window()
+        window.set_default_size(777, 555)
+        window._on_close_request()
+        state = self.service.window_state()
+        self.assertEqual((state.width, state.height, state.maximized), (777, 555, False))
+
+    def test_closing_a_maximized_window_remembers_it_and_keeps_the_normal_size(self):
+        window = self.make_window()
+        window.set_default_size(777, 555)
+        with mock.patch.object(window, "is_maximized", return_value=True):
+            window._on_close_request()
+        state = self.service.window_state()
+        self.assertEqual((state.width, state.height, state.maximized), (777, 555, True))
+
+    def test_a_full_screen_window_is_not_remembered(self):
+        window = self.make_window()
+        window.set_default_size(777, 555)
+        with mock.patch.object(window, "is_fullscreen", return_value=True):
+            window._on_close_request()
+        self.assertIsNone(self.service.window_state())
+
+    def test_the_next_window_opens_as_the_last_one_was_closed(self):
+        first = self.make_window()
+        first.set_default_size(731, 599)
+        first._on_close_request()
+        self.assertEqual(self.make_window().get_default_size(), (731, 599))
+
+    def test_an_error_while_remembering_does_not_prevent_closing(self):
+        window = self.make_window()
+        with mock.patch.object(self.service.store, "save_window", side_effect=StoreError("disk full")):
+            self.assertFalse(window._on_close_request())
+
+    def test_closing_still_stops_the_pending_preview(self):
+        window = self.make_window()
+        window.add_folder(self.make_folder("Photos"))
+        window._schedule_preview()
+        self.assertTrue(window._preview_source)
+        window._on_close_request()
+        self.assertEqual(window._preview_source, 0)
+
+
 class ListReuseTests(WindowTestCase):
     def setUp(self):
         super().setUp()

@@ -37,6 +37,8 @@ On first launch, the window offers to choose a folder. You can also use
 > [!NOTE]
 > Choosing a folder changes nothing. Nothing is saved until you press **Apply**.
 
+The window opens at a size where everything is visible, adapted to your screen, and remembers the size you give it (and whether it was maximized).
+
 ## Choosing the pictogram
 
 Four possibilities, in the **Pictogram** line of the editor. Under it, **Suggestions** offers a few pictograms

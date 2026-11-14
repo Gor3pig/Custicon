@@ -37,6 +37,8 @@ Au premier lancement, la fenêtre propose de choisir un dossier. Vous pouvez aus
 > [!NOTE]
 > Choisir un dossier ne modifie rien. Rien n’est enregistré tant que vous n’avez pas appuyé sur **Appliquer**.
 
+La fenêtre s’ouvre à une taille où tout est visible, adaptée à votre écran, et retient la taille que vous lui donnez (ainsi que son état maximisé).
+
 ## Choisir le pictogramme
 
 Quatre possibilités, sur la ligne **Pictogramme** de l’éditeur. Dessous, **Suggestions** propose quelques pictogrammes

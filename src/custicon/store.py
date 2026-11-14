@@ -11,6 +11,9 @@ from .errors import StoreError
 REGISTRY_NAME = "registry.json"
 DEFAULTS_NAME = "defaults.json"
 PICKER_NAME = "picker.json"
+WINDOW_NAME = "window.json"
+MIN_WINDOW_SIZE = 360
+MAX_WINDOW_SIZE = 10000
 MAX_RECENT = 12
 MAX_FAVORITES = 60
 MAX_NAME_LENGTH = 100
@@ -48,6 +51,7 @@ class Store:
         self.registry_path = self.root / REGISTRY_NAME
         self.defaults_path = self.root / DEFAULTS_NAME
         self.picker_path = self.root / PICKER_NAME
+        self.window_path = self.root / WINDOW_NAME
         self.styles_path = self.root / STYLES_NAME
 
     def icon_path(self, digest: str) -> Path:
@@ -149,6 +153,31 @@ class Store:
     def save_picker(self, recent: list[str], favorites: list[str]) -> None:
         document = {"recent": Store._clean_names(recent, MAX_RECENT), "favorites": Store._clean_names(favorites, MAX_FAVORITES)}
         self._write_atomic(self.picker_path, json.dumps(document, indent=2, ensure_ascii=False).encode())
+
+    @staticmethod
+    def _window_length(value) -> int | None:
+        if isinstance(value, bool) or not isinstance(value, int) or not MIN_WINDOW_SIZE <= value <= MAX_WINDOW_SIZE:
+            return None
+        return value
+
+    def load_window(self) -> dict | None:
+        try:
+            document = json.loads(self.window_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, RecursionError):
+            return None
+        if not isinstance(document, dict):
+            return None
+        width, height = Store._window_length(document.get("width")), Store._window_length(document.get("height"))
+        if width is None or height is None:
+            return None
+        return {"width": width, "height": height, "maximized": document.get("maximized") is True}
+
+    def save_window(self, width: int, height: int, maximized: bool) -> None:
+        width, height = Store._window_length(width), Store._window_length(height)
+        if width is None or height is None:
+            raise StoreError("unusable window size")
+        document = {"width": width, "height": height, "maximized": bool(maximized)}
+        self._write_atomic(self.window_path, json.dumps(document, indent=2).encode())
 
     def load_styles(self) -> list[dict]:
         try:

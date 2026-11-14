@@ -30,6 +30,7 @@ from .format import display_path, folder_name, is_portal_path, is_text_path, nor
 from .messages import banner_action, describe_error, report_lines, reset_report_lines, status_banner, status_label
 from .picker import PickerDialog
 from .textures import texture_from_file, texture_from_svg_text
+from .windowstate import initial_state, screen_size
 
 ROW_ICON_SIZE = 32
 ROW_TEXTURE_LIMIT = 512
@@ -72,7 +73,8 @@ class FolderRow(Gtk.ListBoxRow):
 
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application, service: Service):
-        super().__init__(application=application, title=APP_NAME, default_width=1000, default_height=720)
+        width, height, maximized = initial_state(service.window_state(), screen_size())
+        super().__init__(application=application, title=APP_NAME, default_width=width, default_height=height)
         self._service = service
         self._pending: Draft | None = None
         self._batch: list[Path] | None = None
@@ -122,6 +124,8 @@ class MainWindow(Adw.ApplicationWindow):
         drop = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
         drop.connect("drop", self._on_files_dropped)
         self.add_controller(drop)
+        if maximized:
+            self.maximize()
         self.connect("close-request", self._on_close_request)
         self.connect("notify::is-active", self._on_active_changed)
         settings = Gtk.Settings.get_default()
@@ -874,7 +878,14 @@ class MainWindow(Adw.ApplicationWindow):
         if self._regeneration_source:
             GLib.source_remove(self._regeneration_source)
             self._finish_regeneration()
+        self._remember_window()
         return False
+
+    def _remember_window(self) -> None:
+        if self.is_fullscreen():
+            return
+        width, height = self.get_default_size()
+        self._service.remember_window(width, height, self.is_maximized())
 
     def _show_report(self, report: RegenerationReport) -> None:
         lines = report_lines(report)

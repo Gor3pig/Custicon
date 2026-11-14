@@ -138,6 +138,13 @@ class ResetReport:
     failed: dict[str, str] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class WindowState:
+    width: int
+    height: int
+    maximized: bool
+
+
 @dataclass
 class ApplyReport:
     applied: list[str] = field(default_factory=list)
@@ -365,6 +372,17 @@ class Service:
 
     def remembered_appearance(self) -> dict:
         return self.clean_appearance(self._store.load_defaults() or {}) or {}
+
+    def window_state(self) -> WindowState | None:
+        loaded = self._store.load_window()
+        return WindowState(loaded["width"], loaded["height"], loaded["maximized"]) if loaded else None
+
+    def remember_window(self, width: int, height: int, maximized: bool) -> bool:
+        try:
+            self._store.save_window(width, height, maximized)
+        except CusticonError:
+            return False
+        return True
 
     def picker_memory(self) -> PickerMemory:
         loaded = self._store.load_picker()
