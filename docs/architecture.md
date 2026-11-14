@@ -23,15 +23,17 @@ Le code est dans `src/custicon/`. La logique ne dépend de GTK que pour la réso
 |---|---|
 | `themes.py` | Résolution des icônes avec `Gtk.IconTheme`, lecture du thème actif et de la couleur d’accent par le portail de réglages, recherche de pictogrammes. |
 | `textglyph.py` | Conversion de 1 à 3 caractères en tracé SVG (Pango et cairo), pour les pictogrammes en lettres. |
-| `keywords.py`, `textutil.py` | Dictionnaire hors ligne mots français vers fragments de noms du thème, et normalisation sans accents ni casse. |
+| `keywords.py`, `textutil.py` | Dictionnaires hors ligne mots français vers fragments de noms (thème et jeu Phosphor), et normalisation sans accents ni casse. |
+| `iconsets.py`, `phosphor/` | Jeu de pictogrammes Phosphor livré avec l’application (noms préfixés `phosphor:`), avec sa licence MIT. |
 | `render.py` | Rendu des SVG et des PNG avec librsvg et cairo. |
 | `color.py` | Couleur de la face du dossier et teinte automatique plus foncée. |
-| `compose.py` | Assemblage du SVG final, recoloration du pictogramme, nettoyage des fichiers fournis. |
+| `compose.py` | Assemblage du SVG final, recoloration du pictogramme, teinte du dossier, nettoyage des fichiers fournis. |
 | `metadata.py` | Lecture, écriture et suppression de `metadata::custom-icon`, avec relecture. |
 | `store.py` | Registre JSON, images générées rangées par empreinte du contenu, copies des pictogrammes, apparence mémorisée (`defaults.json`) et styles (`styles.json`). |
 | `service.py` | Appliquer, réinitialiser (un dossier ou tous), annuler un retrait, retrouver un dossier déplacé, régénérer, styles, nettoyage. Seul point d’entrée de l’interface. |
-| `environment.py` | Adaptation à l’exécution dans un bac à sable Flatpak. |
-| `ui/` | Fenêtre, éditeur, sélecteur de pictogramme et logique de présentation. |
+| `environment.py` | Adaptation à l’exécution dans un bac à sable Flatpak, détection de l’accès au dossier personnel. |
+| `aboutinfo.py` | Notes de version lues dans la metainfo (français ou anglais) et adresse du guide selon la langue. |
+| `ui/` | Fenêtre, éditeur, sélecteur de pictogramme, boîte « À propos » et logique de présentation. |
 | `app.py`, `capture.py` | Application, et mode capture d’écran sans affichage. |
 
 ## Fidélité au thème
@@ -51,6 +53,10 @@ Le SVG produit incorpore le dossier du thème, plus un groupe transformé qui pl
 du dossier. Le pictogramme SVG est inséré comme un document séparé (image imbriquée) : ses identifiants et ses
 feuilles de style ne peuvent donc ni entrer en collision avec ceux du dossier ni les modifier. Le résultat reste
 vectoriel. Si le thème ne fournit qu’un PNG, celui-ci est incorporé dans l’enveloppe SVG.
+
+La **teinte du dossier** est un filtre SVG appliqué à un groupe qui enveloppe les éléments du dossier : une couleur
+unie fusionnée en mode « couleur » (teinte et saturation de la couleur choisie, luminosité du dossier) puis découpée par la
+forme du dossier. Le relief du dossier est donc conservé, quel que soit le thème, et le fichier du thème n’est jamais modifié.
 
 La couleur automatique est déduite d’un rendu du dossier : échantillon au centre de la face, puis luminosité
 × 0,74 et saturation × 1,12 (valeurs mesurées sur le couple face et pictogramme d’Adwaita).

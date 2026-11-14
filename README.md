@@ -4,80 +4,87 @@
 
 # Custicon
 
-**Un pictogramme sur l’icône de vos dossiers, dans Nautilus.**
+**A pictogram on the icon of your folders, in Nautilus.**
 
-Licence GPL-3.0 ou ultérieure · GNOME · GTK4 et Libadwaita · Flatpak
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-3584e4?style=for-the-badge)](COPYING)
+[![GNOME](https://img.shields.io/badge/GNOME-51-4a86cf?style=for-the-badge&logo=gnome&logoColor=white)](https://www.gnome.org)
+[![Python](https://img.shields.io/badge/Python-GTK4%20%C2%B7%20libadwaita-e66100?style=for-the-badge&logo=python&logoColor=white)](https://pygobject.gnome.org)
+[![Flatpak](https://img.shields.io/badge/Flatpak-package-9141ac?style=for-the-badge&logo=flatpak&logoColor=white)](https://flatpak.org)
 
-[Guide d’utilisation](docs/guide.md) · [Fonctions](#fonctions) · [Principes](#principes) · [Installation](#installation) · [Développement](#développement)
+**English** · [Français](README.fr.md)
 
-<img src="docs/images/fenetre-principale.png" alt="La fenêtre principale de Custicon" width="820">
+[User guide](help/en/README.md) · [Features](#features) · [Principles](#principles) · [Installation](#installation) · [Development](#development)
+
+<img src="data/screenshots/en-main.png" alt="The main window of Custicon" width="820">
 
 </div>
 
 ---
 
-## Qu’est-ce que Custicon ?
+## What is Custicon?
 
-Nautilus affiche les dossiers Documents, Musique ou Images avec un petit pictogramme au centre.
-**Custicon permet de faire la même chose pour n’importe quel dossier.**
+Nautilus shows the Documents, Music or Pictures folders with a small pictogram in the middle.
+**Custicon lets you do the same for any folder.**
 
-Le pictogramme est posé sur la **vraie icône de dossier de votre thème d’icônes actuel**, pas sur une
-imitation. Si vous changez de thème, une seule action met à jour toutes vos icônes.
+The pictogram is placed on the **real folder icon of your current icon theme**, not on an imitation.
+If you change theme, a single action updates all your icons. You can also tint the folder itself.
 
-## Fonctions
+## Features
 
 <table>
 <tr>
 <td width="33%" valign="top">
 
-**Choisir**<br>Un pictogramme de votre thème, trouvé par son nom, ou votre propre fichier SVG ou PNG.
+**Choose**<br>A pictogram from your theme or from the bundled Phosphor set, found by name (in English or French), or your own SVG or PNG file.
 
 </td>
 <td width="33%" valign="top">
 
-**Régler**<br>Couleur automatique ou libre, taille et position, avec un aperçu en direct.
+**Adjust**<br>Automatic or free color, size and position, with a live preview.
 
 </td>
 <td width="33%" valign="top">
 
-**Retirer**<br>Le dossier retrouve exactement l’icône qu’il avait avant.
+**Tint**<br>Give the folder itself the color you want, or the accent color of your system.
 
 </td>
 </tr>
 <tr>
 <td width="33%" valign="top">
 
-**Régénérer**<br>Toutes les icônes d’un coup, après un changement de thème.
+**Remove**<br>The folder gets back exactly the icon it had before.
 
 </td>
 <td width="33%" valign="top">
 
-**Suivre**<br>La liste de vos dossiers personnalisés, avec l’état de chacun.
+**Regenerate**<br>All icons at once, after a change of theme or accent color.
 
 </td>
 <td width="33%" valign="top">
 
-**Respecter**<br>Le contenu de vos dossiers n’est jamais modifié.
+**Respect**<br>The content of your folders is never modified.
 
 </td>
 </tr>
 </table>
 
-## Principes
+<p align="center"><b><a href="help/en/README.md">Read the user guide →</a></b><br>Everything Custicon can do, step by step.</p>
 
-**Aucun fichier ajouté dans vos dossiers** · **Entièrement local, sans réseau** · **Fidèle à votre thème** · **Réversible**
+## Principles
 
-L’icône est enregistrée dans les métadonnées GVfs que Nautilus lit déjà, et l’image générée est rangée
-dans l’espace de données de l’application. Rien n’est écrit dans le dossier lui-même.
+**No file added to your folders** · **Fully local, no network** · **Faithful to your theme** · **Reversible**
+
+The icon is saved in the GVfs metadata that Nautilus already reads, and the generated image is stored
+in the data space of the application. Nothing is written into the folder itself.
 
 ## Installation
 
-Custicon se distribue sous forme de paquet Flatpak.
+Custicon is distributed as a Flatpak package.
 
-### Depuis une release (le plus simple)
+### From a release (the simplest)
 
-Téléchargez le fichier `custicon-X.Y.Z.flatpak` joint à une [release](https://github.com/Gor3pig/Custicon/releases)
-(le dépôt est privé : connectez-vous d’abord à GitHub), puis :
+Download the `custicon-X.Y.Z.flatpak` file attached to a [release](https://github.com/Gor3pig/Custicon/releases)
+(the repository is private: sign in to GitHub first), then:
 
 ```sh
 sha256sum -c custicon-X.Y.Z.flatpak.sha256
@@ -85,12 +92,12 @@ flatpak install --user custicon-X.Y.Z.flatpak
 flatpak run io.github.gor3pig.Custicon
 ```
 
-Flatpak propose d’ajouter Flathub pour installer l’environnement GNOME 51 si besoin. Sans l’option `--user`,
-l’installation est faite pour tout le système.
+Flatpak may offer to add Flathub to install the GNOME 51 platform. Without the `--user` option,
+the installation is system-wide.
 
-### Depuis les sources
+### From the sources
 
-Il faut `flatpak`, `flatpak-builder` et l’environnement GNOME 51 de Flathub :
+You need `flatpak`, `flatpak-builder` and the GNOME 51 platform from Flathub:
 
 ```sh
 flatpak install flathub org.gnome.Platform//51 org.gnome.Sdk//51
@@ -101,60 +108,64 @@ flatpak-builder --user --install --disable-rofiles-fuse --force-clean build-dir 
 flatpak run io.github.gor3pig.Custicon
 ```
 
-Le paquet est construit à partir des fichiers du dépôt git (le dernier commit de la branche `main`).
+The package is built from the files of the git repository (the last commit of the `main` branch).
 
-### Désinstaller
+### Uninstall
 
 ```sh
 flatpak uninstall --user io.github.gor3pig.Custicon
 ```
 
-Avant de désinstaller, utilisez **Retirer l’icône** pour chaque dossier personnalisé : les images
-générées sont stockées dans les données de l’application et disparaissent avec elles
-si vous ajoutez l’option `--delete-data`.
+Before uninstalling, use **Remove Icon** on each customized folder: the generated images are stored in the
+data of the application and disappear with it if you add the `--delete-data` option.
 
-### Permissions demandées
+### Permissions
 
-Custicon fonctionne dans le bac à sable Flatpak et ne demande que ce dont il a besoin :
-l’affichage, l’accès à votre dossier personnel **en lecture seule** (pour voir le vrai chemin de vos
-dossiers et lire vos thèmes d’icônes) et la communication avec le service de métadonnées de GVfs, qui écrit
-l’icône hors du bac à sable. Le contenu de vos dossiers ne peut donc pas être modifié par Custicon.
-Il n’a pas accès au réseau. Le détail est dans [docs/architecture.md](docs/architecture.md).
+Custicon runs in the Flatpak sandbox and only asks for what it needs: the display, **read-only** access to your home
+folder (to see the real path of your folders and read your icon themes) and communication with the GVfs metadata
+service, which writes the icon outside the sandbox. The content of your folders therefore cannot be modified by Custicon.
+It has no network access. Details are in [docs/architecture.md](docs/architecture.md) (in French).
 
-Le magasin d’applications signale cette permission, car elle concerne tous vos fichiers en lecture. Elle est
-nécessaire : sans le vrai chemin du dossier, GVfs enregistre l’icône dans un arbre que Nautilus ne lit pas.
-Si l’accès manque, Custicon l’indique et donne la commande
-`flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon`.
+The app store flags this permission because it covers all your files in read mode. It is required: without the real
+path of the folder, GVfs saves the icon in a tree that Nautilus does not read. If access is missing, Custicon says so
+and gives the command `flatpak override --user --filesystem=home:ro io.github.gor3pig.Custicon`.
+If the message comes back, a permission override may be removing the access: see the
+[guide](help/en/README.md#questions-and-answers).
 
-## Utilisation
+## Usage
 
-Le [guide d’utilisation](docs/guide.md) décrit chaque étape. En résumé :
+The [user guide](help/en/README.md) describes every step. In short:
 
-1. **Ajouter un dossier** (Ctrl+O) et choisir le dossier à personnaliser.
-2. Choisir un pictogramme et régler l’apparence, en regardant l’aperçu.
-3. **Appliquer**, puis appuyer sur **F5** dans la fenêtre de Nautilus pour voir le changement.
+1. **Add Folder** (Ctrl+O) and choose the folder to customize.
+2. Choose a pictogram and adjust the appearance, watching the preview.
+3. **Apply**, then press **F5** in the Nautilus window to see the change.
 
-On peut aussi ouvrir un dossier directement depuis Nautilus (clic droit, **Ouvrir avec Custicon**), enregistrer des styles,
-choisir la couleur d’accent du système, ou poser des lettres comme pictogramme. Tout est détaillé dans le guide.
+You can also open a folder straight from Nautilus (right click, **Open With Custicon**), save styles, tint the folder,
+use the accent color of the system, or put letters as a pictogram. The guide covers it all, and **F1** opens it
+from the application.
 
-Nautilus n’actualise pas ses icônes tout seul : F5 est nécessaire après chaque application, retrait ou régénération.
+Nautilus does not refresh its icons by itself: F5 is needed after each apply, removal or regeneration.
 
-## Développement
+## Development
 
-Custicon est écrit en Python avec GTK4 et Libadwaita. [docs/architecture.md](docs/architecture.md)
-présente l’organisation du code. Le script `check.sh` lance tous les contrôles (tests, validation
-des fichiers de l’application, traductions) :
+Custicon is written in Python with GTK4 and Libadwaita. [docs/architecture.md](docs/architecture.md) (in French)
+presents the organization of the code. The `check.sh` script runs every check (tests, validation of the
+application files, translations):
 
 ```sh
 ./check.sh
 ```
 
-Il demande Python 3, PyGObject, GTK4, Libadwaita, librsvg, GVfs, `gettext`, `desktop-file-validate`
-et `appstreamcli`. Les tests de l’interface utilisent `gtk4-broadwayd`, fourni avec GTK4, et un bus de session
-(`dbus-run-session` est utilisé s’il n’y en a pas).
+It needs Python 3, PyGObject, GTK4, Libadwaita, librsvg, GVfs, `gettext`, `desktop-file-validate`
+and `appstreamcli`. The interface tests use `gtk4-broadwayd`, shipped with GTK4, and a session bus
+(`dbus-run-session` is used when there is none).
 
-Le projet est développé sous Fedora avec GNOME 50.
+Commit messages are written in English. Releases are described in [docs/publication.md](docs/publication.md).
+The project is developed on Fedora with GNOME 50.
 
-## Licence
+## Licenses
 
-Custicon est un logiciel libre publié sous licence [GNU GPL v3 ou ultérieure](COPYING).
+Custicon is free software released under the [GNU GPL v3 or later](COPYING).
+
+The Phosphor pictograms bundled in `src/custicon/phosphor/` are © 2023 Phosphor Icons, under the
+[MIT license](src/custicon/phosphor/LICENSE).

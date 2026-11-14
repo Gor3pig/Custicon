@@ -26,7 +26,7 @@ Il n’y a pas de dépôt Flatpak signé ni de page web : on installe directemen
    Régénérer `po/custicon.pot`, puis traduire les nouveaux textes dans `po/fr.po`.
 2. **Contrôler** avec `./check.sh`. L’étape « Versions match » vérifie que les trois numéros sont identiques.
 3. **Tester le paquet** avant d’étiqueter (voir plus bas, « Construire un paquet de test »).
-4. **Valider le commit** avec le titre `Release version X.Y.Z`, puis l’envoyer sur `main`.
+4. **Valider le commit** (message en anglais) avec le titre `Release version X.Y.Z`, puis l’envoyer sur `main`.
 5. **Étiqueter** ce commit avec `vX.Y.Z` et envoyer l’étiquette.
 6. Le workflow **Release** crée la release **brouillon** et y joint le paquet. Y rédiger les notes
    (voir « Notes de release ») puis **publier**.
@@ -52,7 +52,7 @@ Les notes sont écrites en **anglais puis en français**, avec le même contenu 
 3. **Install** (*Installation*) : télécharger le fichier `.flatpak`, vérifier la somme `sha256`, puis
    `flatpak install --user custicon-X.Y.Z.flatpak`.
 4. Les limites connues (par exemple : dossiers du dossier personnel seulement, F5 nécessaire dans Nautilus).
-5. Un lien vers le [guide d’utilisation](guide.md).
+5. Un lien vers le [guide d’utilisation](../help/fr/README.md) et [son équivalent anglais](../help/en/README.md).
 
 ## Si une étiquette est fausse
 
