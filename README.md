@@ -183,5 +183,8 @@ The project is developed on Fedora with GNOME 50.
 
 Custicon is free software released under the [GNU GPL v3 or later](COPYING).
 
-The Phosphor pictograms bundled in `src/custicon/phosphor/` are © 2023 Phosphor Icons, under the
-[MIT license](src/custicon/phosphor/LICENSE).
+The pictograms bundled with Custicon keep their own licenses:
+
+- Phosphor Icons, in `src/custicon/phosphor/`: © 2023 Phosphor Icons, [MIT license](src/custicon/phosphor/LICENSE).
+- Fluent Emoji (monochrome), in `src/custicon/emoji/`: © Microsoft Corporation, [MIT license](src/custicon/emoji/LICENSE). Their French names come from the Unicode CLDR, under the [Unicode License v3](src/custicon/emoji/LICENSE-CLDR).
+- Simple Icons, in `src/custicon/brands/`: [CC0 1.0](src/custicon/brands/LICENSE). The brands and logos remain the trademarks of their respective owners (see the [disclaimer](src/custicon/brands/DISCLAIMER)).

@@ -40,11 +40,14 @@ Au premier lancement, la fenêtre propose de choisir un dossier. Vous pouvez aus
 
 Quatre possibilités, dans le groupe **Pictogramme**.
 
-### Une icône du système ou une icône Phosphor
+### Une icône du système, ou d’un jeu fourni
 
-**Icône du système** > **Choisir…** ouvre la liste des pictogrammes. Un sélecteur en haut permet de passer
-du **Thème d’icônes** (les pictogrammes de votre thème actif) à **Phosphor** (un jeu de 1 500 pictogrammes
-livré avec Custicon : animaux, lieux, objets, symboles…).
+**Icône du système** > **Choisir…** ouvre la liste des pictogrammes. Un sélecteur en haut passe d’une source à l’autre :
+
+- **Thème d’icônes** : les pictogrammes de votre thème actif.
+- **Phosphor** : 1 500 pictogrammes livrés avec Custicon (animaux, lieux, objets, symboles…).
+- **Émoji** : environ 1 600 émoji monochromes (visages, animaux, nourriture, voyages, objets…). Ils se teintent comme n’importe quel pictogramme.
+- **Marques** : plus de 3 400 logos (GitHub, Docker, Firefox…), pratiques pour les dossiers de projets. Les logos restent la propriété de leurs détenteurs.
 
 <img src="../../data/screenshots/fr-picker.png" alt="Le choix du pictogramme dans le thème d’icônes" width="800">
 
@@ -56,8 +59,10 @@ livré avec Custicon : animaux, lieux, objets, symboles…).
   La recherche reste en place quand vous changez de jeu.
 - Cliquez sur un pictogramme puis sur **Choisir**, ou double-cliquez dessus.
 - Si le thème actif ne fournit pas l’icône demandée, Custicon utilise celle d’Adwaita.
-- Un pictogramme Phosphor est indiqué par « (Phosphor) » après son nom. Il est livré avec Custicon : il ne dépend pas de
-  votre thème et reste disponible après un changement de thème.
+- Un pictogramme d’un jeu fourni est indiqué avec le nom du jeu après son nom, par exemple « camera (Phosphor) ».
+  Ces jeux sont livrés avec Custicon : ils ne dépendent pas de votre thème et restent disponibles après un changement de thème.
+- Les émoji ont des noms français et anglais : « chat » et « cat » trouvent tous deux les chats. Phosphor et le thème d’icônes
+  comprennent aussi des mots français courants.
 
 ### Un fichier
 

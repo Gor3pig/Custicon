@@ -40,11 +40,14 @@ On first launch, the window offers to choose a folder. You can also use
 
 Four possibilities, in the **Pictogram** group.
 
-### A system icon or a Phosphor icon
+### A system icon, or an icon from a bundled set
 
-**System Icon** > **Choose…** opens the list of pictograms. A switch at the top lets you go from the
-**Icon theme** (the pictograms of your current theme) to **Phosphor** (a set of 1,500 pictograms shipped
-with Custicon: animals, places, objects, symbols…).
+**System Icon** > **Choose…** opens the list of pictograms. A switch at the top goes from one source to another:
+
+- **Icon theme**: the pictograms of your current theme.
+- **Phosphor**: 1,500 pictograms shipped with Custicon (animals, places, objects, symbols…).
+- **Emoji**: about 1,600 monochrome emoji (faces, animals, food, travel, objects…). They are tinted like any other pictogram.
+- **Brands**: more than 3,400 logos (GitHub, Docker, Firefox…), handy for project folders. The logos remain the trademarks of their owners.
 
 <img src="../../data/screenshots/en-picker.png" alt="Choosing a pictogram in the icon theme" width="800">
 
@@ -56,8 +59,10 @@ with Custicon: animals, places, objects, symbols…).
   The search stays in place when you switch sets.
 - Click a pictogram then **Choose**, or double-click it.
 - If the current theme does not provide the requested icon, Custicon uses the Adwaita one.
-- A Phosphor pictogram is shown with “(Phosphor)” after its name. It ships with Custicon: it does not depend on your
-  theme and stays available after a theme change.
+- A pictogram from a bundled set is shown with the name of the set after its name, for example “camera (Phosphor)”.
+  These sets ship with Custicon: they do not depend on your theme and stay available after a theme change.
+- Emoji have French and English names, so “chat” and “cat” both find the cats. Phosphor and the icon theme also understand
+  common French words.
 
 ### A file
 
