@@ -20,7 +20,7 @@ from .metadata import read_custom_icon, write_custom_icon
 from .render import is_png, read_icon_bytes
 from .store import GLYPH_FILE_PATTERN, MAX_STYLE_NAME, MAX_STYLES, Entry, Store
 from .textglyph import MAX_CHARACTERS, text_to_svg
-from .iconsets import PhosphorSet, is_phosphor
+from .iconsets import IconSets, PhosphorSet
 from .themes import DEFAULT_THEME, IconTheme, active_icon_theme, system_accent_color
 
 MIN_SIZE = 0.2
@@ -153,7 +153,7 @@ class Service:
         self._search_dirs = search_dirs
         self._accent_color = accent_color
         self._themes: dict[str, IconTheme] = {}
-        self._phosphor = PhosphorSet()
+        self._sets = IconSets()
 
     @property
     def store(self) -> Store:
@@ -188,10 +188,12 @@ class Service:
         return BuiltIcon(compose(folder_file, glyph_file, style), color, name, folder_file, folder_tint)
 
     def _glyph_revision(self, settings: Settings) -> int | None:
-        return self._phosphor.revision if is_phosphor(settings.glyph_name) else None
+        icon_set = self._sets.for_name(settings.glyph_name)
+        return icon_set.revision if icon_set else None
 
     def _set_is_stale(self, entry: Entry) -> bool:
-        return is_phosphor(entry.settings.get("glyph_name")) and entry.settings.get("glyph_revision") != self._phosphor.revision
+        icon_set = self._sets.for_name(entry.settings.get("glyph_name"))
+        return icon_set is not None and entry.settings.get("glyph_revision") != icon_set.revision
 
     def folder_preview(self, settings: Settings, theme_name: str | None = None) -> tuple[str | None, str | None]:
         folder_tint = self._accent_color() if settings.folder_tint_accent else settings.folder_tint
@@ -462,7 +464,10 @@ class Service:
         return self._theme_name()
 
     def phosphor_set(self) -> PhosphorSet:
-        return self._phosphor
+        return self._sets["phosphor"]
+
+    def icon_sets(self) -> IconSets:
+        return self._sets
 
     def icon_theme(self, theme_name: str | None = None) -> IconTheme:
         return self._theme(theme_name or self._theme_name())
@@ -562,8 +567,9 @@ class Service:
         self._store.release_glyph(entry.settings.get("glyph_copy"))
 
     def _find_glyph(self, theme: IconTheme, icon_name: str) -> Path:
-        if is_phosphor(icon_name):
-            return self._phosphor.file(icon_name)
+        icon_set = self._sets.for_name(icon_name)
+        if icon_set is not None:
+            return icon_set.file(icon_name)
         try:
             return theme.glyph_file(icon_name)
         except IconNotFoundError:

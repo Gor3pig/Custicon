@@ -135,6 +135,17 @@ class SetTests(unittest.TestCase):
         self.assertEqual(names[0], "phosphor:camera")
         self.assertGreater(len(names), 3)
 
+    def test_a_tag_word_matches_before_a_part_of_a_tag(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            for name in ("alpha", "beta"):
+                (directory / f"{name}.svg").write_text("<svg/>")
+            index = {"revision": 2, "icons": {"alpha": {"t": ["catalog entry"]}, "beta": {"t": ["a cat here"]}}}
+            (directory / "index.json").write_text(json.dumps(index))
+            self.assertEqual(PhosphorSet(directory).symbolic_names("cat"), ["phosphor:beta", "phosphor:alpha"])
+
     def test_a_very_short_query_only_searches_names(self):
         for name in self.set.symbolic_names("zz"):
             self.assertIn("zz", phosphor_name(name))

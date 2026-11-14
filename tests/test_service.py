@@ -263,6 +263,57 @@ class PhosphorRevisionTests(ServiceTestCase):
         self.assertNotIn("glyph_revision", service_module.APPEARANCE_FIELDS)
 
 
+class IconSetServiceTests(ServiceTestCase):
+    def inner(self, entry):
+        text = self.store.icon_path(entry.digest).read_text()
+        return base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)", text).group(1)).decode()
+
+    def test_an_emoji_is_applied_and_tinted(self):
+        entry = self.service.apply(self.make_folder(), Settings(glyph_name="emoji:cat-face", color="#ff8800"))
+        self.assertEqual(entry.settings["glyph_name"], "emoji:cat-face")
+        self.assertIn("#ff8800", self.inner(entry))
+        self.assertNotIn("#212121", self.inner(entry))
+
+    def test_a_brand_logo_is_applied_and_tinted(self):
+        entry = self.service.apply(self.make_folder(), Settings(glyph_name="brand:github", color="#00aa55"))
+        self.assertIn("#00aa55", self.inner(entry))
+
+    def test_each_set_stores_its_own_revision(self):
+        for name in ("phosphor:acorn", "emoji:cat-face", "brand:github"):
+            entry = self.service.apply(self.make_folder(name.replace(":", "-")), Settings(glyph_name=name))
+            self.assertEqual(entry.settings["glyph_revision"], self.service.icon_sets().for_name(name).revision, name)
+
+    def test_an_unknown_emoji_or_logo_is_refused_without_falling_back(self):
+        for name in ("emoji:nothing-here", "brand:nothing-here"):
+            with self.assertRaises(IconNotFoundError, msg=name):
+                self.service.build(Settings(glyph_name=name))
+
+    def test_an_emoji_name_never_opens_a_theme_icon(self):
+        with self.assertRaises(IconNotFoundError):
+            self.service.build(Settings(glyph_name="emoji:star-symbolic"))
+
+    def test_the_registry_is_the_one_of_the_picker(self):
+        self.assertIs(self.service.phosphor_set(), self.service.icon_sets()["phosphor"])
+
+    def test_icons_of_every_set_are_regenerated(self):
+        for name in ("emoji:cat-face", "brand:github"):
+            self.service.apply(self.make_folder(name.replace(":", "-")), Settings(glyph_name=name))
+        self.theme = "Green"
+        self.assertEqual(len(self.service.regenerate_all().updated), 2)
+
+    def test_an_emoji_or_logo_made_with_another_revision_is_outdated(self):
+        folders = {}
+        for name in ("emoji:cat-face", "brand:github"):
+            folder = folders[name] = self.make_folder(name.replace(":", "-"))
+            entry = self.service.apply(folder, Settings(glyph_name=name))
+            self.store.put(replace(entry, settings={**entry.settings, "glyph_revision": 0}))
+        self.assertEqual(sorted(self.service.outdated()), sorted(str(folder.resolve()) for folder in folders.values()))
+
+    def test_an_icon_made_with_the_current_revision_is_not_outdated(self):
+        self.service.apply(self.make_folder(), Settings(glyph_name="emoji:cat-face"))
+        self.assertEqual(self.service.outdated(), [])
+
+
 class ResetTests(ServiceTestCase):
     def test_reset_removes_the_icon_when_there_was_none_before(self):
         folder = self.make_folder()
