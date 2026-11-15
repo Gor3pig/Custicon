@@ -25,14 +25,22 @@ maintient le dépôt.
 Pages sert le site (`data/website/`, en anglais et en français), le dépôt signé (`repo/`), `custicon.flatpakref`, `custicon.flatpakrepo`, `custicon.gpg` et l’icône.
 Un changement sous `data/website/` relance aussi la publication.
 
-## Un déploiement par exécution, vérifié
+## Un commit de release n’est déployé que par la release
 
 GitHub ignore un second déploiement Pages d’un **même commit** : si un push puis une release portent sur le même commit,
-la release ne remplaçait pas le dépôt et les utilisateurs restaient sur l’ancienne version (constaté avec les 1.4.0 et 1.4.2).
-Le workflow n’utilise donc plus `actions/deploy-pages` : il appelle l’API Pages avec une `pages_build_version` propre à
-chaque exécution (commit, numéro d’exécution et de tentative), puis une dernière étape **échoue** si le dépôt réellement servi
-n’est pas celui qu’il vient de construire. Une exécution verte signifie donc que la nouvelle version est en ligne.
-`./check.sh` refuse un retour à `deploy-pages` ou la suppression de la vérification.
+la release ne remplace pas le dépôt et les utilisateurs restent sur l’ancienne version (constaté avec les 1.4.0 et 1.4.2,
+alors que les deux exécutions étaient vertes). Deux règles, comme pour Pigoune, l’empêchent par construction :
+
+- le workflow **Flatpak repository** ignore le push d’un commit dont le titre commence par `Release version` : c’est la release
+  qui le déploie ;
+- le workflow **Release** refuse une étiquette qui ne pointe pas sur le commit intitulé `Release version X.Y.Z`.
+
+Le commit `Release version X.Y.Z` est donc **le dernier** commit de la version, étiqueté tel quel. Une dernière étape du workflow Pages
+**échoue** si le dépôt réellement servi n’est pas celui qu’il vient de construire : une exécution verte signifie que la nouvelle version
+est en ligne. `./check.sh` refuse la suppression de ces trois protections.
+
+Si une version a tout de même été publiée sur un autre commit, le dépôt n’est pas mis à jour : pousser un commit qui touche un fichier
+suivi par le workflow Pages (par exemple `.github/workflows/pages.yml`) relance la publication sur un commit neuf.
 
 ## Le dépôt Flatpak et sa clé
 

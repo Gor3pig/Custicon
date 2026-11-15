@@ -48,6 +48,19 @@ jobs:
             exit 1
           fi
 
+      - name: Check that the tagged commit is the release commit
+        if: env.TAG != ''
+        run: |
+          subject=$(git log -1 --format=%s)
+          case "$subject" in
+            "Release version "*) ;;
+            *)
+              echo "$TAG must point to the commit titled 'Release version X.Y.Z', not to: $subject"
+              echo "GitHub ignores a second Pages deployment of a commit that a push already deployed, so the website workflow skips that commit and the release deploys it."
+              exit 1
+              ;;
+          esac
+
       - name: Make the checked out commit the main branch
         run: git checkout -B main
 

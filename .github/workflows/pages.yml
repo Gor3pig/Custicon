@@ -28,6 +28,7 @@ env:
 jobs:
   publish:
     name: Publish the signed Flatpak repository
+    if: github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'Release version')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -81,41 +82,13 @@ jobs:
           rm -rf "$GNUPGHOME"
 
       - name: Upload the files
-        id: artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: _site
 
       - name: Publish on GitHub Pages
         id: deployment
-        env:
-          ARTIFACT: ${{ steps.artifact.outputs.artifact_id }}
-        run: |
-          set -euo pipefail
-          artifact="$ARTIFACT"
-          test -n "$artifact"
-          token=$(curl -sS --fail -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://github.com/$GITHUB_REPOSITORY_OWNER" | jq -r .value)
-          version="$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          echo "Creating the deployment $version for the artifact $artifact"
-          if ! gh api --include -X POST "repos/$GH_REPO/pages/deployments" -F artifact_id="$artifact" -f environment=github-pages -f pages_build_version="$version" -f oidc_token="$token" > "$RUNNER_TEMP/answer" 2>&1; then
-            echo "The deployment could not be created:"
-            cat "$RUNNER_TEMP/answer"
-            exit 1
-          fi
-          answer=$(sed -n '/^{/,$p' "$RUNNER_TEMP/answer")
-          identifier=$(jq -r .id <<<"$answer")
-          echo "page_url=$(jq -r .page_url <<<"$answer")" >> "$GITHUB_OUTPUT"
-          for attempt in $(seq 1 60); do
-            status=$(gh api "repos/$GH_REPO/pages/deployments/$identifier" --jq .status)
-            echo "deployment $identifier: $status"
-            case "$status" in
-              succeed) exit 0 ;;
-              deployment_cancelled | deployment_failed | deployment_content_failed | deployment_attempt_error | deployment_lost) exit 1 ;;
-            esac
-            sleep 10
-          done
-          echo "The deployment did not finish in time"
-          exit 1
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
 
       - name: Check that the published repository is the one just built
         env:
