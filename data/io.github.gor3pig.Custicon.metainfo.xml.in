@@ -110,6 +110,15 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.6.0" date="2026-11-15">
+      <description>
+        <p>A corner badge can now be put alone on a folder, and the texts speak of your desktop environment.</p>
+        <ul>
+          <li>Remove the central pictogram to keep only the corner badge on the folder icon</li>
+          <li>The About dialog, the store entry and the website now name the desktop environments instead of one file manager</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.5.0" date="2026-11-15">
       <description>
         <p>Custicon now works with KDE Plasma and other desktops, and can remove several icons at once.</p>

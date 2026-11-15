@@ -1,3 +1,3 @@
 APP_ID = "io.github.gor3pig.Custicon"
 APP_NAME = "Custicon"
-VERSION = "1.5.0"
+VERSION = "1.6.0"
