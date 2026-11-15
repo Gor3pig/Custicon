@@ -502,13 +502,14 @@ def check_style(style: GlyphStyle) -> None:
         raise InvalidIconError("the pictogram size must be positive")
 
 
-def compose(folder_file: Path, glyph: Path | bytes, style: GlyphStyle) -> str:
+def compose(folder_file: Path, glyph: Path | bytes | None, style: GlyphStyle) -> str:
     check_style(style)
+    if glyph is None and style.badge is None:
+        raise InvalidIconError("nothing to draw: choose a pictogram or a badge")
     folder = load_folder(folder_file)
     taken_ids = taken_ids_of(folder)
     if style.folder_tint is not None and not (style.flat_tint and flat_tint_folder(folder, style.folder_tint)):
         tint_folder(folder, style.folder_tint, taken_ids)
-    glyph_elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(glyph, style, taken_ids)
     folder_x, folder_y, folder_width, folder_height = box_of(folder)
 
     result = ET.Element(
@@ -524,20 +525,22 @@ def compose(folder_file: Path, glyph: Path | bytes, style: GlyphStyle) -> str:
             result.set(key, value)
     result.extend(list(folder))
 
-    scale = GLYPH_SIZE * style.size * folder_width / max(glyph_width, glyph_height)
-    center_x = folder_x + (FACE_X + style.offset_x) * folder_width
-    center_y = folder_y + (FACE_Y + style.offset_y) * folder_height
-    group = ET.SubElement(
-        result,
-        svg_tag("g"),
-        {
-            "transform": (
-                f"translate({number(center_x)} {number(center_y)}) scale({number(scale)}) "
-                f"translate({number(-(glyph_x + glyph_width / 2))} {number(-(glyph_y + glyph_height / 2))})"
-            )
-        },
-    )
-    group.extend(glyph_elements)
+    if glyph is not None:
+        glyph_elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(glyph, style, taken_ids)
+        scale = GLYPH_SIZE * style.size * folder_width / max(glyph_width, glyph_height)
+        center_x = folder_x + (FACE_X + style.offset_x) * folder_width
+        center_y = folder_y + (FACE_Y + style.offset_y) * folder_height
+        group = ET.SubElement(
+            result,
+            svg_tag("g"),
+            {
+                "transform": (
+                    f"translate({number(center_x)} {number(center_y)}) scale({number(scale)}) "
+                    f"translate({number(-(glyph_x + glyph_width / 2))} {number(-(glyph_y + glyph_height / 2))})"
+                )
+            },
+        )
+        group.extend(glyph_elements)
     if style.badge is not None:
         add_badge(result, style.badge, (folder_x, folder_y, folder_width, folder_height), taken_ids)
     return XML_HEADER + serialize(result) + "\n"

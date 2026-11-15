@@ -92,7 +92,8 @@ class Settings:
         for number in (self.size, self.offset_x, self.offset_y):
             if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(number):
                 raise InvalidSettingsError("sizes and offsets must be finite numbers")
-        if sum(bool(source) for source in (self.glyph_name, self.glyph_file, self.glyph_text)) != 1:
+        sources = sum(bool(source) for source in (self.glyph_name, self.glyph_file, self.glyph_text))
+        if sources > 1 or (sources == 0 and not self.badge_glyph):
             raise InvalidSettingsError("choose either a symbolic icon name, a file or a text")
         if self.glyph_text is not None and len(self.glyph_text) > MAX_CHARACTERS:
             raise InvalidSettingsError(f"use at most {MAX_CHARACTERS} characters")
@@ -770,7 +771,9 @@ class Service:
                 return key, entry
         return resolved, None
 
-    def _glyph_source(self, theme: IconTheme, settings: Settings) -> Path | bytes:
+    def _glyph_source(self, theme: IconTheme, settings: Settings) -> Path | bytes | None:
+        if not (settings.glyph_name or settings.glyph_file or settings.glyph_text):
+            return None
         if settings.glyph_file:
             return Path(settings.glyph_file)
         if settings.glyph_text:

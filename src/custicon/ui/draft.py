@@ -52,8 +52,15 @@ class Draft:
         return self.color_mode == "auto"
 
     @property
-    def ready(self) -> bool:
+    def has_glyph(self) -> bool:
         return bool(self.glyph_name or self.glyph_file or self.glyph_text)
+
+    @property
+    def ready(self) -> bool:
+        return self.has_glyph or self.badge_active
+
+    def without_glyph(self) -> "Draft":
+        return replace(self, glyph_name=None, glyph_file=None, glyph_text=None)
 
     def with_glyph_name(self, name: str) -> "Draft":
         return replace(self, glyph_name=name, glyph_file=None, glyph_text=None)

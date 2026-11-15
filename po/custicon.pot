@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 11:32+0100\n"
+"POT-Creation-Date: 2026-11-15 12:34+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,7 +24,7 @@ msgid ""
 "subject to the guidelines of those owners."
 msgstr ""
 
-msgid "Customize the icon of a folder in your file manager."
+msgid "Customize folder icons in your desktop environment."
 msgstr ""
 
 msgid "translator-credits"
@@ -38,6 +38,12 @@ msgid "%d px"
 msgstr ""
 
 msgid "Choose…"
+msgstr ""
+
+msgid "Remove the central pictogram and keep only the corner badge"
+msgstr ""
+
+msgid "Remove the central pictogram"
 msgstr ""
 
 msgid "Suggestions"
@@ -76,7 +82,9 @@ msgstr ""
 msgid "Corner Badge"
 msgstr ""
 
-msgid "A small colored disc with its own pictogram, next to the central one"
+msgid ""
+"A small colored disc with its own pictogram, next to the central one or on "
+"its own"
 msgstr ""
 
 msgid "Top Left"
@@ -905,7 +913,7 @@ msgstr ""
 msgid "Custicon"
 msgstr ""
 
-msgid "Customize the icon of a folder in your file manager"
+msgid "Customize folder icons in your desktop environment"
 msgstr ""
 
 msgid ""
@@ -940,7 +948,8 @@ msgid "Customize or restore several folders at once"
 msgstr ""
 
 msgid ""
-"Add a small colored badge with its own pictogram in a corner of the folder"
+"Add a small colored badge with its own pictogram in a corner of the folder, "
+"with or without a central pictogram"
 msgstr ""
 
 msgid ""
@@ -956,9 +965,8 @@ msgid "Remove an icon at any time: the folder gets back the icon it had before"
 msgstr ""
 
 msgid ""
-"Custicon works with GNOME Files (Nautilus), Nemo, Caja, Dolphin and PCManFM-"
-"Qt. Thunar (Xfce), PCManFM (LXDE) and COSMIC Files cannot show custom folder "
-"icons."
+"Custicon works with the GNOME, Cinnamon, MATE, KDE Plasma and LXQt desktop "
+"environments. Xfce, LXDE and COSMIC cannot show custom folder icons."
 msgstr ""
 
 msgid ""

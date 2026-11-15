@@ -51,6 +51,18 @@ class DraftTests(unittest.TestCase):
         self.assertEqual(draft.color, DEFAULT_COLOR)
         self.assertTrue(draft.has_default_appearance())
 
+    def test_a_badge_alone_makes_the_draft_ready_without_a_central_pictogram(self):
+        draft = Draft(self.folder, badge_on=True, badge_glyph="heart-symbolic")
+        self.assertTrue(draft.ready)
+        self.assertFalse(draft.has_glyph)
+        self.assertFalse(replace(draft, badge_on=False).ready)
+
+    def test_removing_the_central_pictogram_keeps_the_badge(self):
+        draft = Draft(self.folder, glyph_text="ab", badge_on=True, badge_glyph="heart-symbolic").without_glyph()
+        self.assertEqual((draft.glyph_name, draft.glyph_file, draft.glyph_text), (None, None, None))
+        self.assertIsNone(draft.to_settings().glyph_text)
+        self.assertEqual(draft.to_settings().badge_glyph, "heart-symbolic")
+
     def test_choosing_a_system_icon_replaces_a_file(self):
         draft = Draft(self.folder).with_glyph_file("/x/a.svg").with_glyph_name("star-symbolic")
         self.assertEqual((draft.glyph_name, draft.glyph_file), ("star-symbolic", None))

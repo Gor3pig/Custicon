@@ -210,8 +210,12 @@ class Editor(Gtk.Box):
         choose = Gtk.Button(label=_("Choose…"), valign=Gtk.Align.CENTER)
         choose.connect("clicked", lambda *_: self.on_choose_glyph and self.on_choose_glyph())
         self.choose_button = choose
+        self.clear_glyph_button = Gtk.Button(icon_name="edit-clear-symbolic", valign=Gtk.Align.CENTER, tooltip_text=_("Remove the central pictogram and keep only the corner badge"))
+        self.clear_glyph_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Remove the central pictogram")])
+        self.clear_glyph_button.connect("clicked", self._on_clear_glyph)
         chip.append(self.glyph_label)
         chip.append(choose)
+        chip.append(self.clear_glyph_button)
 
         self.suggestions_box = Adw.WrapBox(child_spacing=6, line_spacing=6, hexpand=True)
         self.suggestions_row = labelled_row(_("Suggestions"), self.suggestions_box)
@@ -256,7 +260,7 @@ class Editor(Gtk.Box):
         titles = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True, valign=Gtk.Align.CENTER)
         title = Gtk.Label(label=_("Corner Badge"), xalign=0.0)
         title.add_css_class("heading")
-        subtitle = Gtk.Label(label=_("A small colored disc with its own pictogram, next to the central one"), xalign=0.0, wrap=True, max_width_chars=60)
+        subtitle = Gtk.Label(label=_("A small colored disc with its own pictogram, next to the central one or on its own"), xalign=0.0, wrap=True, max_width_chars=60)
         subtitle.add_css_class("caption")
         subtitle.add_css_class("dim-label")
         titles.append(title)
@@ -540,6 +544,7 @@ class Editor(Gtk.Box):
         draft = self._draft
         usable = draft is not None and draft.ready and self._status != "folder-missing" and not self._blocked
         self.apply_button.set_sensitive(usable)
+        self.clear_glyph_button.set_sensitive(draft is not None and draft.has_glyph)
         if draft is not None:
             self.reset_button.set_sensitive(not draft.has_default_appearance())
 
@@ -570,6 +575,11 @@ class Editor(Gtk.Box):
         finally:
             self._loading = False
         self._emit_change()
+
+    def _on_clear_glyph(self, _button) -> None:
+        if self._loading or self._draft is None:
+            return
+        self.update_glyph(self._draft.without_glyph())
 
     def _on_tint(self, row, _param) -> None:
         self._update(tint=row.get_active())
@@ -634,7 +644,7 @@ class Editor(Gtk.Box):
 
     def _on_drag_begin(self, _gesture, _x, _y) -> None:
         draft = self._draft
-        self._drag_origin = (draft.offset_x, draft.offset_y) if draft is not None and draft.ready else None
+        self._drag_origin = (draft.offset_x, draft.offset_y) if draft is not None and draft.has_glyph else None
         self.big.set_cursor_from_name("grabbing")
 
     def _on_drag_update(self, _gesture, dx: float, dy: float) -> None:
@@ -652,7 +662,7 @@ class Editor(Gtk.Box):
 
     def _on_scroll(self, _controller, _dx: float, dy: float) -> bool:
         draft = self._draft
-        if draft is None or not draft.ready or not dy:
+        if draft is None or not draft.has_glyph or not dy:
             return False
         self._apply_direct(size=snapped(draft.size * SCROLL_FACTOR ** (-dy), MIN_SIZE, MAX_SIZE))
         return True

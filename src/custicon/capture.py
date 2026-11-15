@@ -17,7 +17,7 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "restored")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "restored")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
@@ -121,6 +121,12 @@ def show_badge(window) -> bool:
     return False
 
 
+def show_badge_only(window) -> bool:
+    show_badge(window)
+    window.editor.update_glyph(window.editor.draft.without_glyph())
+    return False
+
+
 def scroll_down(editor) -> bool:
     adjustment = editor.scrolled.get_vadjustment()
     adjustment.set_value(adjustment.get_upper())
@@ -144,7 +150,7 @@ def show_about(window) -> bool:
 
 
 def arrange(screen: str, window, demo: Demo) -> None:
-    size = NARROW if screen == "narrow" else (TALL if screen == "badge" else WIDE)
+    size = NARROW if screen == "narrow" else (TALL if screen in ("badge", "badgeonly") else WIDE)
     window.set_default_size(*size)
     Gtk.Settings.get_default().set_property("gtk-enable-animations", False)
     scheme = Adw.ColorScheme.FORCE_DARK if screen in ("dark", "darkpicker") else Adw.ColorScheme.FORCE_LIGHT
@@ -180,6 +186,9 @@ def arrange(screen: str, window, demo: Demo) -> None:
     if screen == "badge":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, show_badge, window)
+    if screen == "badgeonly":
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, show_badge_only, window)
     if screen == "restored":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, show_restored, window, demo)

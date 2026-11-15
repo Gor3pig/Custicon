@@ -199,6 +199,8 @@ Activez **Pastille de coin** en bas de l’éditeur. Les réglages apparaissent 
 - **Couleur du rond** : la palette des pictogrammes, ou votre propre couleur.
 - **Taille de la pastille** : de 15 % à 50 % de la largeur du dossier, 30 % par défaut.
 
+Pour ne poser qu’une pastille sur un dossier, cliquez sur **Retirer** à côté du pictogramme central : la pastille reste seule sur l’icône du dossier. **Appliquer** reste disponible tant qu’une pastille ou un pictogramme central est défini.
+
 L’aperçu montre la pastille tout de suite. Elle est enregistrée avec le dossier, suit les régénérations, s’applique à tous les dossiers
 d’une sélection, et ne fait pas partie des réglages gardés pour les prochains dossiers. Désactivez l’interrupteur pour la retirer :
 vos choix restent dans l’éditeur si vous le réactivez.

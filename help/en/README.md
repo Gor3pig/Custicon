@@ -199,6 +199,8 @@ Turn on **Corner Badge** at the bottom of the editor. The settings appear:
 - **Badge Color**: the palette of the pictograms, or your own color.
 - **Badge Size**: from 15 % to 50 % of the width of the folder, 30 % by default.
 
+To put only a badge on a folder, click **Remove** next to the central pictogram: the badge then stays alone on the folder icon. **Apply** stays available as long as a badge or a central pictogram is set.
+
 The preview shows the badge at once. The badge is stored with the folder, follows regenerations, applies to every folder
 of a selection, and is not part of the settings kept for the next folders. Turn the switch off to remove it:
 your choices are kept in the editor if you turn it on again.

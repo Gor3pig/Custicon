@@ -180,7 +180,7 @@ class BadgeSettingsTests(unittest.TestCase):
             replace(STAR, badge_glyph="heart-symbolic", badge_size=size).validate()
 
 
-class BadgeServiceTests(WorkspaceTestCase):
+class BadgeServiceBase(WorkspaceTestCase):
     def setUp(self):
         self.root = self.make_workspace()
         self.themes = self.root / "themes"
@@ -197,6 +197,8 @@ class BadgeServiceTests(WorkspaceTestCase):
     def badge_settings(self, **changes):
         return replace(STAR, badge_glyph="heart-symbolic", **changes)
 
+
+class BadgeServiceTests(BadgeServiceBase):
     def test_build_draws_the_badge_only_when_asked(self):
         self.assertNotIn("<circle", self.service.build(STAR).svg)
         built = self.service.build(self.badge_settings(badge_color="#2190a4"))
@@ -236,3 +238,36 @@ class BadgeServiceTests(WorkspaceTestCase):
         plain = self.service.build(STAR)
         with_badge = self.service.build(self.badge_settings())
         self.assertEqual(plain.color, with_badge.color)
+
+
+class BadgeOnlyTests(BadgeServiceBase):
+
+    def only(self, **changes):
+        return Settings(badge_glyph="heart-symbolic", **changes)
+
+    def test_a_badge_alone_is_a_valid_setting(self):
+        self.only().validate()
+
+    def test_without_pictogram_and_badge_there_is_nothing_to_draw(self):
+        with self.assertRaises(InvalidSettingsError):
+            Settings().validate()
+        folder = self.root / "plain-folder.svg"
+        folder.write_text(folder_svg("#3366cc"))
+        with self.assertRaises(InvalidIconError):
+            compose(folder, None, GlyphStyle(color="#ffffff"))
+
+    def test_two_pictogram_sources_are_still_refused(self):
+        with self.assertRaises(InvalidSettingsError):
+            Settings(glyph_name="a-symbolic", glyph_text="x", badge_glyph="heart-symbolic").validate()
+
+    def test_the_icon_has_the_disc_and_no_central_pictogram(self):
+        alone = self.service.build(self.only()).svg
+        both = self.service.build(self.badge_settings()).svg
+        self.assertEqual(alone.count("<circle"), 1)
+        self.assertEqual(alone.count("<image"), both.count("<image") - 1)
+
+    def test_a_badge_alone_is_applied_and_regenerated(self):
+        entry = self.service.apply(self.folder, self.only(badge_corner="tl"))
+        stored = Settings.from_dict(self.store.get(str(self.folder.resolve())).settings)
+        self.assertEqual((stored.glyph_name, stored.badge_glyph), (None, "heart-symbolic"))
+        self.assertIn("<circle", self.store.icon_path(entry.digest).read_text())
