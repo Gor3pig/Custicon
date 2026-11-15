@@ -1,6 +1,6 @@
 project(
   'custicon',
-  version: '1.4.2',
+  version: '1.5.0',
   license: 'GPL-3.0-or-later',
   meson_version: '>= 1.0.0',
 )

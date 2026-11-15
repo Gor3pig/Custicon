@@ -18,7 +18,9 @@
       <li>Pick colors from a palette, drag the pictogram on the preview and scroll to resize it</li>
       <li>Tint the folder itself, or follow the accent color of your system</li>
       <li>Customize or restore several folders at once</li>
+      <li>Add a small colored badge with its own pictogram in a corner of the folder</li>
       <li>Save named styles, and regenerate every icon after a change of icon theme</li>
+      <li>Save all your settings in one file and restore them later, for example on a new computer</li>
       <li>Remove an icon at any time: the folder gets back the icon it had before</li>
     </ul>
     <p>
@@ -47,6 +49,11 @@
       <image type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/en-tint.png</image>
       <image xml:lang="fr" type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/fr-tint.png</image>
       <caption>Tint the folder and keep its shading</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source" width="1000" height="768">https://gor3pig.github.io/Custicon/screenshots/en-badge.png</image>
+      <image xml:lang="fr" type="source" width="1000" height="768">https://gor3pig.github.io/Custicon/screenshots/fr-badge.png</image>
+      <caption>A small colored badge in a corner of the folder</caption>
     </screenshot>
     <screenshot>
       <image type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/en-choosing.png</image>
@@ -103,6 +110,21 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.5.0" date="2026-11-15">
+      <description>
+        <p>Custicon now works with KDE Plasma and other desktops, and can remove several icons at once.</p>
+        <ul>
+          <li>KDE Plasma (Dolphin) and LXQt (PCManFM-Qt) are supported, in addition to GNOME, Cinnamon and MATE: the right method is chosen automatically</li>
+          <li>With Dolphin and PCManFM-Qt the icon is kept in a small hidden .directory file inside the folder, which is removed when you remove the icon</li>
+          <li>A banner tells you when your file manager (Thunar, PCManFM, COSMIC Files) cannot show custom folder icons</li>
+          <li>Remove the icons of several folders in one step, with a confirmation and an Undo for the whole batch</li>
+          <li>The texts now speak of your file manager instead of Nautilus only</li>
+          <li>A corner badge: a small colored disc with its own pictogram next to the central one</li>
+          <li>Save all your settings in one file and restore them later</li>
+          <li>A complete page in the app store, with screenshots, keywords and categories for every desktop</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.4.2" date="2026-11-15">
       <description>
         <p>Custicon now works on openSUSE Tumbleweed without changing its permissions.</p>
