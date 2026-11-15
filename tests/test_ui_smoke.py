@@ -14,6 +14,7 @@ from gi.repository import Adw, Gio, GLib, Gtk
 
 from custicon.ui.editor import hex_from_rgba, rgba_from_hex
 from custicon.metadata import read_custom_icon, write_custom_icon
+from custicon import service as service_module
 from custicon.service import Service, Settings
 from custicon.errors import MetadataError, StoreError
 from custicon.store import Entry, Store
@@ -64,6 +65,9 @@ class WindowTestCase(WorkspaceTestCase):
         from custicon.ui.window import MainWindow
 
         Adw.init()
+        desktop = mock.patch.dict(os.environ, {"XDG_CURRENT_DESKTOP": "GNOME"})
+        desktop.start()
+        self.addCleanup(desktop.stop)
         self.root = self.make_workspace()
         themes = self.root / "themes"
         themes.mkdir()
@@ -171,6 +175,14 @@ class FakeFoldersDialog:
 
     def select_multiple_folders_finish(self, _result):
         return self._store
+
+
+class FakeAnswer:
+    def __init__(self, response):
+        self._response = response
+
+    def choose_finish(self, _result):
+        return self._response
 
 
 class FakeOpenDialog:
@@ -1519,6 +1531,176 @@ class ListReuseTests(WindowTestCase):
         self.assertAlmostEqual(self.window.editor.draft.size, 1.5)
 
 
+class UnsupportedDesktopUiTests(WindowTestCase):
+    def make_window(self, desktop):
+        from custicon.ui.window import MainWindow
+
+        with mock.patch.dict(os.environ, {"XDG_CURRENT_DESKTOP": desktop}):
+            window = MainWindow(shared_application(), self.service)
+        self.addCleanup(window.destroy)
+        return window
+
+    def test_the_banner_is_hidden_by_default(self):
+        self.assertFalse(self.window.unsupported_banner.get_revealed())
+
+    def test_a_desktop_without_support_shows_the_banner_with_the_file_manager(self):
+        window = self.make_window("XFCE")
+        self.assertTrue(window.unsupported_banner.get_revealed())
+        self.assertIn("Thunar", window.unsupported_banner.get_title())
+
+    def test_lxde_shows_the_banner_too(self):
+        window = self.make_window("LXDE")
+        self.assertIn("PCManFM", window.unsupported_banner.get_title())
+
+    def test_the_supported_desktops_show_no_banner(self):
+        for desktop in ("GNOME", "KDE", "LXQt", "X-Cinnamon", "MATE"):
+            with self.subTest(desktop=desktop):
+                self.assertFalse(self.make_window(desktop).unsupported_banner.get_revealed())
+
+    def test_the_hint_names_the_file_manager_of_the_desktop(self):
+        from custicon.ui.editor import Editor
+
+        with mock.patch.dict(os.environ, {"XDG_CURRENT_DESKTOP": "KDE"}):
+            editor = Editor()
+        self.assertIn("Dolphin", editor.hint.get_label())
+        with mock.patch.dict(os.environ, {"XDG_CURRENT_DESKTOP": "Enlightenment"}):
+            other = Editor()
+        self.assertIn("your file manager", other.hint.get_label())
+
+    def test_applying_still_works_on_an_unsupported_desktop(self):
+        window = self.make_window("XFCE")
+        window.add_folder(self.make_folder("x"))
+        window.editor.update_glyph(window.editor.draft.with_glyph_name("star-symbolic"))
+        window._apply()
+        settle()
+        self.assertEqual(len(self.service.store.all()), 1)
+
+
+class BatchRemovalUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.keys = []
+        for name in ("a", "b", "c"):
+            folder = self.add_and_apply(name)
+            self.keys.append(str(folder.resolve()))
+        self.window.reload(select=self.keys[0])
+        settle()
+        self.editor = self.window.editor
+        self.window.choose_toggle.set_active(True)
+        for key in self.keys[1:]:
+            self.window._rows[key].check.set_active(True)
+
+    def test_the_batch_offers_to_remove_the_icons(self):
+        self.assertTrue(self.editor.remove_button.get_visible())
+        self.assertEqual(self.editor.remove_button.get_label(), "Remove 3 Icons")
+
+    def test_a_batch_of_new_folders_has_nothing_to_remove(self):
+        fresh = [self.make_folder("x"), self.make_folder("y")]
+        self.window.add_folders(fresh)
+        settle()
+        self.assertFalse(self.editor.remove_button.get_visible())
+
+    def test_a_mixed_batch_counts_only_the_customized_folders(self):
+        fresh = self.make_folder("x")
+        self.window.add_folders([Path(self.keys[0]), fresh])
+        settle()
+        self.assertEqual(self.editor.remove_button.get_label(), "Remove 1 Icon")
+        self.assertTrue(self.editor.remove_button.get_visible())
+
+    def test_clicking_asks_for_a_confirmation(self):
+        self.editor.remove_button.emit("clicked")
+        settle()
+        dialog = self.window.get_visible_dialog()
+        self.assertIsNotNone(dialog)
+        self.assertEqual(dialog.get_heading(), "Remove the Icons of 3 Folders?")
+
+    def test_the_confirmation_mentions_the_folders_left_alone(self):
+        fresh = self.make_folder("x")
+        self.window.add_folders([Path(self.keys[0]), Path(self.keys[1]), fresh])
+        settle()
+        self.editor.remove_button.emit("clicked")
+        settle()
+        self.assertIn("1 folder without a Custicon icon is left alone.", self.window.get_visible_dialog().get_body())
+
+    def test_cancelling_removes_nothing(self):
+        self.window._remove_batch_confirmed(FakeAnswer("cancel"), None, self.keys)
+        settle()
+        for key in self.keys:
+            self.assertIsNotNone(self.service.store.get(key))
+
+    def test_confirming_removes_every_icon(self):
+        self.window._remove_batch_confirmed(FakeAnswer("remove"), None, self.keys)
+        settle()
+        for key in self.keys:
+            self.assertIsNone(self.service.store.get(key))
+            self.assertIsNone(read_custom_icon(Path(key)))
+
+    def test_after_removing_the_selection_mode_is_left(self):
+        self.window.remove_many(self.keys)
+        settle()
+        self.assertFalse(self.window.choose_toggle.get_active())
+        self.assertIsNone(self.window._batch)
+
+    def test_a_toast_offers_to_undo_the_whole_batch(self):
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.remove_many(self.keys)
+        self.assertIn("Icons removed from 3 folders", toast.call_args.args[0])
+        self.assertEqual(toast.call_args.args[1], "Undo")
+        toast.call_args.args[2]()
+        settle()
+        for key in self.keys:
+            self.assertIsNotNone(self.service.store.get(key))
+            self.assertIsNotNone(read_custom_icon(Path(key)))
+
+    def test_undoing_reports_the_restoration(self):
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.remove_many(self.keys)
+            undo = toast.call_args.args[2]
+            undo()
+        self.assertIn("Icon restored on 3 folders", toast.call_args.args[0])
+
+    def test_a_partial_result_is_shown_in_a_dialog(self):
+        write_custom_icon(Path(self.keys[0]), USER_ICON)
+        self.window.remove_many(self.keys)
+        settle()
+        dialog = self.window.get_visible_dialog()
+        self.assertIsNotNone(dialog)
+        self.assertIn("1 icon kept", dialog.get_body())
+        self.assertIn("2 icons removed", dialog.get_body())
+
+    def test_a_partial_result_still_offers_to_undo_the_removed_icons(self):
+        write_custom_icon(Path(self.keys[0]), USER_ICON)
+        with mock.patch.object(self.window, "toast") as toast:
+            self.window.remove_many(self.keys)
+        self.assertIn("Icons removed from 2 folders", toast.call_args.args[0])
+        self.assertEqual(toast.call_args.args[1], "Undo")
+        toast.call_args.args[2]()
+        settle()
+        self.assertIsNotNone(self.service.store.get(self.keys[1]))
+        self.assertIsNotNone(self.service.store.get(self.keys[2]))
+
+    def test_a_failure_is_reported_and_the_others_are_removed(self):
+        real = service_module.write_custom_icon
+
+        def flaky(target, value):
+            if Path(target) == Path(self.keys[1]):
+                raise MetadataError("refused")
+            return real(target, value)
+
+        with mock.patch.object(service_module, "write_custom_icon", side_effect=flaky):
+            self.window.remove_many(self.keys)
+        settle()
+        self.assertIsNone(self.service.store.get(self.keys[0]))
+        self.assertIsNotNone(self.service.store.get(self.keys[1]))
+        self.assertIsNotNone(self.window.get_visible_dialog())
+
+    def test_the_list_is_rebuilt_without_the_removed_folders(self):
+        self.window.remove_many(self.keys[:2])
+        settle()
+        self.assertNotIn(self.keys[0], self.window._rows)
+        self.assertIn(self.keys[2], self.window._rows)
+
+
 class SuggestionCacheTests(WindowTestCase):
     def test_the_suggestions_of_a_name_are_computed_once(self):
         with mock.patch.object(window_module, "suggest", wraps=window_module.suggest) as compute:
@@ -1928,14 +2110,6 @@ class FakeSaveDialog:
 
     def open_finish(self, _result):
         return self._file
-
-
-class FakeAnswer:
-    def __init__(self, response):
-        self._response = response
-
-    def choose_finish(self, _result):
-        return self._response
 
 
 class StylesUiTests(WindowTestCase):

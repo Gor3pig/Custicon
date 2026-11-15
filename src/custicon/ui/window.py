@@ -26,6 +26,7 @@ from ..service import (
 )
 from .draft import Draft
 from .editor import BIG_SIZE, SMALL_SIZES, Editor
+from .filemanager import manager_name
 from .format import display_path, folder_name, is_portal_path, is_text_path, normalize_text
 from .messages import banner_action, describe_error, report_lines, reset_report_lines, status_banner, status_label
 from .picker import PickerDialog
@@ -108,8 +109,14 @@ class MainWindow(Adw.ApplicationWindow):
             revealed=False,
         )
         self.outdated_banner.connect("button-clicked", lambda *_args: self._start_regeneration())
+        unsupported = environment.unsupported_file_manager()
+        self.unsupported_banner = Adw.Banner(
+            title=_("%s cannot show custom folder icons, so the icons made with Custicon will not appear in it.") % (unsupported or ""),
+            revealed=unsupported is not None,
+        )
         page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         page.append(self.permission_banner)
+        page.append(self.unsupported_banner)
         page.append(self.outdated_banner)
         page.append(self.stack)
         self.toasts.set_child(page)
@@ -549,7 +556,7 @@ class MainWindow(Adw.ApplicationWindow):
         except CusticonError as error:
             self._alert(_("Could Not Find the Folder"), describe_error(error))
             return
-        self.toast(_("“%s” is back in the list. Press F5 in Nautilus to see its icon.") % folder_name(entry.folder))
+        self.toast(_("“%(folder)s” is back in the list. Press F5 in %(manager)s to see its icon.") % {"folder": folder_name(entry.folder), "manager": manager_name()})
         self.reload(select=entry.folder)
 
     def _confirm_reset_all(self) -> None:
@@ -579,7 +586,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.reload()
         body = "\n".join(reset_report_lines(report))
         if report.restored:
-            body += "\n\n" + _("Press F5 in Nautilus to see the changes.")
+            body += "\n\n" + _("Press F5 in %s to see the changes.") % manager_name()
         self._alert(_("Icons Removed"), body)
 
     def _real_path(self, gfile) -> str | None:
@@ -657,6 +664,14 @@ class MainWindow(Adw.ApplicationWindow):
             self._batch = None
             self.choose_toggle.set_active(False)
 
+    def _customized_in(self, folders: list[Path]) -> list[str]:
+        try:
+            known = self._service.store.all()
+        except CusticonError as error:
+            self._report_registry_error(error)
+            return []
+        return [known[key].folder for key in map(str, folders) if key in known]
+
     def _show_batch(self, folders: list[Path]) -> None:
         self._batch = folders
         self._current_key = None
@@ -664,7 +679,7 @@ class MainWindow(Adw.ApplicationWindow):
         draft = Draft(folder=folders[0]).with_appearance(self._service.remembered_appearance())
         self.content_page.set_title(ngettext("%d folder", "%d folders", len(folders)) % len(folders))
         self.editor.load(draft, False, STATUS_OK)
-        self.editor.show_batch(names)
+        self.editor.show_batch(names, len(self._customized_in(folders)))
         self.editor.set_suggestions([])
         self._refresh_styles()
         self._schedule_preview()
@@ -754,7 +769,7 @@ class MainWindow(Adw.ApplicationWindow):
             lines.extend("%s: %s" % (folder_name(folder), message.split("\n")[0]) for folder, message in report.failed.items())
             self._alert(_("Some Icons Could Not Be Applied"), "\n".join(lines))
         else:
-            self.toast(ngettext("Icon applied to %d folder. Press F5 in Nautilus to see it.", "Icon applied to %d folders. Press F5 in Nautilus to see it.", len(report.applied)) % len(report.applied), _("Got It"))
+            self.toast(ngettext("Icon applied to %(count)d folder. Press F5 in %(manager)s to see it.", "Icon applied to %(count)d folders. Press F5 in %(manager)s to see it.", len(report.applied)) % {"count": len(report.applied), "manager": manager_name()}, _("Got It"))
 
     def _apply(self) -> None:
         draft = self.editor.draft
@@ -771,10 +786,75 @@ class MainWindow(Adw.ApplicationWindow):
         self._service.remember_appearance(draft.to_settings())
         if self._pending is not None and str(self._pending.folder) == entry.folder:
             self._pending = None
-        self.toast(_("Icon applied to “%s”. Press F5 in Nautilus to see it.") % folder_name(entry.folder), _("Got It"))
+        self.toast(_("Icon applied to “%(folder)s”. Press F5 in %(manager)s to see it.") % {"folder": folder_name(entry.folder), "manager": manager_name()}, _("Got It"))
         self.reload(select=entry.folder)
 
+    def _confirm_remove_batch(self) -> None:
+        keys = self._customized_in(self._batch)
+        if not keys:
+            return
+        ignored = len(self._batch) - len(keys)
+        body = _("The folders will get back the icon they had before Custicon. Their content is not modified.")
+        if ignored:
+            body += "\n\n" + ngettext("%d folder without a Custicon icon is left alone.", "%d folders without a Custicon icon are left alone.", ignored) % ignored
+        dialog = Adw.AlertDialog(heading=ngettext("Remove the Icon of %d Folder?", "Remove the Icons of %d Folders?", len(keys)) % len(keys), body=body)
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("remove", _("Remove"))
+        dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.choose(self, None, lambda d, result, chosen=keys: self._remove_batch_confirmed(d, result, chosen))
+
+    def _remove_batch_confirmed(self, dialog, result, keys: list[str]) -> None:
+        if dialog.choose_finish(result) == "remove":
+            self.remove_many(keys)
+
+    def remove_many(self, keys: list[str]) -> None:
+        snapshots = []
+        for key in keys:
+            try:
+                snapshot = self._service.snapshot(key)
+            except CusticonError:
+                snapshot = None
+            if snapshot is not None:
+                snapshots.append(snapshot)
+        report = self._service.reset_many(keys)
+        self._batch = None
+        self._choosing_off()
+        self.reload()
+        restored = [snapshot for snapshot in snapshots if snapshot.entry.folder in report.restored]
+        if report.failed or report.kept or report.missing:
+            body = "\n".join(reset_report_lines(report))
+            if report.restored:
+                body += "\n\n" + _("Press F5 in %s to see the changes.") % manager_name()
+            self._alert(_("Icons Removed"), body)
+            if restored:
+                count = len(restored)
+                self.toast(ngettext("Icon removed from %(count)d folder. Press F5 in %(manager)s to see it.", "Icons removed from %(count)d folders. Press F5 in %(manager)s to see it.", count) % {"count": count, "manager": manager_name()}, _("Undo"), lambda: self._undo_removals(restored))
+            return
+        count = len(report.restored)
+        message = ngettext("Icon removed from %(count)d folder. Press F5 in %(manager)s to see it.", "Icons removed from %(count)d folders. Press F5 in %(manager)s to see it.", count) % {"count": count, "manager": manager_name()}
+        self.toast(message, _("Undo") if restored else None, (lambda: self._undo_removals(restored)) if restored else None)
+
+    def _undo_removals(self, snapshots: list) -> None:
+        restored = []
+        failed = {}
+        for snapshot in snapshots:
+            try:
+                restored.append(self._service.restore(snapshot).folder)
+            except CusticonError as error:
+                failed[snapshot.entry.folder] = describe_error(error)
+        self.reload(select=restored[0] if restored else None)
+        if failed:
+            self._alert(_("Could Not Restore the Icon"), "\n".join(f"{folder_name(folder)}: {message}" for folder, message in failed.items()))
+            return
+        count = len(restored)
+        self.toast(ngettext("Icon restored on %(count)d folder. Press F5 in %(manager)s to see it.", "Icon restored on %(count)d folders. Press F5 in %(manager)s to see it.", count) % {"count": count, "manager": manager_name()})
+
     def _confirm_remove(self) -> None:
+        if self._batch:
+            self._confirm_remove_batch()
+            return
         draft = self.editor.draft
         if draft is None or self._current_key is None:
             return
@@ -818,12 +898,12 @@ class MainWindow(Adw.ApplicationWindow):
         if outcome == RESET_UNKNOWN:
             self.toast(_("“%s” was no longer in the list.") % name)
         elif outcome == RESET_KEPT_USER_ICON:
-            self.toast(_("“%s”: the icon you chose in Nautilus was kept.") % name)
+            self.toast(_("“%s”: the icon you chose outside Custicon was kept.") % name)
         elif outcome == RESET_FOLDER_MISSING:
             self.toast(_("“%s” was forgotten.") % name)
         else:
             undo = (lambda: self._undo_removal(snapshot)) if snapshot is not None else None
-            self.toast(_("Icon removed from “%s”. Press F5 in Nautilus to see it.") % name, _("Undo") if undo else None, undo)
+            self.toast(_("Icon removed from “%(folder)s”. Press F5 in %(manager)s to see it.") % {"folder": name, "manager": manager_name()}, _("Undo") if undo else None, undo)
         self.reload()
 
     def _undo_removal(self, snapshot) -> None:
@@ -832,7 +912,7 @@ class MainWindow(Adw.ApplicationWindow):
         except CusticonError as error:
             self._alert(_("Could Not Restore the Icon"), describe_error(error))
             return
-        self.toast(_("Icon restored on “%s”. Press F5 in Nautilus to see it.") % folder_name(entry.folder))
+        self.toast(_("Icon restored on “%(folder)s”. Press F5 in %(manager)s to see it.") % {"folder": folder_name(entry.folder), "manager": manager_name()})
         self.reload(select=entry.folder)
 
     def _start_regeneration(self) -> None:
@@ -891,7 +971,7 @@ class MainWindow(Adw.ApplicationWindow):
         lines = report_lines(report)
         body = "\n".join(lines) if lines else _("Nothing needed to be updated.")
         if report.updated:
-            body += "\n\n" + _("Press F5 in Nautilus to see the changes.")
+            body += "\n\n" + _("Press F5 in %s to see the changes.") % manager_name()
         dialog = Adw.AlertDialog(heading=_("Regeneration Complete"), body=body)
         dialog.add_response("close", _("Close"))
         dialog.set_default_response("close")

@@ -12,6 +12,7 @@ from ..i18n import _, ngettext
 from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
 from ..textglyph import MAX_CHARACTERS
 from .draft import Draft
+from .filemanager import manager_name
 from .format import display_path, folder_name, from_percent, percent_text, to_percent
 from .palette import Palette, hex_of, rgba_of
 
@@ -307,12 +308,13 @@ class Editor(Gtk.Box):
         bar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin_top=6, margin_bottom=10, margin_start=16, margin_end=16)
         bar.add_css_class("toolbar")
         hint = Gtk.Label(
-            label=_("Nautilus does not refresh its icons by itself: after applying, press F5 in the Nautilus window."),
+            label=_("After applying, press F5 in %s if the icon does not show up.") % manager_name(),
             wrap=True,
             xalign=0.0,
         )
         hint.add_css_class("caption")
         hint.add_css_class("dim-label")
+        self.hint = hint
         bar.append(hint)
         buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self.remove_button = Gtk.Button(label=_("Remove Icon"))
@@ -361,13 +363,15 @@ class Editor(Gtk.Box):
             self._loading = False
         self._refresh_actions()
 
-    def show_batch(self, names: list[str]) -> None:
+    def show_batch(self, names: list[str], removable: int = 0) -> None:
         count = len(names)
         self.name_label.set_text(ngettext("%d folder", "%d folders", count) % count)
         self.path_label.set_text(", ".join(names))
         self.path_label.set_tooltip_text("\n".join(names))
         self.apply_button.set_label(ngettext("Apply to %d Folder", "Apply to %d Folders", count) % count)
-        self.remove_button.set_visible(False)
+        self.remove_button.set_label(ngettext("Remove %d Icon", "Remove %d Icons", removable) % removable if removable else _("Remove Icon"))
+        self.remove_button.add_css_class("destructive-action")
+        self.remove_button.set_visible(removable > 0)
 
     def glyph_text(self, draft: Draft) -> str:
         if draft.glyph_name:

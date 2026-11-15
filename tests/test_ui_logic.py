@@ -221,7 +221,7 @@ class MessageTests(unittest.TestCase):
             [
                 "1 icon updated",
                 "2 icons already up to date",
-                "1 folder skipped: icon changed from Nautilus",
+                "1 folder skipped: icon changed outside Custicon",
                 "2 folders not found",
                 "1 folder could not be updated",
             ],

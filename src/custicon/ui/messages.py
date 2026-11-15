@@ -24,7 +24,7 @@ def describe_error(error: Exception) -> str:
         (InvalidIconError, _("An icon file could not be read.")),
         (InvalidSettingsError, _("These settings are not valid.")),
         (FolderError, _("This is not a usable folder.")),
-        (MetadataError, _("Nautilus could not be told about the new icon. Check that Custicon can access this folder.")),
+        (MetadataError, _("The new icon could not be recorded for this folder. Check that Custicon can access it.")),
         (StoreError, _("Custicon could not save its data.")),
     )
     for kind, summary in summaries:
@@ -36,7 +36,7 @@ def describe_error(error: Exception) -> str:
 def status_label(status: str) -> str | None:
     return {
         STATUS_FOLDER_MISSING: _("Folder not found"),
-        STATUS_ICON_CHANGED: _("Icon changed from Nautilus"),
+        STATUS_ICON_CHANGED: _("Icon changed outside Custicon"),
         STATUS_ICON_FILE_MISSING: _("Icon file missing"),
         STATUS_UNREADABLE: _("Metadata unreadable"),
     }.get(status)
@@ -45,7 +45,7 @@ def status_label(status: str) -> str | None:
 def status_banner(status: str) -> str | None:
     return {
         STATUS_FOLDER_MISSING: _("This folder no longer exists."),
-        STATUS_ICON_CHANGED: _("This icon was replaced from Nautilus: Custicon no longer touches it."),
+        STATUS_ICON_CHANGED: _("This icon was replaced outside Custicon: Custicon no longer touches it."),
         STATUS_ICON_FILE_MISSING: _("The icon file of this folder is missing."),
         STATUS_UNREADABLE: _("The metadata of this folder cannot be read."),
     }.get(status)
@@ -66,7 +66,7 @@ def reset_report_lines(report: ResetReport) -> list[str]:
         lines.append(ngettext("%d icon removed", "%d icons removed", count) % count)
     if report.kept:
         count = len(report.kept)
-        lines.append(ngettext("%d icon kept because you changed it from Nautilus", "%d icons kept because you changed them from Nautilus", count) % count)
+        lines.append(ngettext("%d icon kept because you changed it outside Custicon", "%d icons kept because you changed them outside Custicon", count) % count)
     if report.missing:
         count = len(report.missing)
         lines.append(ngettext("%d folder not found and forgotten", "%d folders not found and forgotten", count) % count)
@@ -91,7 +91,7 @@ def report_lines(report: RegenerationReport) -> list[str]:
     if changed:
         count = len(changed)
         lines.append(
-            ngettext("%d folder skipped: icon changed from Nautilus", "%d folders skipped: icon changed from Nautilus", count)
+            ngettext("%d folder skipped: icon changed outside Custicon", "%d folders skipped: icon changed outside Custicon", count)
             % count
         )
     if missing:

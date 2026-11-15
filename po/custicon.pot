@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 00:27+0100\n"
+"POT-Creation-Date: 2026-11-15 02:35+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,7 +24,7 @@ msgid ""
 "subject to the guidelines of those owners."
 msgstr ""
 
-msgid "Customize the icon of a folder in Nautilus."
+msgid "Customize the icon of a folder in your file manager."
 msgstr ""
 
 msgid "translator-credits"
@@ -91,9 +91,8 @@ msgstr ""
 msgid "Delete Style"
 msgstr ""
 
-msgid ""
-"Nautilus does not refresh its icons by itself: after applying, press F5 in "
-"the Nautilus window."
+#, python-format
+msgid "After applying, press F5 in %s if the icon does not show up."
 msgstr ""
 
 msgid "Remove Icon"
@@ -117,7 +116,16 @@ msgid_plural "Apply to %d Folders"
 msgstr[0] ""
 msgstr[1] ""
 
+#, python-format
+msgid "Remove %d Icon"
+msgid_plural "Remove %d Icons"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "No pictogram chosen"
+msgstr ""
+
+msgid "your file manager"
 msgstr ""
 
 #, python-format
@@ -141,8 +149,8 @@ msgid "This is not a usable folder."
 msgstr ""
 
 msgid ""
-"Nautilus could not be told about the new icon. Check that Custicon can "
-"access this folder."
+"The new icon could not be recorded for this folder. Check that Custicon can "
+"access it."
 msgstr ""
 
 msgid "Custicon could not save its data."
@@ -154,7 +162,7 @@ msgstr ""
 msgid "Folder not found"
 msgstr ""
 
-msgid "Icon changed from Nautilus"
+msgid "Icon changed outside Custicon"
 msgstr ""
 
 msgid "Icon file missing"
@@ -166,7 +174,7 @@ msgstr ""
 msgid "This folder no longer exists."
 msgstr ""
 
-msgid "This icon was replaced from Nautilus: Custicon no longer touches it."
+msgid "This icon was replaced outside Custicon: Custicon no longer touches it."
 msgstr ""
 
 msgid "The icon file of this folder is missing."
@@ -191,8 +199,8 @@ msgstr[0] ""
 msgstr[1] ""
 
 #, python-format
-msgid "%d icon kept because you changed it from Nautilus"
-msgid_plural "%d icons kept because you changed them from Nautilus"
+msgid "%d icon kept because you changed it outside Custicon"
+msgid_plural "%d icons kept because you changed them outside Custicon"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -221,8 +229,8 @@ msgstr[0] ""
 msgstr[1] ""
 
 #, python-format
-msgid "%d folder skipped: icon changed from Nautilus"
-msgid_plural "%d folders skipped: icon changed from Nautilus"
+msgid "%d folder skipped: icon changed outside Custicon"
+msgid_plural "%d folders skipped: icon changed outside Custicon"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -410,6 +418,12 @@ msgstr ""
 msgid "Regenerate"
 msgstr ""
 
+#, python-format
+msgid ""
+"%s cannot show custom folder icons, so the icons made with Custicon will not "
+"appear in it."
+msgstr ""
+
 msgid "Regenerate All Icons"
 msgstr ""
 
@@ -487,7 +501,8 @@ msgid "Could Not Find the Folder"
 msgstr ""
 
 #, python-format
-msgid "“%s” is back in the list. Press F5 in Nautilus to see its icon."
+msgid ""
+"“%(folder)s” is back in the list. Press F5 in %(manager)s to see its icon."
 msgstr ""
 
 msgid "There are no customized folders."
@@ -507,7 +522,8 @@ msgstr ""
 msgid "Could Not Remove the Icons"
 msgstr ""
 
-msgid "Press F5 in Nautilus to see the changes."
+#, python-format
+msgid "Press F5 in %s to see the changes."
 msgstr ""
 
 msgid "Icons Removed"
@@ -564,8 +580,9 @@ msgid "Some Icons Could Not Be Applied"
 msgstr ""
 
 #, python-format
-msgid "Icon applied to %d folder. Press F5 in Nautilus to see it."
-msgid_plural "Icon applied to %d folders. Press F5 in Nautilus to see it."
+msgid "Icon applied to %(count)d folder. Press F5 in %(manager)s to see it."
+msgid_plural ""
+"Icon applied to %(count)d folders. Press F5 in %(manager)s to see it."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -576,8 +593,48 @@ msgid "Could Not Apply the Icon"
 msgstr ""
 
 #, python-format
-msgid "Icon applied to “%s”. Press F5 in Nautilus to see it."
+msgid "Icon applied to “%(folder)s”. Press F5 in %(manager)s to see it."
 msgstr ""
+
+msgid ""
+"The folders will get back the icon they had before Custicon. Their content "
+"is not modified."
+msgstr ""
+
+#, python-format
+msgid "%d folder without a Custicon icon is left alone."
+msgid_plural "%d folders without a Custicon icon are left alone."
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "Remove the Icon of %d Folder?"
+msgid_plural "Remove the Icons of %d Folders?"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Remove"
+msgstr ""
+
+#, python-format
+msgid "Icon removed from %(count)d folder. Press F5 in %(manager)s to see it."
+msgid_plural ""
+"Icons removed from %(count)d folders. Press F5 in %(manager)s to see it."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Undo"
+msgstr ""
+
+msgid "Could Not Restore the Icon"
+msgstr ""
+
+#, python-format
+msgid "Icon restored on %(count)d folder. Press F5 in %(manager)s to see it."
+msgid_plural ""
+"Icon restored on %(count)d folders. Press F5 in %(manager)s to see it."
+msgstr[0] ""
+msgstr[1] ""
 
 #, python-format
 msgid "Forget “%s”?"
@@ -599,9 +656,6 @@ msgid ""
 "modified."
 msgstr ""
 
-msgid "Remove"
-msgstr ""
-
 msgid "Could Not Remove the Icon"
 msgstr ""
 
@@ -610,7 +664,7 @@ msgid "“%s” was no longer in the list."
 msgstr ""
 
 #, python-format
-msgid "“%s”: the icon you chose in Nautilus was kept."
+msgid "“%s”: the icon you chose outside Custicon was kept."
 msgstr ""
 
 #, python-format
@@ -618,17 +672,11 @@ msgid "“%s” was forgotten."
 msgstr ""
 
 #, python-format
-msgid "Icon removed from “%s”. Press F5 in Nautilus to see it."
-msgstr ""
-
-msgid "Undo"
-msgstr ""
-
-msgid "Could Not Restore the Icon"
+msgid "Icon removed from “%(folder)s”. Press F5 in %(manager)s to see it."
 msgstr ""
 
 #, python-format
-msgid "Icon restored on “%s”. Press F5 in Nautilus to see it."
+msgid "Icon restored on “%(folder)s”. Press F5 in %(manager)s to see it."
 msgstr ""
 
 msgid "There are no customized folders to regenerate."
@@ -721,10 +769,11 @@ msgstr ""
 msgid "Custicon"
 msgstr ""
 
-msgid "Customize the icon of a folder in Nautilus"
+msgid "Customize the icon of a folder in your file manager"
 msgstr ""
 
-msgid "folder;icon;customize;pictogram;nautilus;"
+msgid ""
+"folder;icon;customize;pictogram;nautilus;nemo;caja;dolphin;file manager;"
 msgstr ""
 
 msgid ""
@@ -734,37 +783,113 @@ msgid ""
 msgstr ""
 
 msgid ""
-"Choose a pictogram from your icon theme or from the bundled Phosphor set, or "
-"use your own SVG or PNG file"
+"Choose among thousands of pictograms: your icon theme, Phosphor, emoji and "
+"brand logos, your own SVG or PNG file, or a few letters"
 msgstr ""
 
 msgid ""
-"Tint the folder itself, and let the pictogram color be chosen automatically, "
-"or set the color, the size and the position yourself"
+"Get suggestions from the name of the folder, and find your recent and "
+"favorite pictograms"
 msgstr ""
 
-msgid "See the result live before applying it"
+msgid ""
+"Pick colors from a palette, drag the pictogram on the preview and scroll to "
+"resize it"
+msgstr ""
+
+msgid "Tint the folder itself, or follow the accent color of your system"
+msgstr ""
+
+msgid "Customize or restore several folders at once"
+msgstr ""
+
+msgid ""
+"Save named styles, and regenerate every icon after a change of icon theme"
 msgstr ""
 
 msgid "Remove an icon at any time: the folder gets back the icon it had before"
 msgstr ""
 
-msgid "Regenerate every icon after a change of icon theme"
-msgstr ""
-
-msgid "Save named styles, or use letters and symbols as a pictogram"
-msgstr ""
-
-msgid "Open a folder from Nautilus with a right click"
-msgstr ""
-
-msgid "The content of your folders is never modified"
+msgid ""
+"Custicon works with GNOME Files (Nautilus), Nemo, Caja, Dolphin and PCManFM-"
+"Qt. Thunar (Xfce), PCManFM (LXDE) and COSMIC Files cannot show custom folder "
+"icons."
 msgstr ""
 
 msgid ""
-"Custicon only needs to read your home folder, to see the real location of "
-"the folders you choose. It has no access to the network, and the content of "
-"a folder is never written."
+"Custicon needs access to your home folder to know where your folders are, "
+"and it has no access to the network. It never changes the content of your "
+"folders: Dolphin and PCManFM-Qt keep the icon in a small hidden .directory "
+"file inside the folder, which Custicon removes when you remove the icon."
+msgstr ""
+
+msgid "Choose a pictogram, a color and a position, with a live preview"
+msgstr ""
+
+msgid "Thousands of pictograms: icon theme, Phosphor, emoji and brand logos"
+msgstr ""
+
+msgid "Tint the folder and keep its shading"
+msgstr ""
+
+msgid "Follow every customized folder and find the ones that moved"
+msgstr ""
+
+msgid "folder"
+msgstr ""
+
+msgid "icon"
+msgstr ""
+
+msgid "customize"
+msgstr ""
+
+msgid "pictogram"
+msgstr ""
+
+msgid "emoji"
+msgstr ""
+
+msgid "color"
+msgstr ""
+
+msgid "Nautilus"
+msgstr ""
+
+msgid "Dolphin"
+msgstr ""
+
+msgid ""
+"Custicon now works with KDE Plasma and other desktops, and can remove "
+"several icons at once."
+msgstr ""
+
+msgid ""
+"KDE Plasma (Dolphin) and LXQt (PCManFM-Qt) are supported, in addition to "
+"GNOME, Cinnamon and MATE: the right method is chosen automatically"
+msgstr ""
+
+msgid ""
+"With Dolphin and PCManFM-Qt the icon is kept in a small hidden .directory "
+"file inside the folder, which is removed when you remove the icon"
+msgstr ""
+
+msgid ""
+"A banner tells you when your file manager (Thunar, PCManFM, COSMIC Files) "
+"cannot show custom folder icons"
+msgstr ""
+
+msgid ""
+"Remove the icons of several folders in one step, with a confirmation and an "
+"Undo for the whole batch"
+msgstr ""
+
+msgid "The texts now speak of your file manager instead of Nautilus only"
+msgstr ""
+
+msgid ""
+"A complete page in the app store, with screenshots, keywords and categories "
+"for every desktop"
 msgstr ""
 
 msgid ""
@@ -933,4 +1058,13 @@ msgstr ""
 msgid ""
 "Let the color be chosen automatically, or set the color, the size and the "
 "position yourself"
+msgstr ""
+
+msgid "See the result live before applying it"
+msgstr ""
+
+msgid "Regenerate every icon after a change of icon theme"
+msgstr ""
+
+msgid "The content of your folders is never modified"
 msgstr ""
