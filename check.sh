@@ -133,6 +133,29 @@ flatpak_repository_files_match() {
     return $failed
 }
 
+validate_screenshots() {
+    python3 - <<'PY'
+import re
+import sys
+from pathlib import Path
+
+metainfo = Path("data/io.github.gor3pig.Custicon.metainfo.xml.in").read_text(encoding="utf-8")
+prefix = "https://gor3pig.github.io/Custicon/screenshots/"
+names = re.findall(r">" + re.escape(prefix) + r"([A-Za-z0-9._-]+\.png)<", metainfo)
+missing = sorted({name for name in names if not Path("data/screenshots", name).is_file()})
+if not names:
+    print("the metainfo lists no screenshot")
+    sys.exit(1)
+if missing:
+    print("screenshots listed in the metainfo but missing from data/screenshots:", ", ".join(missing))
+    sys.exit(1)
+pages = Path(".github/workflows/pages.yml").read_text(encoding="utf-8")
+if "cp data/screenshots/*.png _site/screenshots/" not in pages:
+    print("pages.yml does not publish data/screenshots")
+    sys.exit(1)
+PY
+}
+
 validate_manifest() {
     python3 - "build-aux/$APP_ID.json" <<'PY'
 import json
@@ -248,6 +271,7 @@ step "Versions match" versions_match
 step "Desktop entry" validate_desktop_file
 step "AppStream metainfo" validate_metainfo
 step "Flatpak manifest" validate_manifest
+step "Store screenshots" validate_screenshots
 step "Flatpak repository files" flatpak_repository_files_match
 step "Translatable files are listed" translatable_files_are_listed
 step "Translations are complete" translations_are_complete

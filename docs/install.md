@@ -38,7 +38,7 @@ Custicon runs in the Flatpak sandbox and asks for exactly this, no more (`check.
 | `--filesystem=home` | Access to the home folder, to know the real path of the folders and to read your icon themes. It is read and write because the read-only form (`home:ro`) did not work on every system (it failed on openSUSE Tumbleweed). |
 | `--talk-name=org.gtk.vfs.Metadata`, `org.gtk.vfs.Daemon` | Let the GVfs service of your session write the icon outside the sandbox. |
 
-Custicon never writes in your folders: the icon is saved by the GVfs service of your session, and tests check that the content of a folder is unchanged. It has no network access.
+Custicon never changes what is inside your folders. With GNOME, Cinnamon and MATE the icon is saved by the GVfs service of your session; with KDE Plasma and LXQt it is saved in a small hidden `.directory` file inside the folder, which is removed when the icon is removed. Tests check that the rest of a folder is unchanged. A Flatpak Dolphin may not see icons stored under `~/.var/app/`: not verified. It has no network access.
 
 The app store flags the home folder permission because it covers all your files. It is required: without the real
 path of the folder, GVfs saves the icon in a tree that Nautilus does not read.

@@ -1,11 +1,11 @@
 [Desktop Entry]
 Type=Application
 Name=Custicon
-Comment=Customize the icon of a folder in Nautilus
+Comment=Customize the icon of a folder in your file manager
 Exec=custicon %F
 Icon=io.github.gor3pig.Custicon
 Terminal=false
 StartupNotify=true
-Categories=GNOME;GTK;Utility;
-Keywords=folder;icon;customize;pictogram;nautilus;
+Categories=Utility;FileTools;GTK;
+Keywords=folder;icon;customize;pictogram;nautilus;nemo;caja;dolphin;file manager;
 MimeType=inode/directory;

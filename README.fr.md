@@ -4,7 +4,7 @@
 
 # Custicon
 
-**Un pictogramme sur l’icône de vos dossiers, dans Nautilus.**
+**Un pictogramme sur l’icône de vos dossiers, dans votre gestionnaire de fichiers.**
 
 *Vos dossiers, reconnaissables au premier coup d’œil.*
 
@@ -25,7 +25,7 @@
 
 ## Qu’est-ce que Custicon ?
 
-Nautilus affiche les dossiers Documents, Musique ou Images avec un petit pictogramme au centre.
+Fichiers de GNOME affiche les dossiers Documents, Musique ou Images avec un petit pictogramme au centre.
 **Custicon permet de faire la même chose pour n’importe quel dossier.**
 Le pictogramme est posé sur la vraie icône de dossier de votre thème d’icônes actuel, et le contenu de vos dossiers n’est jamais touché.
 
@@ -70,9 +70,22 @@ Le pictogramme est posé sur la vraie icône de dossier de votre thème d’icô
 
 <p align="center"><b><a href="help/fr/README.md">Lire le guide d’utilisation →</a></b><br>Tout ce que Custicon sait faire, pas à pas.</p>
 
+## Bureaux pris en charge
+
+| Bureau | Gestionnaire de fichiers | État |
+|---|---|---|
+| GNOME, Budgie | Fichiers (Nautilus) | Pris en charge |
+| Cinnamon | Nemo | Pris en charge |
+| MATE | Caja | Pris en charge |
+| KDE Plasma | Dolphin | Pris en charge (petit fichier caché `.directory` dans le dossier, retiré avec l’icône) |
+| LXQt | PCManFM-Qt | Pris en charge (idem) |
+| Xfce, LXDE, COSMIC | Thunar, PCManFM, COSMIC Files | Non pris en charge : ces gestionnaires ne savent pas afficher d’icônes de dossier personnalisées |
+
+Le mode est choisi automatiquement. Chaque ligne a été vérifiée avec le vrai gestionnaire de fichiers ; les autres bureaux (Pantheon, Deepin) ne sont pas vérifiés.
+
 ## Principes
 
-**Aucun fichier ajouté à vos dossiers** · **Entièrement local, sans réseau** · **Fidèle à votre thème** · **Réversible**
+**Le contenu de vos dossiers n’est jamais modifié** · **Entièrement local, sans réseau** · **Fidèle à votre thème** · **Réversible**
 
 ## Installation
 

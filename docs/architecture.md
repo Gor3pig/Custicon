@@ -10,10 +10,13 @@ Pour personnaliser l’icône d’un dossier, Custicon :
 1. retrouve le **fichier réel** de l’icône `folder` du thème d’icônes actif, héritage entre thèmes compris ;
 2. compose un **SVG autonome** qui contient ce dossier et, par-dessus, un pictogramme centré sur sa face ;
 3. range ce SVG dans l’espace de données de l’application, sous un nom tiré de son contenu ;
-4. écrit son adresse dans l’attribut `metadata::custom-icon` du dossier, un mécanisme de GVfs que
-   Nautilus lit déjà.
+4. enregistre son adresse par l’un des deux **moteurs**, choisi automatiquement selon le bureau :
+   l’attribut `metadata::custom-icon` du dossier (GVfs : Nautilus, Nemo, Caja), ou la clé `Icon=` d’un petit
+   fichier caché `.directory` placé dans le dossier (KDE Plasma avec Dolphin, LXQt avec PCManFM-Qt).
 
-Aucun fichier n’est ajouté ni modifié dans le dossier lui-même.
+Avec GVfs, aucun fichier n’est ajouté ni modifié dans le dossier lui-même. Avec `.directory`, Custicon édite
+seulement la ligne `Icon=` de la section `[Desktop Entry]` (le reste du fichier est conservé octet pour octet),
+écrit de façon atomique, relit pour vérifier, et supprime le fichier au retrait s’il l’avait créé.
 
 ## Organisation du code
 
@@ -29,7 +32,9 @@ Le code est dans `src/custicon/`. La logique ne dépend de GTK que pour la réso
 | `render.py` | Rendu des SVG et des PNG avec librsvg et cairo. |
 | `color.py` | Couleur de la face du dossier et teinte automatique plus foncée. |
 | `compose.py` | Assemblage du SVG final, recoloration du pictogramme, teinte du dossier, nettoyage des fichiers fournis. |
-| `metadata.py` | Lecture, écriture et suppression de `metadata::custom-icon`, avec relecture. |
+| `metadata.py` | Lecture, écriture et suppression de `metadata::custom-icon` (moteur GVfs), avec relecture. |
+| `dotdirectory.py` | Moteur `.directory` : édition ligne à ligne de `Icon=`, écriture atomique, refus des liens symboliques et des fichiers trop gros, relecture. |
+| `environment.py` | Détection du bureau (`XDG_CURRENT_DESKTOP`, sonde du portail KDE en repli) et choix du moteur ; bureau inconnu ou mixte = GVfs ; liste des bureaux non pris en charge. |
 | `store.py` | Registre JSON, images générées rangées par empreinte du contenu, copies des pictogrammes, apparence mémorisée (`defaults.json`), styles (`styles.json`) et pictogrammes récents et favoris (`picker.json`). |
 | `service.py` | Appliquer (un dossier ou plusieurs avec `apply_many`, qui continue après un échec et rend un compte rendu), réinitialiser (un dossier ou tous), annuler un retrait, retrouver un dossier déplacé, régénérer, styles, nettoyage. Seul point d’entrée de l’interface. |
 | `environment.py` | Adaptation à l’exécution dans un bac à sable Flatpak, détection de l’accès au dossier personnel. |
@@ -85,7 +90,7 @@ externes sont retirés, et la taille est limitée à 5 Mo.
 | `--socket=wayland`, `--socket=fallback-x11`, `--share=ipc` | Affichage GTK. |
 | `--nosocket=x11` | Empêche le socket X11 permanent : `flatpak build-finish` de Flatpak 1.16 (celui du CI) l’ajoute de lui-même quand `fallback-x11` est demandé, ce qui donnerait toujours accès à X11. À placer **après** les sockets. |
 | `--device=dri` | Accélération graphique : sans elle, GTK4 dessine en logiciel et l’interface devient lente (ajoutée en 1.4.1). |
-| `--filesystem=home` | Voir le **vrai chemin** des dossiers. Ce n’est plus en lecture seule depuis la 1.4.2 : `home:ro` (D-034) ne fonctionnait pas sur openSUSE Tumbleweed, alors que `home` oui (constaté par le demandeur, cause non élucidée). L’application n’écrit jamais dans les dossiers (des tests vérifient que leur contenu est inchangé) : seul le service GVfs de l’hôte écrit la métadonnée, hors du bac à sable. Un accès plus restreint est dangereux : le point de montage vu du bac à sable diffère alors de celui de l’hôte et GVfs écrit dans un arbre que Nautilus ne lit pas, sans erreur. Les dossiers de thèmes de l’hôte sont visibles sans cette permission. Le dossier de données de l’application reste accessible en écriture. |
+| `--filesystem=home` | Voir le **vrai chemin** des dossiers. Ce n’est plus en lecture seule depuis la 1.4.2 : `home:ro` (D-034) ne fonctionnait pas sur openSUSE Tumbleweed, alors que `home` oui (constaté par le demandeur, cause non élucidée). Avec GVfs, l’application n’écrit jamais dans les dossiers (des tests vérifient que leur contenu est inchangé) : seul le service GVfs de l’hôte écrit la métadonnée, hors du bac à sable. Avec le moteur `.directory` (KDE, LXQt), c’est l’application qui écrit, d’où l’accès en écriture indispensable. Un accès plus restreint est dangereux : le point de montage vu du bac à sable diffère alors de celui de l’hôte et GVfs écrit dans un arbre que Nautilus ne lit pas, sans erreur. Les dossiers de thèmes de l’hôte sont visibles sans cette permission. Le dossier de données de l’application reste accessible en écriture. |
 | `--talk-name=org.gtk.vfs.Metadata` et `org.gtk.vfs.Daemon` | Communiquer avec le démon de métadonnées de GVfs. Sans les deux, l’écriture est refusée. |
 
 Il n’y a pas d’accès au réseau, ni à `org.freedesktop.Flatpak` (pas d’évasion du bac à sable). `check.sh` fige la liste des `finish-args`. Un utilisateur ou un administrateur peut toujours retirer une permission par une surcharge (Flatseal, `flatpak override`, y compris globale ou système) : aucune option du manifeste n’y change rien, l’application détecte donc l’absence d’accès au dossier personnel et indique la commande.
@@ -107,9 +112,9 @@ Le sélecteur de fichiers passe par le portail. Avec l’accès au dossier perso
 Un chemin du portail de documents (`/run/user/<id>/doc/...`) serait inutilisable pour Nautilus :
 Custicon le détecte et le refuse avec un message.
 
-## Nautilus et le rafraîchissement
+## Gestionnaires de fichiers et rafraîchissement
 
-Nautilus ne surveille pas les changements d’icône personnalisée : la vue doit être rechargée (F5).
+Les gestionnaires de fichiers ne surveillent pas les changements d’icône personnalisée : la vue doit être rechargée (F5).
 L’interface le rappelle à chaque endroit où cela compte.
 
 ## Tests et contrôles
@@ -137,7 +142,7 @@ Custicon lit des fichiers qu’il ne maîtrise pas (pictogrammes choisis, thème
 de données) et écrit une métadonnée dans les dossiers de l’utilisateur. Ce qui est garanti :
 
 - **Le contenu des dossiers n’est jamais modifié.** Seul l’attribut `metadata::custom-icon` est écrit, par le
-  service GVfs. Dans Flatpak, le dossier personnel est accessible en écriture (D-061) : la garantie repose sur le code et sur les tests, plus sur un montage en lecture seule.
+  service GVfs ; sous KDE et LXQt, seule la ligne `Icon=` d’un fichier `.directory` est écrite, et le fichier créé par Custicon est supprimé au retrait. Dans Flatpak, le dossier personnel est accessible en écriture (D-061) : la garantie repose sur le code et sur les tests, plus sur un montage en lecture seule.
 - **Aucun accès au réseau**, et aucune donnée envoyée. Le rendu SVG ne lit rien hors de son propre dossier.
 - **Entrées bornées et refusées proprement** (voir « Composition ») : taille de fichier, dimensions des images,
   nombre d’éléments et profondeur des SVG, nombres non finis. Les scripts, objets étrangers et références

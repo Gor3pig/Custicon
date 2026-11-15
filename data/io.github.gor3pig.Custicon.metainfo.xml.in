@@ -5,7 +5,7 @@
   <project_license>GPL-3.0-or-later</project_license>
 
   <name translate="no">Custicon</name>
-  <summary>Customize the icon of a folder in Nautilus</summary>
+  <summary>Customize the icon of a folder in your file manager</summary>
   <description>
     <p>
       Custicon adds a pictogram to the icon of a folder, like the Documents or Music folders have.
@@ -13,20 +13,68 @@
       follows your theme.
     </p>
     <ul>
-      <li>Choose a pictogram from your icon theme or from the bundled Phosphor set, or use your own SVG or PNG file</li>
-      <li>Tint the folder itself, and let the pictogram color be chosen automatically, or set the color, the size and the position yourself</li>
-      <li>See the result live before applying it</li>
+      <li>Choose among thousands of pictograms: your icon theme, Phosphor, emoji and brand logos, your own SVG or PNG file, or a few letters</li>
+      <li>Get suggestions from the name of the folder, and find your recent and favorite pictograms</li>
+      <li>Pick colors from a palette, drag the pictogram on the preview and scroll to resize it</li>
+      <li>Tint the folder itself, or follow the accent color of your system</li>
+      <li>Customize or restore several folders at once</li>
+      <li>Save named styles, and regenerate every icon after a change of icon theme</li>
       <li>Remove an icon at any time: the folder gets back the icon it had before</li>
-      <li>Regenerate every icon after a change of icon theme</li>
-      <li>Save named styles, or use letters and symbols as a pictogram</li>
-      <li>Open a folder from Nautilus with a right click</li>
-      <li>The content of your folders is never modified</li>
     </ul>
     <p>
-      Custicon only needs to read your home folder, to see the real location of the folders you choose.
-      It has no access to the network, and the content of a folder is never written.
+      Custicon works with GNOME Files (Nautilus), Nemo, Caja, Dolphin and PCManFM-Qt. Thunar (Xfce),
+      PCManFM (LXDE) and COSMIC Files cannot show custom folder icons.
+    </p>
+    <p>
+      Custicon needs access to your home folder to know where your folders are, and it has no access to
+      the network. It never changes the content of your folders: Dolphin and PCManFM-Qt keep the icon in a
+      small hidden .directory file inside the folder, which Custicon removes when you remove the icon.
     </p>
   </description>
+
+  <screenshots>
+    <screenshot type="default">
+      <image type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/en-main.png</image>
+      <image xml:lang="fr" type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/fr-main.png</image>
+      <caption>Choose a pictogram, a color and a position, with a live preview</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/en-phosphor.png</image>
+      <image xml:lang="fr" type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/fr-phosphor.png</image>
+      <caption>Thousands of pictograms: icon theme, Phosphor, emoji and brand logos</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/en-tint.png</image>
+      <image xml:lang="fr" type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/fr-tint.png</image>
+      <caption>Tint the folder and keep its shading</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/en-choosing.png</image>
+      <image xml:lang="fr" type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/fr-choosing.png</image>
+      <caption>Customize or restore several folders at once</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/en-states.png</image>
+      <image xml:lang="fr" type="source" width="1000" height="720">https://gor3pig.github.io/Custicon/screenshots/fr-states.png</image>
+      <caption>Follow every customized folder and find the ones that moved</caption>
+    </screenshot>
+  </screenshots>
+
+  <keywords>
+    <keyword>folder</keyword>
+    <keyword>icon</keyword>
+    <keyword>customize</keyword>
+    <keyword>pictogram</keyword>
+    <keyword>emoji</keyword>
+    <keyword>color</keyword>
+    <keyword>Nautilus</keyword>
+    <keyword>Dolphin</keyword>
+  </keywords>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#a8d8e6</color>
+    <color type="primary" scheme_preference="dark">#14758f</color>
+  </branding>
 
   <developer id="io.github.gor3pig">
     <name translate="no">Gor3pig</name>
@@ -41,6 +89,7 @@
   <url type="vcs-browser">https://github.com/Gor3pig/Custicon</url>
   <url type="bugtracker">https://github.com/Gor3pig/Custicon/issues</url>
   <url type="help">https://github.com/Gor3pig/Custicon/blob/main/help/en/README.md</url>
+  <url type="contribute">https://github.com/Gor3pig/Custicon/blob/main/docs/development.md</url>
 
   <requires>
     <display_length compare="ge">360</display_length>

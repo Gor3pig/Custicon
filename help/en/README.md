@@ -138,8 +138,8 @@ freely. The pictogram is never remembered, and folders already customized do not
 Press **Apply**. A message confirms the operation.
 
 > [!IMPORTANT]
-> **Nautilus does not refresh its icons by itself.** Press **F5** in the Nautilus window
-> to see the change. The same gesture is needed after a removal or a regeneration.
+> **Most file managers do not refresh their icons by themselves.** Press **F5** in the window of your file manager
+> (Nautilus, Nemo, Caja, Dolphin...) to see the change. The same gesture is needed after a removal or a regeneration.
 
 ## Managing your folders
 
@@ -151,7 +151,7 @@ show an alert:
 | Alert | Meaning | What to do |
 |---|---|---|
 | Folder not found | The folder was deleted, renamed or moved. | **Find the Folder…** (choose its new location) or **Forget This Folder**. |
-| Icon changed from Nautilus | You chose another icon in Nautilus. Custicon no longer touches it. | **Take Back the Custicon Icon**, or **Forget This Folder**. |
+| Icon changed outside Custicon | You chose another icon with your file manager. Custicon no longer touches it. | **Take Back the Custicon Icon**, or **Forget This Folder**. |
 | Icon file missing | The generated image has disappeared. | **Regenerate the Icon**. |
 | Metadata unreadable | The metadata of the folder cannot be read. | Try again or forget the folder. |
 
@@ -162,9 +162,9 @@ When the window becomes active again, the list is updated. Your current settings
 The magnifier at the top of the list (or Ctrl+F) opens a search field: it filters folders by name or by path,
 ignoring accents and case.
 
-### Opening a folder from Nautilus
+### Opening a folder from your file manager
 
-Right-click a folder in Nautilus, then **Open with Custicon**. You can also drag a folder onto the window,
+Right-click a folder in your file manager, then **Open with Custicon**. You can also drag a folder onto the window,
 or run `flatpak run io.github.gor3pig.Custicon /path/to/folder`. Several folders open as a batch (see below),
 and a file is refused. If Custicon is already running, the same window is reused.
 
@@ -173,7 +173,7 @@ and a file is refused. If Custicon is already running, the same window is reused
 Two ways to give the same pictogram and the same look to several folders:
 
 - **Add Folder** lets you choose several folders at once, and dropping several folders on the window or opening
-  them from Nautilus does the same.
+  them from your file manager does the same.
 - The button with the check mark at the top of the list turns on a **selection mode**: check the folders you want
   (a click on a row checks it), including folders that are already customized.
 
@@ -182,12 +182,12 @@ Two ways to give the same pictogram and the same look to several folders:
 From two folders, the editor shows “3 folders” and the **Apply to 3 Folders** button. Choose the pictogram and
 the appearance as usual, then apply: every folder gets them, replacing its previous icon. If some folders fail,
 the others are still done and a report lists the failures. Turn the selection mode off with the same button.
-Removing icons is still done one folder at a time.
+To remove the icons of several folders at once, tick them in the selection mode: the button **Remove 3 Icons** asks for confirmation, then a notification offers **Undo** for the whole batch.
 
 ## Removing an icon
 
 **Remove Icon** asks for confirmation. The folder gets back the icon it had before Custicon:
-no custom icon, or the one you chose yourself in Nautilus.
+no custom icon, or the one you chose yourself in your file manager.
 The content of the folder is never touched.
 
 Right after a removal, a notification offers **Undo** for a few seconds: the icon is restored with
@@ -205,9 +205,9 @@ When you change the icon theme, the icons already placed keep the old folder. A 
 your icon theme or accent color” then offers to regenerate them in one click.
 **Regenerate All Icons** (button at the bottom of the list, or Ctrl+R) recomputes them with the new theme,
 keeping your settings, folder tint included. A report tells what was updated, skipped or not found.
-Folders whose icon you changed from Nautilus are skipped.
+Folders whose icon you changed outside Custicon are skipped.
 
-Then press F5 in Nautilus.
+Then press F5 in your file manager.
 
 ## Help, About and keyboard shortcuts
 
@@ -226,7 +226,7 @@ the support and issue links, the credits and the licenses, including the one of 
 ## Questions and answers
 
 **Why do I have to press F5?**
-Nautilus reads custom icons when a folder is opened and does not watch for changes.
+File managers read custom icons when a folder is opened and do not watch for changes.
 F5 reloads the content of the window.
 
 **The folder icon is not the one of my theme.**
@@ -258,10 +258,9 @@ and install it again from the `.flatpakref` file, keeping your styles and custom
 The installation commands are in the [README](../../README.md#installation).
 
 **Why does Custicon ask for access to my home folder?**
-For Nautilus to see the icon, Custicon has to know the real path of the folder. It asks for access to the home folder
+For your file manager to see the icon, Custicon has to know the real path of the folder. It asks for access to the home folder
 (read and write, because the read-only form did not work on every system, for example openSUSE Tumbleweed).
-Custicon never writes in your folders: the icon is saved by the GVfs service of your session, outside the sandbox,
-and it has no network access. The app store flags this permission because it covers all your files.
+Custicon never changes what is inside your folders. With GNOME, Cinnamon and MATE the icon is saved by the GVfs service of your session, outside the sandbox. With KDE Plasma (Dolphin) and LXQt (PCManFM-Qt) it is saved in a small hidden `.directory` file inside the folder, which Custicon removes when you remove the icon. Custicon has no network access. The app store flags this permission because it covers all your files.
 
 **Custicon says it cannot see my home folder.**
 Access was removed or not granted. Allow it in Settings (Applications, then Custicon),
@@ -283,9 +282,12 @@ Custicon asks for GPU access (`--device=dri`) so that the interface is drawn by 
 the interface falls back to software drawing and becomes sluggish: check with `flatpak override --user --show io.github.gor3pig.Custicon` and
 restore it with `flatpak override --user --device=dri io.github.gor3pig.Custicon`.
 
+**What changes with KDE Plasma or LXQt?**
+The icon is stored in a small hidden `.directory` file inside the folder, so it follows the folder when you copy, move or synchronize it, and it shows up in tools such as Git. Remove the icons in Custicon before moving a folder away, and before uninstalling Custicon with data removal. The folder is drawn by your file manager: with an old version of Qt (Plasma 5), a tinted folder may look different from the preview. This mode was checked with the real file managers, not yet on every Plasma version.
+
 **Why can only folders inside the home folder be chosen?**
-For Nautilus to see the icon, Custicon has to write to the real path of the folder. External
+For your file manager to see the icon, Custicon has to write to the real path of the folder. External
 drives are not supported in this version.
 
-**My folder is chosen but the icon does not appear in Nautilus.**
+**My folder is chosen but the icon does not appear in the file manager.**
 Press F5. If nothing changes, check whether the folder shows an alert in the Custicon list.

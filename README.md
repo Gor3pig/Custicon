@@ -4,7 +4,7 @@
 
 # Custicon
 
-**A pictogram on the icon of your folders, in Nautilus.**
+**A pictogram on the icon of your folders, in your file manager.**
 
 *Your folders, recognizable at a glance.*
 
@@ -25,7 +25,7 @@
 
 ## What is Custicon?
 
-Nautilus shows the Documents, Music or Pictures folders with a small pictogram in the middle.
+GNOME Files shows the Documents, Music or Pictures folders with a small pictogram in the middle.
 **Custicon lets you do the same for any folder.**
 The pictogram is placed on the real folder icon of your current icon theme, and the content of your folders is never touched.
 
@@ -70,9 +70,22 @@ The pictogram is placed on the real folder icon of your current icon theme, and 
 
 <p align="center"><b><a href="help/en/README.md">Read the user guide →</a></b><br>Everything Custicon can do, step by step.</p>
 
+## Supported desktops
+
+| Desktop | File manager | Status |
+|---|---|---|
+| GNOME, Budgie | Files (Nautilus) | Supported |
+| Cinnamon | Nemo | Supported |
+| MATE | Caja | Supported |
+| KDE Plasma | Dolphin | Supported (small hidden `.directory` file in the folder, removed with the icon) |
+| LXQt | PCManFM-Qt | Supported (same) |
+| Xfce, LXDE, COSMIC | Thunar, PCManFM, COSMIC Files | Not supported: these file managers cannot show custom folder icons |
+
+The mode is chosen automatically. Each line was checked with the real file manager; other desktops (Pantheon, Deepin) are not verified.
+
 ## Principles
 
-**No file added to your folders** · **Fully local, no network** · **Faithful to your theme** · **Reversible**
+**Your folders' content is never changed** · **Fully local, no network** · **Faithful to your theme** · **Reversible**
 
 ## Installation
 

@@ -138,8 +138,8 @@ modifier librement. Le pictogramme n’est jamais retenu, et les dossiers déjà
 Appuyez sur **Appliquer**. Un message confirme l’opération.
 
 > [!IMPORTANT]
-> **Nautilus n’actualise pas ses icônes tout seul.** Appuyez sur **F5** dans la fenêtre de Nautilus
-> pour voir le changement. Le même geste est nécessaire après un retrait ou une régénération.
+> **La plupart des gestionnaires de fichiers n’actualisent pas leurs icônes tout seuls.** Appuyez sur **F5** dans la fenêtre de votre gestionnaire
+> de fichiers (Nautilus, Nemo, Caja, Dolphin...) pour voir le changement. Le même geste est nécessaire après un retrait ou une régénération.
 
 ## Gérer ses dossiers
 
@@ -151,7 +151,7 @@ afficher une alerte :
 | Alerte | Signification | Que faire |
 |---|---|---|
 | Dossier introuvable | Le dossier a été supprimé, renommé ou déplacé. | **Retrouver le dossier…** (choisissez son nouvel emplacement) ou **Oublier ce dossier**. |
-| Icône modifiée depuis Nautilus | Vous avez choisi une autre icône dans Nautilus. Custicon n’y touche plus. | **Reprendre l’icône Custicon**, ou **Oublier ce dossier**. |
+| Icône modifiée en dehors de Custicon | Vous avez choisi une autre icône avec votre gestionnaire de fichiers. Custicon n’y touche plus. | **Reprendre l’icône Custicon**, ou **Oublier ce dossier**. |
 | Fichier d’icône manquant | L’image générée a disparu. | **Régénérer l’icône**. |
 | Métadonnées illisibles | Les métadonnées du dossier ne peuvent pas être lues. | Réessayer ou oublier le dossier. |
 
@@ -162,9 +162,9 @@ Quand la fenêtre redevient active, la liste se met à jour. Vos réglages en co
 La loupe en haut de la liste (ou Ctrl+F) ouvre un champ de recherche : il filtre les dossiers par nom ou par chemin,
 sans tenir compte des accents ni des majuscules.
 
-### Ouvrir un dossier depuis Nautilus
+### Ouvrir un dossier depuis votre gestionnaire de fichiers
 
-Clic droit sur un dossier dans Nautilus, puis **Ouvrir avec Custicon**. Vous pouvez aussi glisser un dossier sur la fenêtre,
+Clic droit sur un dossier dans votre gestionnaire de fichiers, puis **Ouvrir avec Custicon**. Vous pouvez aussi glisser un dossier sur la fenêtre,
 ou lancer `flatpak run io.github.gor3pig.Custicon /chemin/du/dossier`. Plusieurs dossiers s’ouvrent en lot (voir plus bas),
 et un fichier est refusé. Si Custicon tourne déjà, la même fenêtre est réutilisée.
 
@@ -173,7 +173,7 @@ et un fichier est refusé. Si Custicon tourne déjà, la même fenêtre est réu
 Deux façons de donner le même pictogramme et le même aspect à plusieurs dossiers :
 
 - **Ajouter un dossier** permet de choisir plusieurs dossiers d’un coup, et glisser plusieurs dossiers sur la fenêtre
-  ou les ouvrir depuis Nautilus fait de même.
+  ou les ouvrir depuis votre gestionnaire de fichiers fait de même.
 - Le bouton à la coche, en haut de la liste, active un **mode sélection** : cochez les dossiers voulus
   (un clic sur une ligne la coche), y compris des dossiers déjà personnalisés.
 
@@ -182,12 +182,12 @@ Deux façons de donner le même pictogramme et le même aspect à plusieurs doss
 À partir de deux dossiers, l’éditeur affiche « 3 dossiers » et le bouton **Appliquer à 3 dossiers**. Choisissez le pictogramme
 et l’apparence comme d’habitude, puis appliquez : chaque dossier les reçoit, à la place de son icône précédente. Si certains échouent,
 les autres sont quand même faits et un compte rendu liste les échecs. Quittez le mode sélection avec le même bouton.
-Le retrait d’icônes se fait toujours dossier par dossier.
+Pour retirer les icônes de plusieurs dossiers d’un coup, cochez-les en mode sélection : le bouton **Retirer 3 icônes** demande une confirmation, puis une notification propose **Annuler** pour tout le lot.
 
 ## Retirer une icône
 
 **Retirer l’icône** demande une confirmation. Le dossier retrouve l’icône qu’il avait avant Custicon :
-aucune icône personnalisée, ou celle que vous aviez choisie vous-même dans Nautilus.
+aucune icône personnalisée, ou celle que vous aviez choisie vous-même dans votre gestionnaire de fichiers.
 Le contenu du dossier n’est jamais touché.
 
 Juste après un retrait, une notification propose **Annuler** pendant quelques secondes : l’icône est rétablie avec
@@ -205,9 +205,9 @@ Quand vous changez de thème d’icônes, les icônes déjà posées gardent l�
 ne correspondent plus à votre thème d’icônes ou à votre couleur d’accent » propose alors de les régénérer en un clic.
 **Régénérer toutes les icônes** (bouton en bas de la liste, ou Ctrl+R) les recalcule avec le nouveau thème,
 en gardant vos réglages, y compris la teinte du dossier. Un compte rendu indique ce qui a été mis à jour, ignoré ou introuvable.
-Les dossiers dont vous avez changé l’icône depuis Nautilus sont ignorés.
+Les dossiers dont vous avez changé l’icône en dehors de Custicon sont ignorés.
 
-Appuyez ensuite sur F5 dans Nautilus.
+Appuyez ensuite sur F5 dans votre gestionnaire de fichiers.
 
 ## Aide, À propos et raccourcis clavier
 
@@ -226,7 +226,7 @@ les liens d’assistance et de signalement d’un problème, les crédits et les
 ## Questions et réponses
 
 **Pourquoi dois-je appuyer sur F5 ?**
-Nautilus lit les icônes personnalisées à l’ouverture d’un dossier et ne surveille pas leurs changements.
+Les gestionnaires de fichiers lisent les icônes personnalisées à l’ouverture d’un dossier et ne surveillent pas leurs changements.
 F5 recharge le contenu de la fenêtre.
 
 **L’icône du dossier n’est pas celle de mon thème.**
@@ -258,10 +258,9 @@ puis installez-la de nouveau depuis le fichier `.flatpakref`, en gardant vos sty
 Les commandes d’installation sont dans le [README](../../README.fr.md#installation).
 
 **Pourquoi Custicon demande-t-il l’accès à mon dossier personnel ?**
-Pour que Nautilus voie l’icône, Custicon doit connaître le vrai chemin du dossier. Il demande l’accès au
+Pour que votre gestionnaire de fichiers voie l’icône, Custicon doit connaître le vrai chemin du dossier. Il demande l’accès au
 dossier personnel (en lecture et écriture, car la forme en lecture seule ne fonctionnait pas partout, par exemple sur openSUSE Tumbleweed).
-Custicon n’écrit jamais dans vos dossiers : l’icône est enregistrée par le service GVfs de votre session, hors du bac à sable,
-et il n’a aucun accès au réseau. Le magasin d’applications signale cette permission, car elle concerne tous vos fichiers.
+Custicon ne modifie jamais le contenu de vos dossiers. Avec GNOME, Cinnamon et MATE, l’icône est enregistrée par le service GVfs de votre session, hors du bac à sable. Avec KDE Plasma (Dolphin) et LXQt (PCManFM-Qt), elle est enregistrée dans un petit fichier caché `.directory` placé dans le dossier, que Custicon supprime quand vous retirez l’icône. Custicon n’a aucun accès au réseau. Le magasin d’applications signale cette permission, car elle concerne tous vos fichiers.
 
 **Custicon indique qu’il ne voit pas mon dossier personnel.**
 L’accès a été retiré ou n’a pas été accordé. Autorisez-le dans les Paramètres (Applications, puis Custicon),
@@ -282,9 +281,12 @@ Custicon demande l’accès au GPU (`--device=dri`) pour que l’interface soit 
 l’interface retombe sur un dessin logiciel et devient poussive : vérifiez avec `flatpak override --user --show io.github.gor3pig.Custicon` et
 rétablissez-le avec `flatpak override --user --device=dri io.github.gor3pig.Custicon`.
 
+**Qu’est-ce qui change avec KDE Plasma ou LXQt ?**
+L’icône est enregistrée dans un petit fichier caché `.directory` placé dans le dossier : elle suit donc le dossier quand vous le copiez, le déplacez ou le synchronisez, et elle apparaît dans des outils comme Git. Retirez les icônes dans Custicon avant de déplacer un dossier ailleurs, et avant de désinstaller Custicon avec suppression des données. Le dossier est dessiné par votre gestionnaire de fichiers : avec une ancienne version de Qt (Plasma 5), un dossier teinté peut différer de l’aperçu. Ce mode a été vérifié avec les vrais gestionnaires de fichiers, pas encore sur toutes les versions de Plasma.
+
 **Pourquoi ne peut-on choisir que les dossiers du dossier personnel ?**
-Pour que Nautilus voie l’icône, Custicon doit écrire sur le vrai chemin du dossier. Les disques
+Pour que votre gestionnaire de fichiers voie l’icône, Custicon doit écrire sur le vrai chemin du dossier. Les disques
 externes ne sont pas pris en charge dans cette version.
 
-**Mon dossier est choisi mais l’icône n’apparaît pas dans Nautilus.**
+**Mon dossier est choisi mais l’icône n’apparaît pas dans le gestionnaire de fichiers.**
 Appuyez sur F5. Si rien ne change, regardez si le dossier affiche une alerte dans la liste de Custicon.
