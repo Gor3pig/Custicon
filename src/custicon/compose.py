@@ -1,10 +1,13 @@
 import base64
 import colorsys
+import io
 import math
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
+
+import cairo
 
 from .color import is_hex_color
 from .errors import InvalidIconError
@@ -285,11 +288,63 @@ def retint(match: re.Match, hue: float, saturation: float) -> str:
     return "#%02x%02x%02x" % tuple(round(channel * 255) for channel in channels)
 
 
+PNG_HREF = "data:image/png;base64,"
+
+
+def retint_png(data: bytes, hue: float, saturation: float) -> bytes:
+    png_size(data)
+    source = cairo.ImageSurface.create_from_png(io.BytesIO(data))
+    width, height, stride = source.get_width(), source.get_height(), source.get_stride()
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+    pixels = source.get_data()
+    result = surface.get_data()
+    cache: dict = {}
+    for row in range(height):
+        base = row * stride
+        for column in range(width):
+            offset = base + column * 4
+            alpha = pixels[offset + 3]
+            if alpha == 0:
+                continue
+            key = (pixels[offset], pixels[offset + 1], pixels[offset + 2], alpha)
+            converted = cache.get(key)
+            if converted is None:
+                blue, green, red = (min(255, round(value * 255 / alpha)) / 255 for value in key[:3])
+                _hue, lightness, _saturation = colorsys.rgb_to_hls(red, green, blue)
+                new_red, new_green, new_blue = colorsys.hls_to_rgb(hue, lightness, saturation)
+                converted = tuple(round(channel * alpha) for channel in (new_blue, new_green, new_red)) + (alpha,)
+                cache[key] = converted
+            result[offset : offset + 4] = bytes(converted)
+    surface.mark_dirty()
+    output = io.BytesIO()
+    surface.write_to_png(output)
+    return output.getvalue()
+
+
+def retint_image(element: ET.Element, hue: float, saturation: float) -> bool:
+    key = f"{{{XLINK_NS}}}href"
+    href = element.get(key) or element.get("href") or ""
+    if not href.startswith(PNG_HREF):
+        return False
+    try:
+        data = retint_png(base64.b64decode(href[len(PNG_HREF) :], validate=True), hue, saturation)
+    except (ValueError, cairo.Error, OSError, InvalidIconError):
+        return False
+    element.attrib.pop("href", None)
+    element.set(key, PNG_HREF + base64.b64encode(data).decode())
+    return True
+
+
 def flat_tint_folder(folder: ET.Element, color: str) -> bool:
-    if any(local_name(element.tag) in ("image", "filter") for element in folder.iter()):
+    if any(local_name(element.tag) == "filter" for element in folder.iter()):
         return False
     hue, saturation = hue_of(color)
     changed = False
+    for element in folder.iter():
+        if local_name(element.tag) == "image":
+            if not retint_image(element, hue, saturation):
+                return False
+            changed = True
 
     def convert(value: str) -> str:
         nonlocal changed
