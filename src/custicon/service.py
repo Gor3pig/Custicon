@@ -190,7 +190,7 @@ class Service:
             self._themes[name] = IconTheme(name, self._search_dirs)
         return self._themes[name]
 
-    def build(self, settings: Settings, theme_name: str | None = None, glyph_file: Path | None = None) -> BuiltIcon:
+    def build(self, settings: Settings, theme_name: str | None = None, glyph_file: Path | None = None, flat_tint: bool = False) -> BuiltIcon:
         settings.validate()
         name = theme_name or self._theme_name()
         theme = self._theme(name)
@@ -198,7 +198,7 @@ class Service:
         if glyph_file is None:
             glyph_file = self._glyph_source(theme, settings)
         folder_tint = self._accent_color() if settings.folder_tint_accent else settings.folder_tint
-        folder_data = None if folder_tint is None else tinted_folder_svg(folder_file, folder_tint)
+        folder_data = None if folder_tint is None else tinted_folder_svg(folder_file, folder_tint, flat_tint)
         color = settings.color or (self._accent_color() if settings.accent else auto_glyph_color(folder_file, folder_data))
         style = GlyphStyle(
             color=color,
@@ -207,6 +207,7 @@ class Service:
             offset_y=settings.offset_y,
             tint=settings.tint if settings.glyph_file else True,
             folder_tint=folder_tint,
+            flat_tint=flat_tint,
         )
         return BuiltIcon(compose(folder_file, glyph_file, style), color, name, folder_file, folder_tint)
 
@@ -239,7 +240,7 @@ class Service:
         glyph_file, glyph_copy = self._keep_glyph(settings, existing)
         if migrated:
             self._clear_mark(target, existing)
-        built = self.build(settings, glyph_file=glyph_file)
+        built = self.build(settings, glyph_file=glyph_file, flat_tint=backend == BACKEND_DIRECTORY)
         digest = self._store.save_icon(built.svg)
         try:
             current = self._read_mark(target, backend)

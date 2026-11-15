@@ -21,6 +21,7 @@ KDE_NAMESPACE_PATTERN = "org.kde.kdeglobals.*"
 KDE_ICONS_NAMESPACE = "org.kde.kdeglobals.Icons"
 KDE_ICON_THEME_KEY = "Theme"
 DEFAULT_THEME = "Adwaita"
+KDE_DEFAULT_THEME = "breeze"
 APPEARANCE_NAMESPACE = "org.freedesktop.appearance"
 ACCENT_KEY = "accent-color"
 DEFAULT_ACCENT = "#3584e4"
@@ -132,9 +133,7 @@ def active_icon_theme() -> str:
     from . import environment
 
     if environment.is_kde():
-        name = portal_kde_icon_theme() or config_icon_theme("~/.config/kdeglobals", "Icons", "Theme")
-        if name:
-            return name
+        return portal_kde_icon_theme() or config_icon_theme("~/.config/kdeglobals", "Icons", "Theme") or KDE_DEFAULT_THEME
     elif "LXQT" in environment.current_desktops() and environment.detect_backend() == environment.BACKEND_DIRECTORY:
         name = config_icon_theme("~/.config/lxqt/lxqt.conf", "General", "icon_theme")
         if name:

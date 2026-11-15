@@ -1,4 +1,5 @@
 import base64
+import colorsys
 import math
 import re
 import xml.etree.ElementTree as ET
@@ -52,6 +53,7 @@ class GlyphStyle:
     offset_y: float = 0.0
     tint: bool = True
     folder_tint: str | None = None
+    flat_tint: bool = False
 
 
 def svg_tag(name: str) -> str:
@@ -263,15 +265,61 @@ def tint_folder(folder: ET.Element, color: str, taken_ids: set[str]) -> None:
     folder.append(group)
 
 
+HEX_COLOR = re.compile(r"#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-zA-Z])")
+FLAT_TINT_ATTRIBUTES = ("fill", "stroke", "stop-color", "flood-color", "color")
+
+
+def hue_of(color: str) -> tuple[float, float]:
+    red, green, blue = (int(color[index : index + 2], 16) / 255 for index in (1, 3, 5))
+    hue, _lightness, saturation = colorsys.rgb_to_hls(red, green, blue)
+    return hue, saturation
+
+
+def retint(match: re.Match, hue: float, saturation: float) -> str:
+    text = match.group(0)
+    if len(text) == 4:
+        text = "#" + "".join(character * 2 for character in text[1:])
+    red, green, blue = (int(text[index : index + 2], 16) / 255 for index in (1, 3, 5))
+    _hue, lightness, _saturation = colorsys.rgb_to_hls(red, green, blue)
+    channels = colorsys.hls_to_rgb(hue, lightness, saturation)
+    return "#%02x%02x%02x" % tuple(round(channel * 255) for channel in channels)
+
+
+def flat_tint_folder(folder: ET.Element, color: str) -> bool:
+    if any(local_name(element.tag) in ("image", "filter") for element in folder.iter()):
+        return False
+    hue, saturation = hue_of(color)
+    changed = False
+
+    def convert(value: str) -> str:
+        nonlocal changed
+        result = HEX_COLOR.sub(lambda match: retint(match, hue, saturation), value)
+        changed = changed or result != value
+        return result
+
+    for element in folder.iter():
+        for name in FLAT_TINT_ATTRIBUTES:
+            value = element.get(name)
+            if value is not None:
+                element.set(name, convert(value))
+        style = element.get("style")
+        if style is not None:
+            element.set("style", convert(style))
+        if local_name(element.tag) == "style" and element.text:
+            element.text = convert(element.text)
+    return changed
+
+
 def taken_ids_of(root: ET.Element) -> set[str]:
     return {element.get("id") for element in root.iter() if element.get("id")}
 
 
-def tinted_folder_svg(folder_file: Path, color: str) -> bytes:
+def tinted_folder_svg(folder_file: Path, color: str, flat: bool = False) -> bytes:
     if not is_hex_color(color):
         raise InvalidIconError(f"invalid color {color!r}")
     folder = load_folder(folder_file)
-    tint_folder(folder, color, taken_ids_of(folder))
+    if not (flat and flat_tint_folder(folder, color)):
+        tint_folder(folder, color, taken_ids_of(folder))
     return (XML_HEADER + serialize(folder)).encode()
 
 
@@ -319,7 +367,7 @@ def compose(folder_file: Path, glyph: Path | bytes, style: GlyphStyle) -> str:
     check_style(style)
     folder = load_folder(folder_file)
     taken_ids = taken_ids_of(folder)
-    if style.folder_tint is not None:
+    if style.folder_tint is not None and not (style.flat_tint and flat_tint_folder(folder, style.folder_tint)):
         tint_folder(folder, style.folder_tint, taken_ids)
     glyph_elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(glyph, style, taken_ids)
     folder_x, folder_y, folder_width, folder_height = box_of(folder)

@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 import os
 import unittest
 from pathlib import Path
@@ -164,9 +165,9 @@ class KdeThemeTests(unittest.TestCase):
         with mock.patch.object(environment, "is_kde", return_value=True), mock.patch.object(themes, "portal_kde_icon_theme", return_value="breeze"), mock.patch.object(themes, "portal_icon_theme", return_value="Adwaita"):
             self.assertEqual(themes.active_icon_theme(), "breeze")
 
-    def test_a_kde_desktop_without_the_value_falls_back_to_the_usual_chain(self):
+    def test_a_kde_desktop_without_any_value_uses_the_breeze_default_of_kde(self):
         with mock.patch.object(environment, "is_kde", return_value=True), mock.patch.object(themes, "portal_kde_icon_theme", return_value=None), mock.patch.object(themes, "portal_icon_theme", return_value="Papirus"):
-            self.assertEqual(themes.active_icon_theme(), "Papirus")
+            self.assertEqual(themes.active_icon_theme(), "breeze")
 
     def test_another_desktop_never_asks_for_the_kde_theme(self):
         with mock.patch.object(environment, "is_kde", return_value=False), mock.patch.object(themes, "portal_kde_icon_theme", side_effect=AssertionError("asked")), mock.patch.object(themes, "portal_icon_theme", return_value="Papirus"):
@@ -271,6 +272,21 @@ class DirectoryApplyTests(DirectoryServiceTestCase):
         entry = self.service.apply(folder, STAR)
         self.assertEqual(self.icon_of(folder), self.store.icon_uri(entry.digest))
         self.assertIn(f"Icon={self.store.icon_path(entry.digest)}", (folder / ".directory").read_text())
+
+    def test_the_folder_tint_is_flat_for_the_directory_engine(self):
+        folder = self.make_folder()
+        entry = self.service.apply(folder, replace(STAR, folder_tint="#e01b24"))
+        svg = self.store.icon_path(entry.digest).read_text()
+        self.assertNotIn("feBlend", svg)
+        self.assertNotIn("#3366cc", svg)
+
+    def test_the_folder_tint_keeps_its_filter_for_gvfs(self):
+        folder = self.make_folder()
+        service = Service(self.store, theme_name=lambda: self.theme, search_dirs=[str(self.themes)], backend="gvfs")
+        self.require_metadata(self.workspace)
+        entry = service.apply(folder, replace(STAR, folder_tint="#e01b24"))
+        self.addCleanup(service.reset, folder)
+        self.assertIn("feBlend", self.store.icon_path(entry.digest).read_text())
 
     def test_apply_does_not_use_the_gvfs_attribute(self):
         folder = self.make_folder()
