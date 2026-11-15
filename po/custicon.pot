@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 16:38+0100\n"
+"POT-Creation-Date: 2026-11-15 16:47+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -196,6 +196,9 @@ msgid ""
 msgstr ""
 
 msgid "Custicon could not save its data."
+msgstr ""
+
+msgid "This icon set could not be used."
 msgstr ""
 
 msgid "An unexpected error occurred."
@@ -502,6 +505,77 @@ msgstr ""
 msgid "Remove from Favorites"
 msgstr ""
 
+msgid "Custom Icon Sets"
+msgstr ""
+
+msgid ""
+"Add a folder of SVG files. Custicon keeps a copy, so you can move or delete "
+"the original folder afterwards."
+msgstr ""
+
+msgid "Add a Set from a Folder…"
+msgstr ""
+
+#, python-format
+msgid ""
+"Up to %(sets)d sets and %(files)d SVG files per set. Removing a set does not "
+"change the folders already customized: their icons are kept."
+msgstr ""
+
+msgid "No custom set yet"
+msgstr ""
+
+#, python-format
+msgid "%d icon"
+msgid_plural "%d icons"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Remove This Set?"
+msgstr ""
+
+#, python-format
+msgid ""
+"“%s” is removed. The folders already customized with its pictograms keep "
+"their icons."
+msgstr ""
+
+msgid "Could Not Remove the Set"
+msgstr ""
+
+msgid "Name the Set"
+msgstr ""
+
+msgid ""
+"The icons are copied as they are. Make sure you are allowed to use them."
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Adding…"
+msgstr ""
+
+msgid "Could Not Add the Set"
+msgstr ""
+
+#, python-format
+msgid "%(added)d icon added"
+msgid_plural "%(added)d icons added"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid ", %(ignored)d ignored (unreadable, too large or already present)."
+msgstr ""
+
+#, python-format
+msgid "“%s” Is Ready"
+msgstr ""
+
 msgid "Custicon cannot see your home folder"
 msgstr ""
 
@@ -536,6 +610,9 @@ msgid "Save Settings…"
 msgstr ""
 
 msgid "Restore Settings…"
+msgstr ""
+
+msgid "Manage Icon Sets…"
 msgstr ""
 
 msgid "Remove All Icons…"
@@ -594,6 +671,9 @@ msgid "%d folder to check"
 msgid_plural "%d folders to check"
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "Choose a Folder of SVG Files"
+msgstr ""
 
 msgid "Could Not Read the Saved Data"
 msgstr ""
@@ -763,9 +843,6 @@ msgid "Remove the Icon of %d Folder?"
 msgid_plural "Remove the Icons of %d Folders?"
 msgstr[0] ""
 msgstr[1] ""
-
-msgid "Remove"
-msgstr ""
 
 #, python-format
 msgid "Icon removed from %(count)d folder. Press F5 in %(manager)s to see it."

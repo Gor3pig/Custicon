@@ -24,3 +24,7 @@ class MetadataError(CusticonError):
 
 class StoreError(CusticonError):
     pass
+
+
+class IconSetError(CusticonError):
+    pass

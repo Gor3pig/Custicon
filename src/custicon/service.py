@@ -32,6 +32,8 @@ from .metadata import read_custom_icon, write_custom_icon
 from .render import is_png, read_icon_bytes
 from .store import GLYPH_FILE_PATTERN, MAX_NAME_LENGTH, MAX_STYLE_NAME, MAX_STYLES, Entry, Store
 from .textglyph import MAX_CHARACTERS, text_to_svg
+from . import customsets, iconsets
+from .customsets import ImportReport, SetInfo
 from .iconsets import IconSets, PhosphorSet
 from .themes import DEFAULT_THEME, IconTheme, active_icon_theme, system_accent_color
 
@@ -262,7 +264,8 @@ class Service:
         self._search_dirs = search_dirs
         self._accent_color = accent_color
         self._themes: dict[str, IconTheme] = {}
-        self._sets = IconSets()
+        self._sets = IconSets(user_root=store.sets_dir)
+        iconsets.default_sets().set_user_root(store.sets_dir)
 
     @property
     def store(self) -> Store:
@@ -787,6 +790,22 @@ class Service:
     def icon_sets(self) -> IconSets:
         return self._sets
 
+    def custom_sets(self) -> list[SetInfo]:
+        return customsets.list_sets(self._store.sets_dir)
+
+    def import_set(self, folder: Path | str, name: str) -> ImportReport:
+        report = customsets.import_set(self._store.sets_dir, Path(folder), name)
+        self._refresh_sets()
+        return report
+
+    def remove_set(self, slug: str) -> None:
+        customsets.remove_set(self._store.sets_dir, slug)
+        self._refresh_sets()
+
+    def _refresh_sets(self) -> None:
+        self._sets.refresh()
+        iconsets.default_sets().refresh()
+
     def icon_theme(self, theme_name: str | None = None) -> IconTheme:
         return self._theme(theme_name or self._theme_name())
 
@@ -859,7 +878,27 @@ class Service:
             return text_to_svg(settings.glyph_text).encode()
         return self._find_glyph(theme, settings.glyph_name)
 
+    def _keep_set_glyph(self, settings: Settings) -> tuple[Path | bytes | None, str | None] | None:
+        name = settings.glyph_name
+        if not name or not name.startswith(customsets.KEY_PREFIX):
+            return None
+        icon_set = self._sets.for_name(name)
+        try:
+            if icon_set is None:
+                raise IconNotFoundError(f"{name}: this icon set is not installed")
+            data = read_icon_bytes(icon_set.file(name))
+        except (IconNotFoundError, InvalidIconError):
+            stored = self._store.glyph_path(settings.glyph_copy)
+            if stored is not None and stored.is_file():
+                return stored, settings.glyph_copy
+            raise
+        copy = self._store.save_glyph(data, ".svg")
+        return self._store.glyph_path(copy), copy
+
     def _keep_glyph(self, settings: Settings, existing: Entry | None) -> tuple[Path | bytes | None, str | None]:
+        kept = self._keep_set_glyph(settings)
+        if kept is not None:
+            return kept
         if not settings.glyph_file and not settings.glyph_text:
             return None, None
         stored = self._store.glyph_path(settings.glyph_copy)

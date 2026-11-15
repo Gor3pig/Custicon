@@ -24,6 +24,7 @@ MAX_STYLE_NAME = 40
 BACKUP_SUFFIX = ".bak"
 ICONS_DIR = "icons"
 GLYPHS_DIR = "glyphs"
+SETS_DIR = "sets"
 REGISTRY_VERSION = 1
 DEFAULT_BACKEND = "gvfs"
 BACKENDS = ("gvfs", "directory")
@@ -52,6 +53,7 @@ class Store:
         self.root = Path(root)
         self.icons_dir = self.root / ICONS_DIR
         self.glyphs_dir = self.root / GLYPHS_DIR
+        self.sets_dir = self.root / SETS_DIR
         self.registry_path = self.root / REGISTRY_NAME
         self.defaults_path = self.root / DEFAULTS_NAME
         self.picker_path = self.root / PICKER_NAME

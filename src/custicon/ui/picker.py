@@ -92,6 +92,8 @@ class PickerDialog(Adw.Dialog):
         self.set_toggle.add(Adw.Toggle(name="theme", label=_("Icon theme")))
         for key, label in (("phosphor", "Phosphor"), ("emoji", _("Emoji")), ("brands", _("Brands"))):
             self.set_toggle.add(Adw.Toggle(name=key, label=label))
+        for key in self._sets.user_keys():
+            self.set_toggle.add(Adw.Toggle(name=key, label=self._sets[key].title(iconsets.current_language())))
         self.set_toggle.set_active_name(self._active)
         self.set_toggle.connect("notify::active-name", self._on_set_changed)
         row.append(self.set_toggle)

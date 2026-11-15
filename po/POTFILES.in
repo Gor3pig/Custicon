@@ -5,6 +5,7 @@ src/custicon/ui/format.py
 src/custicon/ui/messages.py
 src/custicon/ui/palette.py
 src/custicon/ui/picker.py
+src/custicon/ui/sets.py
 src/custicon/ui/window.py
 data/io.github.gor3pig.Custicon.desktop.in
 data/io.github.gor3pig.Custicon.metainfo.xml.in

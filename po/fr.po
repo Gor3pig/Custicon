@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 16:38+0100\n"
+"POT-Creation-Date: 2026-11-15 16:47+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -200,6 +200,9 @@ msgstr ""
 
 msgid "Custicon could not save its data."
 msgstr "Custicon n’a pas pu enregistrer ses données."
+
+msgid "This icon set could not be used."
+msgstr "Ce jeu d’icônes n’a pas pu être utilisé."
 
 msgid "An unexpected error occurred."
 msgstr "Une erreur inattendue s’est produite."
@@ -508,6 +511,77 @@ msgstr "Aucun pictogramme trouvé"
 msgid "Remove from Favorites"
 msgstr "Retirer des favoris"
 
+msgid "Custom Icon Sets"
+msgstr "Jeux d’icônes personnels"
+
+msgid ""
+"Add a folder of SVG files. Custicon keeps a copy, so you can move or delete "
+"the original folder afterwards."
+msgstr "Ajoutez un dossier de fichiers SVG. Custicon en garde une copie : vous pouvez ensuite déplacer ou supprimer le dossier d’origine."
+
+msgid "Add a Set from a Folder…"
+msgstr "Ajouter un jeu depuis un dossier…"
+
+#, python-format
+msgid ""
+"Up to %(sets)d sets and %(files)d SVG files per set. Removing a set does not "
+"change the folders already customized: their icons are kept."
+msgstr "Jusqu’à %(sets)d jeux et %(files)d fichiers SVG par jeu. Retirer un jeu ne change pas les dossiers déjà personnalisés : leurs icônes sont conservées."
+
+msgid "No custom set yet"
+msgstr "Aucun jeu personnel pour l’instant"
+
+#, python-format
+msgid "%d icon"
+msgid_plural "%d icons"
+msgstr[0] "%d icône"
+msgstr[1] "%d icônes"
+
+msgid "Remove"
+msgstr "Retirer"
+
+msgid "Remove This Set?"
+msgstr "Retirer ce jeu ?"
+
+#, python-format
+msgid ""
+"“%s” is removed. The folders already customized with its pictograms keep "
+"their icons."
+msgstr "« %s » est retiré. Les dossiers déjà personnalisés avec ses pictogrammes gardent leurs icônes."
+
+msgid "Could Not Remove the Set"
+msgstr "Impossible de retirer le jeu"
+
+msgid "Name the Set"
+msgstr "Nommer le jeu"
+
+msgid ""
+"The icons are copied as they are. Make sure you are allowed to use them."
+msgstr "Les icônes sont copiées telles quelles. Vérifiez que vous avez le droit de les utiliser."
+
+msgid "Add"
+msgstr "Ajouter"
+
+msgid "Adding…"
+msgstr "Ajout en cours…"
+
+msgid "Could Not Add the Set"
+msgstr "Impossible d’ajouter le jeu"
+
+#, python-format
+msgid "%(added)d icon added"
+msgid_plural "%(added)d icons added"
+msgstr[0] "%(added)d icône ajoutée"
+msgstr[1] "%(added)d icônes ajoutées"
+
+#, python-format
+msgid ", %(ignored)d ignored (unreadable, too large or already present)."
+msgstr ", %(ignored)d ignorée(s) (illisibles, trop grosses ou déjà présentes)."
+
+#, python-format
+msgid "“%s” Is Ready"
+msgstr "« %s » est prêt"
+
 msgid "Custicon cannot see your home folder"
 msgstr "Custicon ne voit pas votre dossier personnel"
 
@@ -547,6 +621,9 @@ msgstr "Sauvegarder les réglages…"
 
 msgid "Restore Settings…"
 msgstr "Restaurer les réglages…"
+
+msgid "Manage Icon Sets…"
+msgstr "Gérer les jeux d’icônes…"
 
 msgid "Remove All Icons…"
 msgstr "Retirer toutes les icônes…"
@@ -607,6 +684,9 @@ msgid_plural "%d folders to check"
 msgstr[0] "%d dossier à vérifier"
 msgstr[1] "%d dossiers à vérifier"
 
+msgid "Choose a Folder of SVG Files"
+msgstr "Choisir un dossier de fichiers SVG"
+
 msgid "Could Not Read the Saved Data"
 msgstr "Impossible de lire les données enregistrées"
 
@@ -627,7 +707,9 @@ msgstr "Réparer des dossiers"
 
 msgid ""
 "Choose what Custicon should do. Nothing is changed until you click Repair."
-msgstr "Choisissez ce que Custicon doit faire. Rien n’est modifié avant de cliquer sur Réparer."
+msgstr ""
+"Choisissez ce que Custicon doit faire. Rien n’est modifié avant de cliquer "
+"sur Réparer."
 
 msgid "Repair"
 msgstr "Réparer"
@@ -645,7 +727,9 @@ msgstr "Impossible de réparer les dossiers"
 msgid ""
 "%(repaired)d repaired, %(forgotten)d forgotten, %(failed)d failed. Press F5 "
 "in %(manager)s to see the changes."
-msgstr "%(repaired)d réparé(s), %(forgotten)d oublié(s), %(failed)d en échec. Appuyez sur F5 dans %(manager)s pour voir les changements."
+msgstr ""
+"%(repaired)d réparé(s), %(forgotten)d oublié(s), %(failed)d en échec. "
+"Appuyez sur F5 dans %(manager)s pour voir les changements."
 
 msgid "Some Folders Could Not Be Repaired"
 msgstr "Certains dossiers n’ont pas pu être réparés"
@@ -790,9 +874,6 @@ msgid "Remove the Icon of %d Folder?"
 msgid_plural "Remove the Icons of %d Folders?"
 msgstr[0] "Retirer l’icône de %d dossier ?"
 msgstr[1] "Retirer les icônes de %d dossiers ?"
-
-msgid "Remove"
-msgstr "Retirer"
 
 #, python-format
 msgid "Icon removed from %(count)d folder. Press F5 in %(manager)s to see it."

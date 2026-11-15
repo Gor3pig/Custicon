@@ -31,6 +31,7 @@ from ..service import (
 )
 from .draft import Draft
 from .editor import BIG_SIZE, SMALL_SIZES, Editor
+from .sets import SetsDialog
 from .filemanager import manager_name
 from .format import display_path, folder_name, is_portal_path, is_text_path, normalize_text
 from .messages import (
@@ -168,6 +169,7 @@ class MainWindow(Adw.ApplicationWindow):
             ("backup", self._backup_settings),
             ("restore", self._restore_settings),
             ("reset-all", self._confirm_reset_all),
+            ("icon-sets", self._open_sets),
             ("search", self._start_search),
         )
         for name, callback in actions:
@@ -182,6 +184,7 @@ class MainWindow(Adw.ApplicationWindow):
         menu.append(_("Import Styles…"), "win.import-styles")
         menu.append(_("Save Settings…"), "win.backup")
         menu.append(_("Restore Settings…"), "win.restore")
+        menu.append(_("Manage Icon Sets…"), "win.icon-sets")
         menu.append(_("Remove All Icons…"), "win.reset-all")
         menu.append(_("Help"), "app.help")
         menu.append(_("About %s") % APP_NAME, "app.about")
@@ -363,6 +366,22 @@ class MainWindow(Adw.ApplicationWindow):
         if count:
             self.problems_banner.set_title(ngettext("%d folder to check", "%d folders to check", count) % count)
         self.problems_banner.set_revealed(count > 0)
+
+    def _open_sets(self) -> None:
+        SetsDialog(self._service, self._alert, self._pick_set_folder, self._update_outdated_banner).present(self)
+
+    def _pick_set_folder(self, callback) -> None:
+        chooser = Gtk.FileDialog(title=_("Choose a Folder of SVG Files"))
+        chooser.select_folder(self, None, lambda dialog, result: self._set_folder_chosen(dialog, result, callback))
+
+    def _set_folder_chosen(self, dialog, result, callback) -> None:
+        try:
+            gfile = dialog.select_folder_finish(result)
+        except GLib.Error:
+            return
+        path = self._real_path(gfile)
+        if path is not None:
+            callback(Path(path))
 
     def _open_repair(self) -> None:
         try:

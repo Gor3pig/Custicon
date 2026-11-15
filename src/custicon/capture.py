@@ -12,18 +12,19 @@ gi.require_version("Gsk", "4.0")
 from gi.repository import Adw, Gdk, GLib, Graphene, Gsk, Gtk
 
 from .app import Application
+from .iconsets import PHOSPHOR_DIRECTORY
 from .metadata import write_custom_icon
 from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationReport, RestoreReport, Service, Settings
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "restored")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setpicker", "restored")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
 DIALOG_SETTLE_MS = 3200
-DIALOG_SCREENS = ("repair", "darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge")
-SET_SCREENS = {"darkpicker": ("emoji", "chat"), "phosphor": ("phosphor", ""), "emoji": ("emoji", "chat"), "brands": ("brands", "git")}
+DIALOG_SCREENS = ("repair", "sets", "setpicker", "darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge")
+SET_SCREENS = {"setpicker": ("mine-mes-icones", ""), "darkpicker": ("emoji", "chat"), "phosphor": ("phosphor", ""), "emoji": ("emoji", "chat"), "brands": ("brands", "git")}
 WIDE = (1000, 720)
 NARROW = (400, 720)
 TALL = (1000, 768)
@@ -121,6 +122,16 @@ def show_badge(window) -> bool:
     return False
 
 
+def make_sample_set(demo) -> None:
+    source = demo.root / "icones"
+    source.mkdir()
+    names = ("star", "heart", "camera", "music-notes", "house", "lock", "book", "bell", "gear", "key", "flag", "leaf")
+    for name in names:
+        shutil.copy(PHOSPHOR_DIRECTORY / f"{name}.svg", source / f"mon-{name}.svg")
+    (source / "casse.svg").write_text("<svg")
+    demo.service.import_set(source, "Mes icônes")
+
+
 def show_list(window, demo) -> None:
     service = demo.service
     service.apply(demo.folders["Projets"], Settings(glyph_name="applications-engineering-symbolic", folder_tint="#33d17a", badge_glyph="phosphor:check", badge_color="#2190a4"))
@@ -196,6 +207,11 @@ def arrange(screen: str, window, demo: Demo) -> None:
     if screen == "badge":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, show_badge, window)
+    if screen in ("sets", "setpicker"):
+        make_sample_set(demo)
+    if screen == "sets":
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, window._open_sets)
     if screen == "list":
         show_list(window, demo)
     if screen == "repair":

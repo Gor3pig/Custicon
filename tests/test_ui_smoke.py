@@ -483,6 +483,92 @@ class RepairUiTests(WindowTestCase):
         self.assertIsNone(self.window.get_visible_dialog())
 
 
+class CustomSetUiTests(WindowTestCase):
+    class Answer:
+        def __init__(self, response):
+            self.response = response
+
+        def choose_finish(self, _result):
+            return self.response
+
+    def setUp(self):
+        super().setUp()
+        self.source = self.root / "svg"
+        self.source.mkdir()
+        (self.source / "my-icon.svg").write_text(glyph_svg())
+        (self.source / "other.svg").write_text(glyph_svg())
+        (self.source / "broken.svg").write_text("<svg")
+        self.messages = []
+        self.dialog = window_module.SetsDialog(
+            self.service, lambda heading, body: self.messages.append((heading, body)), lambda callback: None
+        )
+        self.dialog.present(self.window)
+        settle()
+
+    def rows(self):
+        found, row = [], self.dialog.list.get_first_child()
+        while row is not None:
+            found.append(row)
+            row = row.get_next_sibling()
+        return found
+
+    def import_it(self, name="Mine"):
+        self.dialog._start_import(self.source, name)
+        self.assertTrue(settle(lambda: not self.dialog._busy))
+        settle()
+
+    def test_an_empty_list_says_so(self):
+        self.assertEqual(len(self.rows()), 1)
+        self.assertFalse(self.rows()[0].get_sensitive())
+
+    def test_adding_a_set_lists_it_and_reports_what_was_ignored(self):
+        self.import_it()
+        self.assertEqual([row.get_subtitle() for row in self.rows()], ["2 icons"])
+        self.assertEqual(self.messages[-1][0], "“Mine” Is Ready")
+        self.assertIn("2 icons added, 1 ignored", self.messages[-1][1])
+        self.assertTrue(self.dialog.add_button.get_sensitive())
+
+    def test_a_refused_folder_is_reported_and_nothing_is_added(self):
+        self.dialog._start_import(self.root / "nowhere", "Nope")
+        self.assertTrue(settle(lambda: not self.dialog._busy))
+        self.assertEqual(self.messages[-1][0], "Could Not Add the Set")
+        self.assertEqual(self.service.custom_sets(), [])
+
+    def test_removing_a_set_needs_the_confirmation(self):
+        self.import_it()
+        info = self.service.custom_sets()[0]
+        self.dialog._remove_confirmed(self.Answer("cancel"), None, info)
+        self.assertEqual(len(self.service.custom_sets()), 1)
+        self.dialog._remove_confirmed(self.Answer("remove"), None, info)
+        self.assertEqual(self.service.custom_sets(), [])
+        self.assertEqual(len(self.rows()), 1)
+
+    def test_the_picker_gets_a_button_for_each_set_and_lists_its_icons(self):
+        self.import_it("My Set")
+        self.window.add_folder(self.make_folder("docs"))
+        settle()
+        self.window._choose_glyph()
+        settle()
+        picker = self.window.get_visible_dialog()
+        self.assertIsNotNone(picker.set_toggle.get_toggle_by_name("mine-my-set"))
+        picker.set_toggle.set_active_name("mine-my-set")
+        settle()
+        self.assertEqual(picker.model.get_n_items(), 2)
+        self.assertFalse(picker.category_row.get_visible())
+
+    def test_a_pictogram_of_a_set_can_be_applied_from_the_editor(self):
+        self.import_it("My Set")
+        folder = self.make_folder("docs")
+        self.window.add_folder(folder)
+        settle()
+        self.window.editor.update_glyph(self.window.editor.draft.with_glyph_name("mine-my-set:my-icon"))
+        settle()
+        self.window._apply()
+        settle()
+        self.assertIsNotNone(read_custom_icon(folder))
+        self.assertIn("glyph_copy", self.service.store.get(str(folder)).settings)
+
+
 class PickerTests(WindowTestCase):
     def test_the_picker_lists_pictograms_and_filters_them(self):
         from custicon.ui.picker import PickerDialog

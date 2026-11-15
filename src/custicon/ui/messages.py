@@ -2,6 +2,7 @@ from ..errors import (
     CusticonError,
     FolderError,
     IconNotFoundError,
+    IconSetError,
     InvalidIconError,
     InvalidSettingsError,
     MetadataError,
@@ -28,6 +29,7 @@ def describe_error(error: Exception) -> str:
         (FolderError, _("This is not a usable folder.")),
         (MetadataError, _("The new icon could not be recorded for this folder. Check that Custicon can access it.")),
         (StoreError, _("Custicon could not save its data.")),
+        (IconSetError, _("This icon set could not be used.")),
     )
     for kind, summary in summaries:
         if isinstance(error, kind):

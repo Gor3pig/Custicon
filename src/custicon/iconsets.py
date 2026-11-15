@@ -1,8 +1,10 @@
 import json
+import re
 from pathlib import Path
 
 from gi.repository import GLib
 
+from . import customsets
 from .errors import IconNotFoundError
 from .symbolic import SymbolicSvg
 from .textutil import normalize_text
@@ -33,6 +35,8 @@ def phosphor_name(name: str) -> str:
 
 
 class IconSet:
+    user = False
+
     def __init__(self, key: str, prefix: str, directory: Path, titles: dict | None = None, renamed: dict | None = None):
         self.key = key
         self.prefix = prefix
@@ -163,23 +167,58 @@ class PhosphorSet(IconSet):
         super().__init__("phosphor", PHOSPHOR_PREFIX, directory, DEFINITIONS[0][2], RENAMED)
 
 
+class UserSet(IconSet):
+    user = True
+
+    def _load(self) -> None:
+        loaded = self._loaded
+        super()._load()
+        if loaded:
+            return
+        for name in self._icons:
+            spaced = normalize_text(re.sub(r"[-_.]+", " ", name))
+            self._folded[name] = [spaced]
+            self._words[name] = [set(spaced.split())]
+
+
 class IconSets:
-    def __init__(self, root: Path = PACKAGE_DIRECTORY):
+    def __init__(self, root: Path = PACKAGE_DIRECTORY, user_root: Path | None = None):
         self._sets = {}
         for key, prefix, titles in DEFINITIONS:
             if key == "phosphor":
                 self._sets[key] = PhosphorSet(root / key)
             else:
                 self._sets[key] = IconSet(key, prefix, root / key, titles)
+        self._user_root = user_root
+        self._user: dict[str, UserSet] | None = None
+
+    def set_user_root(self, user_root: Path | None) -> None:
+        self._user_root = user_root
+        self.refresh()
+
+    def refresh(self) -> None:
+        self._user = None
+
+    def _user_sets(self) -> dict[str, UserSet]:
+        if self._user is None:
+            self._user = {}
+            if self._user_root is not None:
+                for info in customsets.list_sets(self._user_root):
+                    titles = {DEFAULT_LANGUAGE: info.name, "fr": info.name}
+                    self._user[info.key] = UserSet(info.key, info.key + ":", self._user_root / info.slug, titles)
+        return self._user
+
+    def user_keys(self) -> list[str]:
+        return list(self._user_sets())
 
     def __iter__(self):
-        return iter(self._sets)
+        return iter([*self._sets, *self._user_sets()])
 
     def __getitem__(self, key: str) -> IconSet:
-        return self._sets[key]
+        return self._sets[key] if key in self._sets else self._user_sets()[key]
 
     def for_name(self, name: str | None) -> IconSet | None:
-        for icon_set in self._sets.values():
+        for icon_set in [*self._sets.values(), *self._user_sets().values()]:
             if icon_set.owns(name):
                 return icon_set
         return None
