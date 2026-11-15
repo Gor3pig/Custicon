@@ -149,6 +149,15 @@ class DamagedEntryTests(unittest.TestCase):
         self.assertFalse(draft.has_glyph)
         self.assertIsNone(draft.badge_glyph)
 
+    def test_the_kept_copy_of_a_set_pictogram_follows_the_draft_until_the_pictogram_changes(self):
+        from custicon.store import Entry
+
+        entry = Entry("/tmp/x", "a" * 16, "Adwaita", "#ffffff", {"glyph_name": "mine-s:i", "glyph_copy": "b" * 16 + ".svg"}, None)
+        draft = Draft.from_entry(entry)
+        self.assertEqual(draft.to_settings().glyph_copy, "b" * 16 + ".svg")
+        self.assertIsNone(draft.with_glyph_name("phosphor:star").to_settings().glyph_copy)
+        self.assertIsNone(draft.with_glyph_text("A").to_settings().glyph_copy)
+
     def test_a_name_wins_over_a_file(self):
         draft = self.draft(glyph_name="a-symbolic", glyph_file="/x.svg")
         self.assertEqual((draft.glyph_name, draft.glyph_file), ("a-symbolic", None))

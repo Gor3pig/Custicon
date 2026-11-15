@@ -888,24 +888,39 @@ class Service:
             return Path(settings.glyph_file)
         if settings.glyph_text:
             return text_to_svg(settings.glyph_text).encode()
+        if settings.glyph_name.startswith(customsets.KEY_PREFIX):
+            return self._locate_set_glyph(settings)[0]
         return self._find_glyph(theme, settings.glyph_name)
+
+    def _locate_set_glyph(self, settings: Settings) -> tuple[Path, bool]:
+        name = settings.glyph_name
+        icon_set = self._sets.for_name(name)
+        try:
+            if icon_set is None:
+                raise IconNotFoundError(f"{name}: this icon set is not installed")
+            return icon_set.file(name), True
+        except IconNotFoundError:
+            stored = self._store.glyph_path(settings.glyph_copy)
+            if stored is not None and stored.is_file():
+                return stored, False
+            raise
 
     def _keep_set_glyph(self, settings: Settings) -> tuple[Path | bytes | None, str | None] | None:
         name = settings.glyph_name
         if not name or not name.startswith(customsets.KEY_PREFIX):
             return None
-        icon_set = self._sets.for_name(name)
-        try:
-            if icon_set is None:
-                raise IconNotFoundError(f"{name}: this icon set is not installed")
-            data = read_icon_bytes(icon_set.file(name))
-        except (IconNotFoundError, InvalidIconError):
-            stored = self._store.glyph_path(settings.glyph_copy)
-            if stored is not None and stored.is_file():
-                return stored, settings.glyph_copy
-            raise
-        copy = self._store.save_glyph(data, ".svg")
-        return self._store.glyph_path(copy), copy
+        path, from_set = self._locate_set_glyph(settings)
+        if from_set:
+            try:
+                data = read_icon_bytes(path)
+            except InvalidIconError:
+                stored = self._store.glyph_path(settings.glyph_copy)
+                if stored is not None and stored.is_file():
+                    return stored, settings.glyph_copy
+                raise
+            copy = self._store.save_glyph(data, ".svg")
+            return self._store.glyph_path(copy), copy
+        return path, settings.glyph_copy
 
     def _keep_glyph(self, settings: Settings, existing: Entry | None) -> tuple[Path | bytes | None, str | None]:
         kept = self._keep_set_glyph(settings)

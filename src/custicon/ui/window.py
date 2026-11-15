@@ -399,9 +399,11 @@ class MainWindow(Adw.ApplicationWindow):
             gfile = dialog.select_folder_finish(result)
         except GLib.Error:
             return
-        path = self._real_path(gfile)
-        if path is not None:
-            callback(Path(path))
+        path = gfile.get_path()
+        if path is None:
+            self._alert(_("Folder Not Accessible"), _("Custicon cannot read this folder. Choose a folder on this computer."))
+            return
+        callback(Path(path))
 
     def _open_repair(self) -> None:
         try:

@@ -548,6 +548,18 @@ class CustomSetUiTests(WindowTestCase):
         settle()
         return self.dialog._icon_rows[slug]
 
+    def test_the_list_is_locked_while_a_job_runs(self):
+        self.import_it()
+        outcome = []
+        self.dialog._run_in_thread(lambda: (time.sleep(0.4), {})[1], outcome.append)
+        self.assertFalse(self.dialog.list.get_sensitive())
+        self.assertFalse(self.dialog.add_button.get_sensitive())
+        self.dialog._run_in_thread(lambda: {}, outcome.append)
+        self.assertTrue(settle(lambda: not self.dialog._busy))
+        settle()
+        self.assertEqual(len(outcome), 1)
+        self.assertTrue(self.dialog.list.get_sensitive())
+
     def test_a_set_unfolds_to_its_icons(self):
         self.import_it()
         rows = self.expand()
@@ -620,6 +632,28 @@ class CustomSetUiTests(WindowTestCase):
         self.dialog._remove_confirmed(self.Answer("remove"), None, self.service.custom_sets()[0])
         self.assertEqual(self.dialog._open_slugs, set())
         self.assertEqual(self.dialog._rows, {})
+
+    def test_a_folder_of_a_removed_set_can_still_be_edited_and_applied(self):
+        self.import_it("My Set")
+        folder = self.make_folder("docs")
+        self.window.add_folder(folder)
+        settle()
+        self.window.editor.update_glyph(self.window.editor.draft.with_glyph_name("mine-my-set:my-icon"))
+        settle()
+        self.window._apply()
+        settle()
+        self.service.remove_set("my-set")
+        self.window.reload(select=str(folder))
+        settle()
+        self.window._render_preview()
+        settle()
+        self.assertFalse(self.window.editor._blocked)
+        self.window.editor._update(size=1.25)
+        self.window._apply()
+        settle()
+        entry = self.service.store.get(str(folder))
+        self.assertEqual(entry.settings["size"], 1.25)
+        self.assertEqual(self.service.entry_status(entry), "ok")
 
     def test_the_picker_gets_a_button_for_each_set_and_lists_its_icons(self):
         self.import_it("My Set")

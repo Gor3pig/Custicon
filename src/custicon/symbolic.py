@@ -32,6 +32,7 @@ def default_foreground() -> str:
 
 def colored_svg(data: bytes, color: str) -> bytes:
     root = compose.parse_svg(data)
+    compose.sanitize(root)
     compose.recolor(root, color)
     if root.get("fill") is None:
         root.set("fill", color)

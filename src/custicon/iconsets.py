@@ -200,13 +200,15 @@ class IconSets:
         self._user = None
 
     def _user_sets(self) -> dict[str, UserSet]:
-        if self._user is None:
-            self._user = {}
+        found = self._user
+        if found is None:
+            found = {}
             if self._user_root is not None:
                 for info in customsets.list_sets(self._user_root):
                     titles = {DEFAULT_LANGUAGE: info.name, "fr": info.name}
-                    self._user[info.key] = UserSet(info.key, info.key + ":", self._user_root / info.slug, titles)
-        return self._user
+                    found[info.key] = UserSet(info.key, info.key + ":", self._user_root / info.slug, titles)
+            self._user = found
+        return found
 
     def user_keys(self) -> list[str]:
         return list(self._user_sets())

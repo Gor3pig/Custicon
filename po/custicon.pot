@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 17:18+0100\n"
+"POT-Creation-Date: 2026-11-15 18:01+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -735,6 +735,12 @@ msgstr ""
 msgid "Choose a Folder of SVG Files"
 msgstr ""
 
+msgid "Folder Not Accessible"
+msgstr ""
+
+msgid "Custicon cannot read this folder. Choose a folder on this computer."
+msgstr ""
+
 msgid "Could Not Read the Saved Data"
 msgstr ""
 
@@ -818,9 +824,6 @@ msgid "Press F5 in %s to see the changes."
 msgstr ""
 
 msgid "Icons Removed"
-msgstr ""
-
-msgid "Folder Not Accessible"
 msgstr ""
 
 msgid ""

@@ -40,6 +40,17 @@ class ColoringTests(unittest.TestCase):
     def test_a_current_color_set_is_recolored(self):
         self.assertEqual(first_opaque(symbolic.colored_svg(PHOSPHOR.read_bytes(), "#ff8800")), (255, 136, 0))
 
+    def test_an_external_reference_or_a_script_is_dropped_before_drawing(self):
+        hostile = (
+            b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 10 10">'
+            b'<script>alert(1)</script><image xlink:href="file:///etc/passwd" width="5" height="5"/>'
+            b'<use xlink:href="http://example.invalid/a.svg#b"/><rect width="10" height="10" style="fill:url(http://example.invalid/x)"/></svg>'
+        )
+        drawn = symbolic.colored_svg(hostile, "#ff8800").decode()
+        for forbidden in ("script", "file://", "example.invalid"):
+            self.assertNotIn(forbidden, drawn)
+        self.assertIn("rect", drawn)
+
     def test_a_set_with_explicit_fills_is_recolored(self):
         self.assertEqual(first_opaque(symbolic.colored_svg(EMOJI.read_bytes(), "#ff8800")), (255, 136, 0))
 

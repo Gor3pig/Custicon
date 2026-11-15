@@ -260,6 +260,7 @@ class SetsDialog(Adw.Dialog):
             return
         self._busy = True
         self.add_button.set_sensitive(False)
+        self.list.set_sensitive(False)
         self.add_button.set_label(_("Adding…"))
 
         def run() -> None:
@@ -274,6 +275,7 @@ class SetsDialog(Adw.Dialog):
     def _thread_finished(self, outcome: dict, finished) -> bool:
         self._busy = False
         self.add_button.set_label(_("Add a Set from a Folder…"))
+        self.list.set_sensitive(True)
         self.refresh()
         finished(outcome)
         return False

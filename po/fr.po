@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 17:18+0100\n"
+"POT-Creation-Date: 2026-11-15 18:01+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -759,6 +759,12 @@ msgstr "Fichiers SVG"
 msgid "Choose a Folder of SVG Files"
 msgstr "Choisir un dossier de fichiers SVG"
 
+msgid "Folder Not Accessible"
+msgstr "Dossier inaccessible"
+
+msgid "Custicon cannot read this folder. Choose a folder on this computer."
+msgstr "Custicon ne peut pas lire ce dossier. Choisissez un dossier de cet ordinateur."
+
 msgid "Could Not Read the Saved Data"
 msgstr "Impossible de lire les données enregistrées"
 
@@ -851,9 +857,6 @@ msgstr "Appuyez sur F5 dans %s pour voir les changements."
 
 msgid "Icons Removed"
 msgstr "Icônes retirées"
-
-msgid "Folder Not Accessible"
-msgstr "Dossier inaccessible"
 
 msgid ""
 "Custicon needs the real location of the folder. Choose a folder inside your "
@@ -1326,7 +1329,10 @@ msgstr ""
 msgid ""
 "Add a folder of SVG files as a set of your own, then add or remove icons one "
 "by one: it appears in the picker and keeps working even if you remove the set"
-msgstr "Ajoutez un dossier de fichiers SVG comme jeu personnel, puis ajoutez ou retirez des icônes une à une : il apparaît dans le sélecteur et continue de fonctionner même si vous retirez le jeu"
+msgstr ""
+"Ajoutez un dossier de fichiers SVG comme jeu personnel, puis ajoutez ou "
+"retirez des icônes une à une : il apparaît dans le sélecteur et continue de "
+"fonctionner même si vous retirez le jeu"
 
 msgid ""
 "A bar tells you how many folders need a check, and one dialog repairs them, "
@@ -1671,4 +1677,3 @@ msgstr "Régénérez toutes les icônes après un changement de thème d’icôn
 
 msgid "The content of your folders is never modified"
 msgstr "Le contenu de vos dossiers n’est jamais modifié"
-

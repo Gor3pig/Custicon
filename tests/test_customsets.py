@@ -145,6 +145,14 @@ class ImportTests(SetFolderCase):
                 remove_set(self.sets, slug)
         self.assertTrue((self.root / "victim").is_dir())
 
+    def test_the_longest_pictogram_name_fits_the_stored_names(self):
+        from custicon.store import MAX_NAME_LENGTH
+
+        self.add("x" * 200 + ".svg")
+        import_set(self.sets, self.source, "y" * 40)
+        name = customsets.KEY_PREFIX + slugify("y" * 40) + ":" + icon_names(self.sets, slugify("y" * 40))[0]
+        self.assertLessEqual(len(name), MAX_NAME_LENGTH)
+
     def test_slugify(self):
         self.assertEqual(slugify("Été Ñandú!"), "ete-nandu")
         self.assertEqual(slugify("---"), "")
@@ -332,6 +340,17 @@ class ServiceSetTests(SetFolderCase):
         (extra / "my-icon.svg").write_text(glyph_svg().replace("M0 0h16v16H0z", "M2 2h12v12H2z"))
         self.assertEqual(self.service.add_icons("mine", [extra / "my-icon.svg"]).replaced, 1)
         self.assertEqual(self.service.outdated(), [entry.folder])
+
+    def test_a_preview_still_works_from_the_kept_copy_after_the_set_is_removed(self):
+        entry = self.service.apply(self.folder, Settings(glyph_name=self.name))
+        self.service.remove_set("mine")
+        kept = Settings.from_dict(entry.settings)
+        self.assertIn("<image", self.service.build(replace(kept, size=1.2)).svg)
+        with self.assertRaises(IconNotFoundError):
+            self.service.build(Settings(glyph_name=self.name))
+        written = [path.name for path in self.store.glyphs_dir.iterdir()]
+        self.service.build(kept)
+        self.assertEqual([path.name for path in self.store.glyphs_dir.iterdir()], written)
 
     def test_the_builtin_sets_are_unchanged(self):
         icon_sets = self.service.icon_sets()
