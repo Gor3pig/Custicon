@@ -35,7 +35,7 @@ The pictogram is placed on the real folder icon of your current icon theme, and 
 <tr>
 <td width="33%" valign="top">
 
-**Choose**<br>Over 6,000 pictograms: Phosphor, emoji, brand logos, your theme, your own file or letters. Suggestions follow the folder name.
+**Choose**<br>Over 6,000 pictograms: Phosphor, emoji, brand logos, your theme, your own file, your own sets of SVG icons or letters. Suggestions follow the folder name.
 
 </td>
 <td width="33%" valign="top">

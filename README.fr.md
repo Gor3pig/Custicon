@@ -35,7 +35,7 @@ Le pictogramme est posé sur la vraie icône de dossier de votre thème d’icô
 <tr>
 <td width="33%" valign="top">
 
-**Choisir**<br>Plus de 6 000 pictogrammes : Phosphor, émoji, logos de marques, votre thème, votre fichier ou des lettres. Des suggestions suivent le nom du dossier.
+**Choisir**<br>Plus de 6 000 pictogrammes : Phosphor, émoji, logos de marques, votre thème, votre fichier, vos propres jeux d’icônes SVG ou des lettres. Des suggestions suivent le nom du dossier.
 
 </td>
 <td width="33%" valign="top">

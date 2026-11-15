@@ -91,6 +91,19 @@ qui correspondent au nom du dossier (par exemple un appareil photo pour un dossi
 Ils sont dessinés en vectoriel et teintés comme n’importe quel pictogramme du thème. Un caractère que la police
 ne sait pas dessiner est refusé avec un message. Choisir une icône ou un fichier efface le texte, et inversement.
 
+### Vos propres jeux d’icônes
+
+Utilisez vos icônes SVG comme un jeu, à côté de Phosphor, Émoji et Marque. Ouvrez le menu principal, choisissez **Gérer les jeux d’icônes…**, puis
+**Ajouter un jeu depuis un dossier…**, choisissez un dossier de fichiers `.svg` et donnez un nom au jeu. Custicon contrôle chaque fichier, en garde une copie
+dans ses données (vous pouvez ensuite déplacer ou supprimer le dossier d’origine) et indique combien d’icônes ont été ajoutées et combien ont été ignorées
+(illisibles, trop grosses, ou deuxième fichier de même nom une fois simplifié). Le jeu a ensuite son propre bouton dans le sélecteur, et ses icônes se cherchent par nom de fichier.
+
+- Les icônes sont teintées comme celles de Phosphor : préférez des formes simples.
+- Jusqu’à 8 jeux et 2 000 fichiers SVG par jeu ; un fichier peut peser jusqu’à 2 Mo.
+- Ajouter un dossier sous un nom qui existe déjà remplace ce jeu ; les dossiers personnalisés avec lui sont alors signalés comme périmés, et **Régénérer** les met à jour.
+- **Retirer** supprime un jeu sans jamais changer les dossiers déjà personnalisés : Custicon garde une copie des icônes qu’ils utilisent.
+- Custicon ne vérifie pas la licence de vos icônes : assurez-vous d’avoir le droit de les utiliser. Un fichier de sauvegarde ne contient jamais d’images : sur un autre ordinateur, ajoutez d’abord le jeu avant de restaurer.
+
 ## Régler l’apparence
 
 La colonne de gauche de l’éditeur montre l’aperçu, à quatre tailles, avec l’icône de dossier de votre thème actif.

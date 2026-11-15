@@ -91,6 +91,19 @@ that match the name of the folder (for example a camera for a folder called “P
 They are drawn as vectors and tinted like any theme pictogram. A character the font cannot draw is refused with a message.
 Choosing an icon or a file clears the text, and the other way round.
 
+### Your own icon sets
+
+Use your own SVG icons as a set, next to Phosphor, Emoji and Brands. Open the main menu, choose **Manage Icon Sets…**, then **Add a Set from a
+Folder…**, pick a folder of `.svg` files and give the set a name. Custicon checks each file, keeps a copy in its own data (you can move or
+delete the original folder afterwards) and reports how many icons were added and how many were ignored (unreadable, too large, or a second file with
+the same name once simplified). The set then has its own button in the picker, and its icons are searched by file name.
+
+- The icons are tinted like the Phosphor ones: use simple shapes.
+- Up to 8 sets and 2,000 SVG files per set; a file may be up to 2 MB.
+- Adding a folder under a name that already exists replaces that set; the folders customized with it are then reported as outdated, and **Regenerate** updates them.
+- **Remove** deletes a set but never changes the folders already customized: Custicon keeps a copy of the icons they use.
+- Custicon does not check the licence of your icons: make sure you may use them. A backup file never contains images, so on another computer add the set again before restoring.
+
 ## Adjusting the appearance
 
 The left column of the editor shows the preview, at four sizes, with the folder icon of your current theme.
