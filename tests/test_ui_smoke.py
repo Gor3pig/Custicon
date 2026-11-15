@@ -409,6 +409,80 @@ class RegenerationTests(WindowTestCase):
         self.assertIsNone(self.window.get_visible_dialog())
 
 
+class RepairUiTests(WindowTestCase):
+    class Answer:
+        def __init__(self, response):
+            self.response = response
+
+        def choose_finish(self, _result):
+            return self.response
+
+    def setUp(self):
+        super().setUp()
+        self.lost = self.add_and_apply("lost", "star-symbolic")
+        self.changed = self.add_and_apply("changed", "heart-symbolic")
+        self.healthy = self.add_and_apply("healthy", "star-symbolic")
+
+    def break_two(self):
+        self.service.apply(self.lost, Settings(glyph_name="heart-symbolic", color="#ff0000"))
+        self.service.store.icon_path(self.service.store.get(str(self.lost)).digest).unlink()
+        write_custom_icon(self.changed, USER_ICON)
+        self.window.reload()
+        settle()
+
+    def checks(self, dialog):
+        found = []
+
+        def walk(widget):
+            child = widget.get_first_child()
+            while child is not None:
+                if isinstance(child, Gtk.CheckButton):
+                    found.append(child)
+                walk(child)
+                child = child.get_next_sibling()
+
+        walk(dialog.get_extra_child())
+        return found
+
+    def test_the_banner_is_hidden_when_everything_is_fine(self):
+        self.assertFalse(self.window.problems_banner.get_revealed())
+
+    def test_the_banner_counts_the_folders_to_check(self):
+        self.break_two()
+        self.assertTrue(self.window.problems_banner.get_revealed())
+        self.assertEqual(self.window.problems_banner.get_title(), "2 folders to check")
+
+    def test_only_the_safe_repair_is_ticked_at_first(self):
+        self.break_two()
+        self.window._open_repair()
+        settle()
+        dialog = self.window.get_visible_dialog()
+        ticked = [check.get_child().get_first_child().get_label() for check in self.checks(dialog) if check.get_active()]
+        self.assertEqual(ticked, ["lost"])
+        self.assertEqual(len(self.checks(dialog)), 2)
+
+    def test_repairing_only_touches_the_ticked_folders(self):
+        self.break_two()
+        keys = [(str(self.lost), Gtk.CheckButton(active=True)), (str(self.changed), Gtk.CheckButton(active=False))]
+        self.window._repair_chosen(self.Answer("repair"), None, keys)
+        settle()
+        self.assertEqual(read_custom_icon(self.changed), USER_ICON)
+        self.assertEqual(self.service.entry_status(self.service.store.get(str(self.lost))), "ok")
+        self.assertEqual(self.window.problems_banner.get_title(), "1 folder to check")
+
+    def test_cancelling_changes_nothing(self):
+        self.break_two()
+        keys = [(str(self.lost), Gtk.CheckButton(active=True))]
+        self.window._repair_chosen(self.Answer("cancel"), None, keys)
+        settle()
+        self.assertEqual(self.window.problems_banner.get_title(), "2 folders to check")
+
+    def test_nothing_to_repair_only_informs(self):
+        self.window._open_repair()
+        settle()
+        self.assertIsNone(self.window.get_visible_dialog())
+
+
 class PickerTests(WindowTestCase):
     def test_the_picker_lists_pictograms_and_filters_them(self):
         from custicon.ui.picker import PickerDialog

@@ -13,6 +13,9 @@ from custicon.service import (
     RESET_FOLDER_MISSING,
     RESET_KEPT_USER_ICON,
     RESET_RESTORED,
+    REPAIR_FORGET,
+    REPAIR_REGENERATE,
+    REPAIR_TAKE_BACK,
     RESET_UNKNOWN,
     STATUS_FOLDER_MISSING,
     STATUS_ICON_CHANGED,
@@ -681,6 +684,89 @@ class RegenerationTests(ServiceTestCase):
         report = self.service.regenerate_all()
         self.assertEqual(list(report.failed), [str(folder)])
         self.assertEqual(read_custom_icon(folder), self.store.icon_uri(self.store.get(str(folder)).digest))
+
+
+class RepairTests(ServiceTestCase):
+    def setUp(self):
+        super().setUp()
+        self.healthy = self.make_folder("healthy")
+        self.lost_file = self.make_folder("lost-file")
+        self.changed = self.make_folder("changed")
+        self.gone = self.make_folder("gone")
+        for folder in (self.healthy, self.changed, self.gone):
+            self.service.apply(folder, STAR)
+        self.service.apply(self.lost_file, replace(STAR, color="#ff0000"))
+        self.store.icon_path(self.store.get(str(self.lost_file)).digest).unlink()
+        write_custom_icon(self.changed, USER_ICON)
+        shutil.rmtree(self.gone)
+
+    def keys(self, *folders):
+        return [str(folder) for folder in folders]
+
+    def test_every_kind_of_problem_comes_with_its_own_action(self):
+        found = {problem.folder: (problem.status, problem.action) for problem in self.service.problems()}
+        self.assertEqual(
+            found,
+            {
+                str(self.lost_file): (STATUS_ICON_FILE_MISSING, REPAIR_REGENERATE),
+                str(self.changed): (STATUS_ICON_CHANGED, REPAIR_TAKE_BACK),
+                str(self.gone): (STATUS_FOLDER_MISSING, REPAIR_FORGET),
+            },
+        )
+
+    def test_a_healthy_list_has_no_problem(self):
+        shutil.rmtree(self.store.root)
+        self.assertEqual(self.service.problems(), [])
+
+    def test_nothing_is_touched_when_nothing_is_chosen(self):
+        report = self.service.repair([])
+        self.assertEqual((report.regenerated, report.taken_back, report.forgotten), ([], [], []))
+        self.assertEqual(len(self.service.problems()), 3)
+        self.assertEqual(read_custom_icon(self.changed), USER_ICON)
+
+    def test_a_missing_icon_file_is_regenerated(self):
+        report = self.service.repair(self.keys(self.lost_file))
+        self.assertEqual(report.regenerated, self.keys(self.lost_file))
+        self.assertEqual(self.service.entry_status(self.store.get(str(self.lost_file))), STATUS_OK)
+        self.assertEqual(read_custom_icon(self.changed), USER_ICON)
+
+    def test_taking_back_an_icon_keeps_the_one_the_user_had(self):
+        report = self.service.repair(self.keys(self.changed))
+        self.assertEqual(report.taken_back, self.keys(self.changed))
+        entry = self.store.get(str(self.changed))
+        self.assertEqual(entry.previous, USER_ICON)
+        self.assertEqual(read_custom_icon(self.changed), self.store.icon_uri(entry.digest))
+
+    def test_a_missing_folder_is_forgotten_only_when_chosen(self):
+        self.service.repair(self.keys(self.lost_file))
+        self.assertIsNotNone(self.store.get(str(self.gone)))
+        report = self.service.repair(self.keys(self.gone))
+        self.assertEqual(report.forgotten, self.keys(self.gone))
+        self.assertIsNone(self.store.get(str(self.gone)))
+
+    def test_a_folder_that_recovered_is_not_touched(self):
+        self.service.repair(self.keys(self.lost_file))
+        report = self.service.repair(self.keys(self.lost_file, self.healthy, "/nowhere/else"))
+        self.assertEqual(report.skipped, self.keys(self.lost_file, self.healthy, "/nowhere/else"))
+        self.assertEqual((report.regenerated, report.taken_back, report.forgotten), ([], [], []))
+
+    def test_one_failure_does_not_stop_the_others(self):
+        real_apply = self.service.apply
+
+        def flaky(folder, settings, backend=None):
+            if Path(folder) == self.lost_file:
+                raise MetadataError("denied")
+            return real_apply(folder, settings, backend)
+
+        with mock.patch.object(self.service, "apply", side_effect=flaky):
+            report = self.service.repair(self.keys(self.lost_file, self.changed, self.gone))
+        self.assertEqual(list(report.failed), self.keys(self.lost_file))
+        self.assertEqual(report.taken_back, self.keys(self.changed))
+        self.assertEqual(report.forgotten, self.keys(self.gone))
+
+    def test_a_folder_listed_twice_is_repaired_once(self):
+        report = self.service.repair(self.keys(self.changed, self.changed))
+        self.assertEqual(report.taken_back, self.keys(self.changed))
 
 
 class ResetManyTests(ServiceTestCase):

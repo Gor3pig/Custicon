@@ -20,6 +20,7 @@ teinter le dossier lui-même. Ce guide décrit chaque étape.
 - [Plusieurs dossiers à la fois](#plusieurs-dossiers-à-la-fois)
 - [Pastille de coin](#pastille-de-coin)
 - [Sauvegarder et restaurer ses réglages](#sauvegarder-et-restaurer-ses-réglages)
+- [Réparer des dossiers](#réparer-des-dossiers)
 - [Retirer une icône](#retirer-une-icône)
 - [Après un changement de thème](#après-un-changement-de-thème)
 
@@ -226,6 +227,18 @@ chaque icône est régénérée avec les réglages du fichier. Un compte rendu i
 - vos styles et favoris actuels sont conservés et complétés, et votre apparence mémorisée n’est pas écrasée.
 
 Restaurer deux fois donne le même résultat. Appuyez ensuite sur F5 dans votre gestionnaire de fichiers.
+
+## Réparer des dossiers
+
+Quand des dossiers demandent une vérification (dossier déplacé ou supprimé, fichier d’icône manquant, icône changée avec votre
+gestionnaire de fichiers), un bandeau **N dossiers à vérifier** apparaît en haut de la fenêtre. **Réparer…** ouvre une liste avec une case par problème :
+
+- **Fichier d’icône manquant** : *Régénérer l’icône*, cochée d’office car sans risque.
+- **Icône changée hors Custicon** : *Reprendre l’icône Custicon*, non cochée : elle remplace l’icône que vous avez choisie vous-même (celle-ci est
+  conservée et rendue si vous retirez plus tard l’icône Custicon).
+- **Dossier introuvable** : *Oublier ce dossier*, non cochée. Pour retrouver un dossier déplacé, sélectionnez-le dans la liste puis **Retrouver le dossier…**.
+
+Rien n’est modifié avant de cliquer sur **Réparer**, et seuls les dossiers cochés sont touchés. Le bandeau disparaît quand il n’y a plus rien à vérifier.
 
 ## Retirer une icône
 

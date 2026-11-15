@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 15:32+0100\n"
+"POT-Creation-Date: 2026-11-15 16:38+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -514,6 +514,9 @@ msgstr ""
 msgid "Regenerate"
 msgstr ""
 
+msgid "Repair…"
+msgstr ""
+
 #, python-format
 msgid ""
 "%s cannot show custom folder icons, so the icons made with Custicon will not "
@@ -586,7 +589,53 @@ msgstr ""
 msgid "No folder matches your search"
 msgstr ""
 
+#, python-format
+msgid "%d folder to check"
+msgid_plural "%d folders to check"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "Could Not Read the Saved Data"
+msgstr ""
+
+msgid "Nothing needs to be repaired."
+msgstr ""
+
+msgid "Regenerate the icon"
+msgstr ""
+
+msgid "Take back the Custicon icon (replaces the one you chose)"
+msgstr ""
+
+msgid "Forget this folder (there is no icon to restore)"
+msgstr ""
+
+msgid "Repair Folders"
+msgstr ""
+
+msgid ""
+"Choose what Custicon should do. Nothing is changed until you click Repair."
+msgstr ""
+
+msgid "Repair"
+msgstr ""
+
+#, python-format
+msgid "Repair %d Folder"
+msgid_plural "Repair %d Folders"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Could Not Repair the Folders"
+msgstr ""
+
+#, python-format
+msgid ""
+"%(repaired)d repaired, %(forgotten)d forgotten, %(failed)d failed. Press F5 "
+"in %(manager)s to see the changes."
+msgstr ""
+
+msgid "Some Folders Could Not Be Repaired"
 msgstr ""
 
 msgid "Forget This Folder"

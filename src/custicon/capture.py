@@ -17,12 +17,12 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "restored")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "restored")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
 DIALOG_SETTLE_MS = 3200
-DIALOG_SCREENS = ("darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge")
+DIALOG_SCREENS = ("repair", "darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge")
 SET_SCREENS = {"darkpicker": ("emoji", "chat"), "phosphor": ("phosphor", ""), "emoji": ("emoji", "chat"), "brands": ("brands", "git")}
 WIDE = (1000, 720)
 NARROW = (400, 720)
@@ -198,6 +198,9 @@ def arrange(screen: str, window, demo: Demo) -> None:
         GLib.timeout_add(DIALOG_DELAY_MS, show_badge, window)
     if screen == "list":
         show_list(window, demo)
+    if screen == "repair":
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, window._open_repair)
     if screen == "badgeonly":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, show_badge_only, window)
@@ -250,7 +253,7 @@ def main(argv: list[str]) -> int:
     demo = Demo()
     try:
         demo.create(populate=screen != "empty")
-        if screen in ("states", "report"):
+        if screen in ("states", "report", "repair"):
             demo.break_some()
         app = Application(demo.service, unique=False)
 

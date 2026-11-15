@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 15:32+0100\n"
+"POT-Creation-Date: 2026-11-15 16:38+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -522,6 +522,9 @@ msgstr ""
 msgid "Regenerate"
 msgstr "Régénérer"
 
+msgid "Repair…"
+msgstr "Réparer…"
+
 #, python-format
 msgid ""
 "%s cannot show custom folder icons, so the icons made with Custicon will not "
@@ -598,8 +601,54 @@ msgstr "Sélectionner plusieurs dossiers"
 msgid "No folder matches your search"
 msgstr "Aucun dossier ne correspond à votre recherche"
 
+#, python-format
+msgid "%d folder to check"
+msgid_plural "%d folders to check"
+msgstr[0] "%d dossier à vérifier"
+msgstr[1] "%d dossiers à vérifier"
+
 msgid "Could Not Read the Saved Data"
 msgstr "Impossible de lire les données enregistrées"
+
+msgid "Nothing needs to be repaired."
+msgstr "Rien à réparer."
+
+msgid "Regenerate the icon"
+msgstr "Régénérer l’icône"
+
+msgid "Take back the Custicon icon (replaces the one you chose)"
+msgstr "Reprendre l’icône Custicon (remplace celle que vous avez choisie)"
+
+msgid "Forget this folder (there is no icon to restore)"
+msgstr "Oublier ce dossier (aucune icône à remettre)"
+
+msgid "Repair Folders"
+msgstr "Réparer des dossiers"
+
+msgid ""
+"Choose what Custicon should do. Nothing is changed until you click Repair."
+msgstr "Choisissez ce que Custicon doit faire. Rien n’est modifié avant de cliquer sur Réparer."
+
+msgid "Repair"
+msgstr "Réparer"
+
+#, python-format
+msgid "Repair %d Folder"
+msgid_plural "Repair %d Folders"
+msgstr[0] "Réparer %d dossier"
+msgstr[1] "Réparer %d dossiers"
+
+msgid "Could Not Repair the Folders"
+msgstr "Impossible de réparer les dossiers"
+
+#, python-format
+msgid ""
+"%(repaired)d repaired, %(forgotten)d forgotten, %(failed)d failed. Press F5 "
+"in %(manager)s to see the changes."
+msgstr "%(repaired)d réparé(s), %(forgotten)d oublié(s), %(failed)d en échec. Appuyez sur F5 dans %(manager)s pour voir les changements."
+
+msgid "Some Folders Could Not Be Repaired"
+msgstr "Certains dossiers n’ont pas pu être réparés"
 
 msgid "Forget This Folder"
 msgstr "Oublier ce dossier"

@@ -20,6 +20,7 @@ itself. This guide describes every step.
 - [Several folders at once](#several-folders-at-once)
 - [Corner badge](#corner-badge)
 - [Saving and restoring your settings](#saving-and-restoring-your-settings)
+- [Repairing folders](#repairing-folders)
 - [Removing an icon](#removing-an-icon)
 - [After a theme change](#after-a-theme-change)
 
@@ -225,6 +226,18 @@ is regenerated with the settings of the file. A report tells what happened:
 - your current styles and favorites are kept and completed, and your remembered appearance is not overwritten.
 
 Restoring twice gives the same result. Then press F5 in your file manager.
+
+## Repairing folders
+
+When some folders need a check (the folder was moved or deleted, the icon file is missing, or you changed the icon with your
+file manager), a bar **N folders to check** appears at the top of the window. **Repair…** opens a list with one box per problem:
+
+- **Icon file missing**: *Regenerate the icon*, ticked by default because it is safe.
+- **Icon changed outside Custicon**: *Take back the Custicon icon*, not ticked: it replaces the icon you chose yourself (that icon is kept
+  and given back if you remove the Custicon icon later).
+- **Folder not found**: *Forget this folder*, not ticked. To find a moved folder instead, select it in the list and use **Find the Folder…**.
+
+Nothing is changed until you click **Repair**, and only the ticked folders are touched. The bar disappears when nothing is left to check.
 
 ## Removing an icon
 

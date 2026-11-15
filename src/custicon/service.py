@@ -52,6 +52,14 @@ RESET_RESTORED = "restored"
 RESET_KEPT_USER_ICON = "kept-user-icon"
 RESET_FOLDER_MISSING = "folder-missing"
 RESET_UNKNOWN = "unknown"
+REPAIR_REGENERATE = "regenerate"
+REPAIR_TAKE_BACK = "take-back"
+REPAIR_FORGET = "forget"
+REPAIR_ACTIONS = {
+    STATUS_ICON_FILE_MISSING: REPAIR_REGENERATE,
+    STATUS_ICON_CHANGED: REPAIR_TAKE_BACK,
+    STATUS_FOLDER_MISSING: REPAIR_FORGET,
+}
 
 
 def is_clean_text(text) -> bool:
@@ -212,6 +220,22 @@ class RestoreReport:
 @dataclass
 class ApplyReport:
     applied: list[str] = field(default_factory=list)
+    failed: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class Problem:
+    folder: str
+    status: str
+    action: str
+
+
+@dataclass
+class RepairReport:
+    regenerated: list[str] = field(default_factory=list)
+    taken_back: list[str] = field(default_factory=list)
+    forgotten: list[str] = field(default_factory=list)
+    skipped: list[str] = field(default_factory=list)
     failed: dict[str, str] = field(default_factory=dict)
 
 
@@ -719,6 +743,37 @@ class Service:
 
     def entry_status(self, entry: Entry) -> str:
         return self._status(entry)
+
+    def problems(self, known: list[Customized] | None = None) -> list[Problem]:
+        if known is None:
+            known = self.customized()
+        return [
+            Problem(item.entry.folder, item.status, REPAIR_ACTIONS[item.status])
+            for item in known
+            if item.status in REPAIR_ACTIONS
+        ]
+
+    def repair(self, folders: list[str]) -> RepairReport:
+        report = RepairReport()
+        for key in dict.fromkeys(folders):
+            entry = self._store.get(key)
+            if entry is None:
+                report.skipped.append(key)
+                continue
+            action = REPAIR_ACTIONS.get(self._status(entry))
+            if action is None:
+                report.skipped.append(key)
+                continue
+            try:
+                if action == REPAIR_FORGET:
+                    self.forget(key)
+                    report.forgotten.append(key)
+                else:
+                    self.apply(Path(key), Settings.from_dict(entry.settings), entry.backend)
+                    (report.regenerated if action == REPAIR_REGENERATE else report.taken_back).append(key)
+            except (CusticonError, OSError) as error:
+                report.failed[key] = str(error)
+        return report
 
     def folder_file(self, theme_name: str | None = None) -> Path:
         return self._theme(theme_name or self._theme_name()).folder_file()

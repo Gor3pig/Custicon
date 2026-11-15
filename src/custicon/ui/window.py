@@ -6,7 +6,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
 
 from .. import environment
 from ..config import APP_ID, APP_NAME
@@ -23,6 +23,9 @@ from ..service import (
     STATUS_ICON_CHANGED,
     STATUS_ICON_FILE_MISSING,
     STATUS_OK,
+    REPAIR_FORGET,
+    REPAIR_REGENERATE,
+    REPAIR_TAKE_BACK,
     RegenerationReport,
     Service,
 )
@@ -120,6 +123,8 @@ class MainWindow(Adw.ApplicationWindow):
             revealed=False,
         )
         self.outdated_banner.connect("button-clicked", lambda *_args: self._start_regeneration())
+        self.problems_banner = Adw.Banner(title="", button_label=_("Repair…"), revealed=False)
+        self.problems_banner.connect("button-clicked", lambda *_args: self._open_repair())
         unsupported = environment.unsupported_file_manager()
         self.unsupported_banner = Adw.Banner(
             title=_("%s cannot show custom folder icons, so the icons made with Custicon will not appear in it.") % (unsupported or ""),
@@ -129,6 +134,7 @@ class MainWindow(Adw.ApplicationWindow):
         page.append(self.permission_banner)
         page.append(self.unsupported_banner)
         page.append(self.outdated_banner)
+        page.append(self.problems_banner)
         page.append(self.stack)
         self.toasts.set_child(page)
         self.set_content(self.toasts)
@@ -347,6 +353,90 @@ class MainWindow(Adw.ApplicationWindow):
         except CusticonError:
             stale = []
         self.outdated_banner.set_revealed(bool(stale))
+        self._update_problems_banner(known)
+
+    def _update_problems_banner(self, known: list | None = None) -> None:
+        try:
+            count = len(self._service.problems(known))
+        except CusticonError:
+            count = 0
+        if count:
+            self.problems_banner.set_title(ngettext("%d folder to check", "%d folders to check", count) % count)
+        self.problems_banner.set_revealed(count > 0)
+
+    def _open_repair(self) -> None:
+        try:
+            problems = self._service.problems()
+        except CusticonError as error:
+            self._alert(_("Could Not Read the Saved Data"), describe_error(error))
+            return
+        if not problems:
+            self.toast(_("Nothing needs to be repaired."))
+            self._update_problems_banner()
+            return
+        descriptions = {
+            REPAIR_REGENERATE: _("Regenerate the icon"),
+            REPAIR_TAKE_BACK: _("Take back the Custicon icon (replaces the one you chose)"),
+            REPAIR_FORGET: _("Forget this folder (there is no icon to restore)"),
+        }
+        dialog = Adw.AlertDialog(heading=_("Repair Folders"), body=_("Choose what Custicon should do. Nothing is changed until you click Repair."))
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        checks = []
+        for action in (REPAIR_REGENERATE, REPAIR_TAKE_BACK, REPAIR_FORGET):
+            group = [problem for problem in problems if problem.action == action]
+            if not group:
+                continue
+            title = Gtk.Label(label=status_label(group[0].status), xalign=0.0, margin_top=8)
+            title.add_css_class("heading")
+            content.append(title)
+            for problem in group:
+                check = Gtk.CheckButton(active=action == REPAIR_REGENERATE)
+                text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+                name = Gtk.Label(label=folder_name(problem.folder), xalign=0.0, ellipsize=Pango.EllipsizeMode.MIDDLE)
+                detail = Gtk.Label(label=descriptions[action], xalign=0.0, wrap=True)
+                detail.add_css_class("dim-label")
+                detail.add_css_class("caption")
+                text.append(name)
+                text.append(detail)
+                check.set_child(text)
+                content.append(check)
+                checks.append((problem.folder, check))
+        scrolled = Gtk.ScrolledWindow(child=content, propagate_natural_height=True, max_content_height=320, hscrollbar_policy=Gtk.PolicyType.NEVER)
+        dialog.set_extra_child(scrolled)
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("repair", _("Repair"))
+        dialog.set_response_appearance("repair", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+
+        def refresh(*_args) -> None:
+            count = sum(1 for _key, check in checks if check.get_active())
+            dialog.set_response_enabled("repair", count > 0)
+            dialog.set_response_label("repair", ngettext("Repair %d Folder", "Repair %d Folders", count) % count if count else _("Repair"))
+
+        for _key, check in checks:
+            check.connect("toggled", refresh)
+        refresh()
+        dialog.choose(self, None, self._repair_chosen, checks)
+
+    def _repair_chosen(self, dialog, result, checks) -> None:
+        if dialog.choose_finish(result) != "repair":
+            return
+        keys = [key for key, check in checks if check.get_active()]
+        try:
+            report = self._service.repair(keys)
+        except CusticonError as error:
+            self._alert(_("Could Not Repair the Folders"), describe_error(error))
+            return
+        repaired = len(report.regenerated) + len(report.taken_back)
+        self.toast(
+            _("%(repaired)d repaired, %(forgotten)d forgotten, %(failed)d failed. Press F5 in %(manager)s to see the changes.")
+            % {"repaired": repaired, "forgotten": len(report.forgotten), "failed": len(report.failed), "manager": manager_name()}
+        )
+        self.reload(select=self._current_key)
+        if report.failed:
+            lines = [f"{folder_name(key)}: {message}" for key, message in report.failed.items()]
+            self._alert(_("Some Folders Could Not Be Repaired"), "\n".join(lines))
 
     def _customized(self) -> list:
         try:
