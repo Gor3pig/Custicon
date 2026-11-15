@@ -48,6 +48,27 @@ FOLDER_TINT_FILTER_ID = "custicon-folder-tint"
 Box = tuple[float, float, float, float]
 
 
+BADGE_CORNERS = ("tl", "tr", "bl", "br")
+BADGE_MIN_SIZE = 0.15
+BADGE_MAX_SIZE = 0.5
+BADGE_DEFAULT_SIZE = 0.3
+BADGE_DEFAULT_COLOR = "#e62d42"
+BADGE_GLYPH_RATIO = 0.58
+BADGE_MARGIN = 0.03
+BADGE_TOP_MARGIN = 0.12
+BADGE_LIGHT_GLYPH = "#ffffff"
+BADGE_DARK_GLYPH = "#241f31"
+BADGE_DARK_LUMINANCE = 0.62
+
+
+@dataclass(frozen=True)
+class Badge:
+    glyph: Path | bytes
+    color: str = BADGE_DEFAULT_COLOR
+    corner: str = "br"
+    size: float = BADGE_DEFAULT_SIZE
+
+
 @dataclass(frozen=True)
 class GlyphStyle:
     color: str
@@ -57,6 +78,7 @@ class GlyphStyle:
     tint: bool = True
     folder_tint: str | None = None
     flat_tint: bool = False
+    badge: Badge | None = None
 
 
 def svg_tag(name: str) -> str:
@@ -410,7 +432,65 @@ def load_glyph(source: Path | bytes, style: GlyphStyle, taken_ids: set[str]) -> 
     return [image_element(document, "image/svg+xml", width, height, x, y)], (x, y, width, height)
 
 
+def badge_glyph_color(disc: str) -> str:
+    red, green, blue = (int(disc[index : index + 2], 16) / 255 for index in (1, 3, 5))
+    luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    return BADGE_DARK_GLYPH if luminance > BADGE_DARK_LUMINANCE else BADGE_LIGHT_GLYPH
+
+
+def check_badge(badge: Badge) -> None:
+    if not is_hex_color(badge.color):
+        raise InvalidIconError(f"invalid badge color {badge.color!r}")
+    if badge.corner not in BADGE_CORNERS:
+        raise InvalidIconError(f"invalid badge corner {badge.corner!r}")
+    if isinstance(badge.size, bool) or not isinstance(badge.size, (int, float)) or not math.isfinite(badge.size):
+        raise InvalidIconError("invalid badge size")
+    if not BADGE_MIN_SIZE <= badge.size <= BADGE_MAX_SIZE:
+        raise InvalidIconError(f"badge size must be between {BADGE_MIN_SIZE} and {BADGE_MAX_SIZE}")
+
+
+def add_badge(result: ET.Element, badge: Badge, folder_box: Box, taken_ids: set[str]) -> None:
+    folder_x, folder_y, folder_width, folder_height = folder_box
+    diameter = badge.size * folder_width
+    margin = BADGE_MARGIN * folder_width
+    center_x = folder_x + margin + diameter / 2 if badge.corner.endswith("l") else folder_x + folder_width - margin - diameter / 2
+    if badge.corner.startswith("t"):
+        center_y = folder_y + BADGE_TOP_MARGIN * folder_height + diameter / 2
+    else:
+        center_y = folder_y + folder_height - margin - diameter / 2
+    ET.SubElement(
+        result,
+        svg_tag("circle"),
+        {
+            "cx": number(center_x),
+            "cy": number(center_y),
+            "r": number(diameter / 2),
+            "fill": badge.color,
+            "stroke": "#ffffff",
+            "stroke-opacity": "0.9",
+            "stroke-width": number(diameter * 0.045),
+        },
+    )
+    elements, (glyph_x, glyph_y, glyph_width, glyph_height) = load_glyph(
+        badge.glyph, GlyphStyle(color=badge_glyph_color(badge.color)), taken_ids
+    )
+    scale = BADGE_GLYPH_RATIO * diameter / max(glyph_width, glyph_height)
+    group = ET.SubElement(
+        result,
+        svg_tag("g"),
+        {
+            "transform": (
+                f"translate({number(center_x)} {number(center_y)}) scale({number(scale)}) "
+                f"translate({number(-(glyph_x + glyph_width / 2))} {number(-(glyph_y + glyph_height / 2))})"
+            )
+        },
+    )
+    group.extend(elements)
+
+
 def check_style(style: GlyphStyle) -> None:
+    if style.badge is not None:
+        check_badge(style.badge)
     if not is_hex_color(style.color):
         raise InvalidIconError(f"invalid color {style.color!r}")
     if style.folder_tint is not None and not is_hex_color(style.folder_tint):
@@ -458,4 +538,6 @@ def compose(folder_file: Path, glyph: Path | bytes, style: GlyphStyle) -> str:
         },
     )
     group.extend(glyph_elements)
+    if style.badge is not None:
+        add_badge(result, style.badge, (folder_x, folder_y, folder_width, folder_height), taken_ids)
     return XML_HEADER + serialize(result) + "\n"

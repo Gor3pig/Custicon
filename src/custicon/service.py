@@ -6,7 +6,17 @@ from pathlib import Path
 import math
 
 from .color import auto_glyph_color, is_hex_color
-from .compose import GlyphStyle, compose, tinted_folder_svg
+from .compose import (
+    BADGE_CORNERS,
+    BADGE_DEFAULT_COLOR,
+    BADGE_DEFAULT_SIZE,
+    BADGE_MAX_SIZE,
+    BADGE_MIN_SIZE,
+    Badge,
+    GlyphStyle,
+    compose,
+    tinted_folder_svg,
+)
 from .errors import (
     CusticonError,
     FolderError,
@@ -16,7 +26,7 @@ from .errors import (
     MetadataError,
     StoreError,
 )
-from . import dotdirectory
+from . import backup, dotdirectory
 from .environment import BACKEND_DIRECTORY, BACKEND_GVFS
 from .metadata import read_custom_icon, write_custom_icon
 from .render import is_png, read_icon_bytes
@@ -29,6 +39,7 @@ MIN_SIZE = 0.2
 MAX_SIZE = 3.0
 MAX_OFFSET = 0.5
 
+BADGE_FIELDS = ("badge_glyph", "badge_color", "badge_corner", "badge_size")
 APPEARANCE_FIELDS = ("color", "accent", "size", "offset_x", "offset_y", "tint", "folder_tint", "folder_tint_accent")
 
 STATUS_OK = "ok"
@@ -58,8 +69,13 @@ class Settings:
     folder_tint: str | None = None
     folder_tint_accent: bool = False
     glyph_revision: int | None = None
+    badge_glyph: str | None = None
+    badge_color: str | None = None
+    badge_corner: str = "br"
+    badge_size: float = BADGE_DEFAULT_SIZE
 
     def validate(self) -> None:
+        self._validate_badge()
         for text in (self.glyph_name, self.glyph_file, self.glyph_text, self.color, self.glyph_copy, self.folder_tint):
             if text is not None and (not isinstance(text, str) or "\0" in text):
                 raise InvalidSettingsError("invalid text in the settings")
@@ -90,8 +106,26 @@ class Settings:
             if not -MAX_OFFSET <= offset <= MAX_OFFSET:
                 raise InvalidSettingsError(f"offset must be between {-MAX_OFFSET} and {MAX_OFFSET}")
 
+    def _validate_badge(self) -> None:
+        for text in (self.badge_glyph, self.badge_color):
+            if text is not None and (not isinstance(text, str) or "\0" in text or not text):
+                raise InvalidSettingsError("invalid text in the badge settings")
+        if self.badge_color is not None and not is_hex_color(self.badge_color):
+            raise InvalidSettingsError(f"invalid badge color {self.badge_color!r}")
+        if self.badge_corner not in BADGE_CORNERS:
+            raise InvalidSettingsError(f"invalid badge corner {self.badge_corner!r}")
+        size = self.badge_size
+        if isinstance(size, bool) or not isinstance(size, (int, float)) or not math.isfinite(size):
+            raise InvalidSettingsError("the badge size must be a finite number")
+        if not BADGE_MIN_SIZE <= size <= BADGE_MAX_SIZE:
+            raise InvalidSettingsError(f"the badge size must be between {BADGE_MIN_SIZE} and {BADGE_MAX_SIZE}")
+
     def to_dict(self) -> dict:
-        return asdict(self)
+        values = asdict(self)
+        if self.badge_glyph is None:
+            for name in BADGE_FIELDS:
+                del values[name]
+        return values
 
     @classmethod
     def from_dict(cls, values: dict) -> "Settings":
@@ -145,6 +179,23 @@ class WindowState:
     width: int
     height: int
     maximized: bool
+
+
+@dataclass
+class BackupSummary:
+    folders: int
+    styles: int
+    pictograms: int
+
+
+@dataclass
+class RestoreReport:
+    restored: list[str] = field(default_factory=list)
+    kept: list[str] = field(default_factory=list)
+    missing: list[str] = field(default_factory=list)
+    failed: dict[str, str] = field(default_factory=dict)
+    styles_added: int = 0
+    styles_rejected: int = 0
 
 
 @dataclass
@@ -208,8 +259,19 @@ class Service:
             tint=settings.tint if settings.glyph_file else True,
             folder_tint=folder_tint,
             flat_tint=flat_tint,
+            badge=self._badge(theme, settings),
         )
         return BuiltIcon(compose(folder_file, glyph_file, style), color, name, folder_file, folder_tint)
+
+    def _badge(self, theme: IconTheme, settings: Settings) -> Badge | None:
+        if not settings.badge_glyph:
+            return None
+        return Badge(
+            self._find_glyph(theme, settings.badge_glyph),
+            settings.badge_color or BADGE_DEFAULT_COLOR,
+            settings.badge_corner,
+            settings.badge_size,
+        )
 
     def _glyph_revision(self, settings: Settings) -> int | None:
         icon_set = self._sets.for_name(settings.glyph_name)
@@ -490,9 +552,12 @@ class Service:
             raise StoreError("this is not a Custicon styles file") from error
         if not isinstance(incoming, dict) or not isinstance(incoming.get("styles"), list):
             raise StoreError("this is not a Custicon styles file")
+        return self._merge_styles(incoming["styles"])
+
+    def _merge_styles(self, items: list) -> tuple[int, int]:
         merged = {style.name.casefold(): style for style in self.styles()}
         imported = rejected = 0
-        for item in incoming["styles"]:
+        for item in items:
             style = self._valid_style(item)
             if style is None or (style.name.casefold() not in merged and len(merged) >= MAX_STYLES):
                 rejected += 1
@@ -502,6 +567,77 @@ class Service:
         if imported:
             self._store.save_styles([{"name": style.name, "appearance": style.appearance} for style in merged.values()])
         return imported, rejected
+
+    def export_backup(self, path: Path | str) -> BackupSummary:
+        from .config import VERSION
+
+        entries = list(self._store.all().values())
+        styles = self.styles()
+        memory = self.picker_memory()
+        document = backup.build_document(VERSION, entries, styles, self._store.load_defaults(), memory)
+        try:
+            with open(path, "wb") as handle:
+                handle.write(backup.dump(document))
+        except OSError as error:
+            raise StoreError(f"cannot write {Path(path).name}: {error.strerror}") from error
+        return BackupSummary(len(entries), len(styles), len(set(memory.recent) | set(memory.favorites)))
+
+    def import_backup(self, path: Path | str) -> RestoreReport:
+        try:
+            with open(path, "rb") as handle:
+                data = handle.read(backup.MAX_BYTES + 1)
+        except OSError as error:
+            raise StoreError(f"cannot read {Path(path).name}: {error.strerror}") from error
+        document = backup.parse(data)
+        report = RestoreReport()
+        for folder, values in backup.folder_items(document):
+            self._restore_folder(folder, values, report)
+        styles = document.get("styles")
+        if isinstance(styles, list):
+            before = len(self.styles())
+            _imported, report.styles_rejected = self._merge_styles(styles)
+            report.styles_added = len(self.styles()) - before
+        self._restore_defaults(document.get("defaults"))
+        self._restore_picker(document.get("picker"))
+        return report
+
+    def _restore_folder(self, folder: str, values: dict, report: RestoreReport) -> None:
+        try:
+            target = self._resolved(folder)
+            key = str(target)
+            if not target.is_dir():
+                report.missing.append(key)
+                return
+            existing = self._store.get(key)
+            if existing is not None and self._status(existing) == STATUS_ICON_CHANGED:
+                report.kept.append(key)
+                return
+            self.apply(target, Settings.from_dict(values))
+        except (CusticonError, OSError, TypeError, ValueError) as error:
+            report.failed[folder] = str(error)
+            return
+        report.restored.append(key)
+
+    def _restore_defaults(self, values) -> None:
+        if not isinstance(values, dict) or self._store.load_defaults() is not None:
+            return
+        cleaned = self.clean_appearance(values)
+        if cleaned:
+            try:
+                self._store.save_defaults(cleaned)
+            except CusticonError:
+                pass
+
+    def _restore_picker(self, picker) -> None:
+        if not isinstance(picker, dict):
+            return
+        memory = self.picker_memory()
+        recent = [*memory.recent, *[name for name in Store._clean_names(picker.get("recent"), 1000) if name not in memory.recent]]
+        favorites = [*memory.favorites, *[name for name in Store._clean_names(picker.get("favorites"), 1000) if name not in memory.favorites]]
+        try:
+            self._store.save_picker(recent, favorites)
+        except CusticonError:
+            pass
 
     def _valid_style(self, item) -> Style | None:
         if not isinstance(item, dict) or not isinstance(item.get("name"), str) or not isinstance(item.get("appearance"), dict):
