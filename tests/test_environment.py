@@ -97,10 +97,12 @@ class HomeAccessTests(WorkspaceTestCase):
         info.write_text("[Application]\nname=x\n\n[Context]\n" + (f"filesystems={filesystems}\n" if filesystems is not None else ""))
         return self.run_access(info, home)
 
+    backend = environment.BACKEND_GVFS
+
     def run_access(self, info, home):
         with mock.patch.object(environment, "FLATPAK_INFO", str(info)), mock.patch.object(
             environment.os.path, "expanduser", side_effect=lambda value: str(home) if value == "~" else value
-        ):
+        ), mock.patch.object(environment, "detect_backend", return_value=self.backend):
             return environment.home_access()
 
     def test_outside_the_sandbox_the_home_folder_is_always_visible(self):
@@ -110,6 +112,21 @@ class HomeAccessTests(WorkspaceTestCase):
     def test_home_and_host_grant_access_in_either_mode(self):
         for value in ("home;", "home:ro;", "home:rw;", "host;", "xdg-download;home:ro;", "!home;home:ro;"):
             self.assertTrue(self.access(value), value)
+
+    def test_the_directory_engine_needs_write_access_to_the_home_folder(self):
+        self.backend = environment.BACKEND_DIRECTORY
+        for value in ("home:ro;", "~:ro;", "!home;home:ro;"):
+            self.assertFalse(self.access(value), value)
+        for value in ("home;", "home:rw;", "host;"):
+            self.assertTrue(self.access(value), value)
+
+    def test_a_visible_read_only_home_is_not_enough_for_the_directory_engine(self):
+        self.backend = environment.BACKEND_DIRECTORY
+        self.assertFalse(self.access("home:ro;", names=(".var", ".config")))
+        self.assertFalse(self.access("xdg-download;home:ro;", names=(".config",)))
+        self.assertTrue(self.access(None, names=(".config",)))
+        self.backend = environment.BACKEND_GVFS
+        self.assertTrue(self.access("home:ro;", names=(".config",)))
 
     def test_other_folders_do_not_grant_access_to_the_home_folder(self):
         for value in ("xdg-download;", "xdg-documents:ro;", "!home;", "/srv;", "host-os;", "", None):

@@ -52,8 +52,10 @@ def own_data_home() -> str | None:
     return os.environ.get(OWN_DATA_VARIABLE)
 
 
-def grants_home(entry: str) -> bool:
-    name = entry.strip().partition(":")[0]
+def grants_home(entry: str, writable: bool = False) -> bool:
+    name, _separator, mode = entry.strip().partition(":")
+    if writable and mode == "ro":
+        return False
     if name in HOME_ACCESS or name == "~":
         return True
     return bool(name) and os.path.normpath(name) == os.path.normpath(os.path.expanduser("~"))
@@ -76,8 +78,11 @@ def home_access() -> bool:
         entries = parser.get("Context", "filesystems", fallback=None)
     except (OSError, ValueError, configparser.Error):
         return True
-    if entries is not None and any(grants_home(entry) for entry in entries.split(";")):
+    writable = detect_backend() == BACKEND_DIRECTORY
+    if entries is not None and any(grants_home(entry, writable) for entry in entries.split(";")):
         return True
+    if writable and entries is not None and any(grants_home(entry) for entry in entries.split(";")):
+        return False
     return home_is_visible()
 
 
