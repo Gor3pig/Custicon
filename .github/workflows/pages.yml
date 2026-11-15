@@ -96,7 +96,13 @@ jobs:
           test -n "$artifact"
           token=$(curl -sS --fail -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://github.com/$GITHUB_REPOSITORY_OWNER" | jq -r .value)
           version="$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          answer=$(gh api -X POST "repos/$GH_REPO/pages/deployments" -F artifact_id="$artifact" -f environment=github-pages -f pages_build_version="$version" -f oidc_token="$token")
+          echo "Creating the deployment $version for the artifact $artifact"
+          if ! gh api --include -X POST "repos/$GH_REPO/pages/deployments" -F artifact_id="$artifact" -f environment=github-pages -f pages_build_version="$version" -f oidc_token="$token" > "$RUNNER_TEMP/answer" 2>&1; then
+            echo "The deployment could not be created:"
+            cat "$RUNNER_TEMP/answer"
+            exit 1
+          fi
+          answer=$(sed -n '/^{/,$p' "$RUNNER_TEMP/answer")
           identifier=$(jq -r .id <<<"$answer")
           echo "page_url=$(jq -r .page_url <<<"$answer")" >> "$GITHUB_OUTPUT"
           for attempt in $(seq 1 60); do
