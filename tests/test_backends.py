@@ -29,6 +29,11 @@ DOLPHIN_FILE = "[Dolphin]\nTimestamp=2026,11,15,1,2,3.456\nViewMode=1\n"
 
 
 class DesktopDetectionTests(unittest.TestCase):
+    def setUp(self):
+        for target, name in ((environment, "default_file_manager"), (themes, "config_icon_theme")):
+            patcher = mock.patch.object(target, name, return_value=None)
+            patcher.start()
+            self.addCleanup(patcher.stop)
     def backend(self, value, probe=lambda: False):
         return environment.detect_backend({environment.DESKTOP_VARIABLE: value}, probe)
 
@@ -79,6 +84,11 @@ class DesktopDetectionTests(unittest.TestCase):
 
 
 class UnsupportedDesktopTests(unittest.TestCase):
+    def setUp(self):
+        for target, name in ((environment, "default_file_manager"), (themes, "config_icon_theme")):
+            patcher = mock.patch.object(target, name, return_value=None)
+            patcher.start()
+            self.addCleanup(patcher.stop)
     def manager(self, value):
         return environment.unsupported_file_manager({environment.DESKTOP_VARIABLE: value})
 
@@ -115,6 +125,11 @@ class UnsupportedDesktopTests(unittest.TestCase):
 
 
 class KdeDetectionTests(unittest.TestCase):
+    def setUp(self):
+        for target, name in ((environment, "default_file_manager"), (themes, "config_icon_theme")):
+            patcher = mock.patch.object(target, name, return_value=None)
+            patcher.start()
+            self.addCleanup(patcher.stop)
     def kde(self, value, probe=lambda: True):
         return environment.is_kde({environment.DESKTOP_VARIABLE: value}, probe)
 
@@ -140,6 +155,11 @@ class KdeDetectionTests(unittest.TestCase):
 
 
 class KdeThemeTests(unittest.TestCase):
+    def setUp(self):
+        for target, name in ((environment, "default_file_manager"), (themes, "config_icon_theme")):
+            patcher = mock.patch.object(target, name, return_value=None)
+            patcher.start()
+            self.addCleanup(patcher.stop)
     def test_a_kde_desktop_reads_its_own_icon_theme_first(self):
         with mock.patch.object(environment, "is_kde", return_value=True), mock.patch.object(themes, "portal_kde_icon_theme", return_value="breeze"), mock.patch.object(themes, "portal_icon_theme", return_value="Adwaita"):
             self.assertEqual(themes.active_icon_theme(), "breeze")
@@ -608,6 +628,115 @@ class MixedBackendTests(WorkspaceTestCase):
         self.addCleanup(gvfs.reset, b)
         self.assertEqual(self.store.get(str(a)).backend, "directory")
         self.assertEqual(self.store.get(str(b)).backend, "gvfs")
+
+
+class MimeApplicationsTests(WorkspaceTestCase):
+    def setUp(self):
+        self.home = self.make_workspace() / "home"
+        (self.home / ".config").mkdir(parents=True)
+        patcher = mock.patch.dict(os.environ, {"HOME": str(self.home)})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, value, name=".config/mimeapps.list"):
+        path = self.home / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"[Default Applications]\ninode/directory={value}\n")
+
+    def test_no_file_means_no_manager(self):
+        self.assertIsNone(environment.default_file_manager())
+
+    def test_dolphin_as_default_is_found(self):
+        self.write("org.kde.dolphin.desktop;")
+        self.assertEqual(environment.default_file_manager(), ("Dolphin", environment.BACKEND_DIRECTORY))
+
+    def test_only_the_first_choice_counts_and_case_is_ignored(self):
+        self.write("Org.GNOME.Nautilus.desktop;org.kde.dolphin.desktop;")
+        self.assertEqual(environment.default_file_manager(), ("Nautilus", environment.BACKEND_GVFS))
+
+    def test_an_unknown_manager_is_not_supported(self):
+        self.write("thunar.desktop;")
+        self.assertIsNone(environment.default_file_manager())
+
+    def test_the_local_applications_folder_is_a_second_source(self):
+        self.write("pcmanfm-qt.desktop;", ".local/share/applications/mimeapps.list")
+        self.assertEqual(environment.default_file_manager(), ("PCManFM-Qt", environment.BACKEND_DIRECTORY))
+
+    def test_a_broken_file_is_ignored(self):
+        (self.home / ".config" / "mimeapps.list").write_bytes(b"\xff\xfe[[[")
+        self.assertIsNone(environment.default_file_manager())
+
+    def test_an_unknown_desktop_follows_the_default_file_manager(self):
+        variable = {environment.DESKTOP_VARIABLE: "Hyprland"}
+        self.assertEqual(environment.detect_backend(variable, lambda: False), environment.BACKEND_GVFS)
+        self.write("org.kde.dolphin.desktop;")
+        self.assertEqual(environment.detect_backend(variable, lambda: False), environment.BACKEND_DIRECTORY)
+        self.assertEqual(environment.file_manager_name(variable), "Dolphin")
+        self.assertIsNone(environment.unsupported_file_manager({environment.DESKTOP_VARIABLE: "XFCE"}))
+
+    def test_a_known_desktop_ignores_the_default_file_manager(self):
+        self.write("org.kde.dolphin.desktop;")
+        for desktop, backend in (("GNOME", "gvfs"), ("MATE", "gvfs"), ("GNOME:KDE", "gvfs")):
+            self.assertEqual(environment.detect_backend({environment.DESKTOP_VARIABLE: desktop}, lambda: False), backend)
+        self.assertEqual(environment.file_manager_name({environment.DESKTOP_VARIABLE: "GNOME"}), "Nautilus")
+
+    def test_a_missing_variable_keeps_asking_the_portal_first(self):
+        self.write("org.gnome.nautilus.desktop;")
+        self.assertEqual(environment.detect_backend({}, lambda: True), environment.BACKEND_DIRECTORY)
+        self.assertEqual(environment.detect_backend({}, lambda: False), environment.BACKEND_GVFS)
+        self.write("org.kde.dolphin.desktop;")
+        self.assertEqual(environment.detect_backend({}, lambda: False), environment.BACKEND_DIRECTORY)
+
+    def test_the_kde_icon_theme_falls_back_to_kdeglobals(self):
+        (self.home / ".config" / "kdeglobals").write_text("[Icons]\nTheme=breeze-dark\n[General]\nTheme=other\n")
+        with mock.patch.object(environment, "is_kde", return_value=True), mock.patch.object(themes, "portal_kde_icon_theme", return_value=None):
+            self.assertEqual(themes.active_icon_theme(), "breeze-dark")
+
+    def test_the_lxqt_icon_theme_is_read_from_its_configuration(self):
+        (self.home / ".config" / "lxqt").mkdir()
+        (self.home / ".config" / "lxqt" / "lxqt.conf").write_text("[General]\nicon_theme=Papirus-Dark\n")
+        with mock.patch.dict(os.environ, {environment.DESKTOP_VARIABLE: "LXQt"}), mock.patch.object(themes, "portal_icon_theme", return_value="Adwaita"):
+            self.assertEqual(themes.active_icon_theme(), "Papirus-Dark")
+
+    def test_another_desktop_never_reads_the_lxqt_configuration(self):
+        (self.home / ".config" / "lxqt").mkdir()
+        (self.home / ".config" / "lxqt" / "lxqt.conf").write_text("[General]\nicon_theme=Papirus-Dark\n")
+        with mock.patch.dict(os.environ, {environment.DESKTOP_VARIABLE: "GNOME"}), mock.patch.object(themes, "portal_icon_theme", return_value="Adwaita"):
+            self.assertEqual(themes.active_icon_theme(), "Adwaita")
+
+    def test_a_missing_or_empty_configuration_gives_nothing(self):
+        self.assertIsNone(themes.config_icon_theme("~/.config/kdeglobals", "Icons", "Theme"))
+        (self.home / ".config" / "kdeglobals").write_text("[Icons]\nTheme=\n")
+        self.assertIsNone(themes.config_icon_theme("~/.config/kdeglobals", "Icons", "Theme"))
+
+    def test_a_duplicated_key_is_tolerated(self):
+        (self.home / ".config" / "mimeapps.list").write_text(
+            "[Default Applications]\ninode/directory=org.kde.dolphin.desktop;\ninode/directory=nemo.desktop;\n"
+        )
+        self.assertIsNotNone(environment.default_file_manager())
+        (self.home / ".config" / "kdeglobals").write_text("[Icons]\nTheme=a\nTheme=b\n")
+        self.assertIsNotNone(themes.config_icon_theme("~/.config/kdeglobals", "Icons", "Theme"))
+
+    def test_a_file_without_a_section_gives_nothing(self):
+        (self.home / ".config" / "kdeglobals").write_text("Theme=breeze\n")
+        self.assertIsNone(themes.config_icon_theme("~/.config/kdeglobals", "Icons", "Theme"))
+
+    def test_an_unknown_desktop_with_dolphin_never_reads_the_lxqt_configuration(self):
+        self.write("org.kde.dolphin.desktop;")
+        (self.home / ".config" / "lxqt").mkdir()
+        (self.home / ".config" / "lxqt" / "lxqt.conf").write_text("[General]\nicon_theme=Papirus-Dark\n")
+        with mock.patch.dict(os.environ, {environment.DESKTOP_VARIABLE: "Hyprland"}), mock.patch.object(themes, "portal_icon_theme", return_value="Adwaita"):
+            self.assertEqual(themes.active_icon_theme(), "Adwaita")
+
+    def test_the_kde_portal_probe_reads_the_reply(self):
+        def reply(count):
+            child = mock.Mock(n_children=lambda: count)
+            return mock.Mock(get_child_value=lambda _index: child)
+
+        for count, expected in ((3, True), (0, False)):
+            bus = mock.Mock(call_sync=mock.Mock(return_value=reply(count)))
+            with mock.patch.object(themes.Gio, "bus_get_sync", return_value=bus):
+                self.assertIs(themes.portal_has_kde(), expected)
 
 
 if __name__ == "__main__":

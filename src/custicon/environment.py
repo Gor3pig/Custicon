@@ -27,6 +27,16 @@ FILE_MANAGERS = (
     ("COSMIC", "COSMIC Files"),
     ("PANTHEON", "Files"),
 )
+MIME_FILE_MANAGERS = {
+    "org.kde.dolphin.desktop": ("Dolphin", BACKEND_DIRECTORY),
+    "pcmanfm-qt.desktop": ("PCManFM-Qt", BACKEND_DIRECTORY),
+    "org.gnome.nautilus.desktop": ("Nautilus", BACKEND_GVFS),
+    "nemo.desktop": ("Nemo", BACKEND_GVFS),
+    "caja.desktop": ("Caja", BACKEND_GVFS),
+    "caja-browser.desktop": ("Caja", BACKEND_GVFS),
+}
+MIME_FILES = ("~/.config/mimeapps.list", "~/.local/share/applications/mimeapps.list")
+DIRECTORY_MIME_TYPE = "inode/directory"
 FLATPAK_COMMAND = "flatpak override --user --filesystem=home io.github.gor3pig.Custicon"
 
 
@@ -109,30 +119,53 @@ def is_kde(environ=None, probe=None) -> bool:
     return (probe or kde_portal_present)()
 
 
-def detect_backend(environ=None, probe=None) -> str:
+def default_file_manager() -> tuple[str, str] | None:
+    for path in MIME_FILES:
+        parser = configparser.ConfigParser(interpolation=None, strict=False, delimiters=("=",))
+        try:
+            parser.read(os.path.expanduser(path), encoding="utf-8")
+            value = parser.get("Default Applications", DIRECTORY_MIME_TYPE, fallback="")
+        except (OSError, ValueError, configparser.Error):
+            continue
+        first = next((name.strip().lower() for name in value.split(";") if name.strip()), None)
+        if first:
+            return MIME_FILE_MANAGERS.get(first)
+    return None
+
+
+def detect_backend(environ=None, probe=None, lookup=None) -> str:
     desktops = current_desktops(environ)
     if any(name in GVFS_DESKTOPS for name in desktops):
         return BACKEND_GVFS
     if any(name in DIRECTORY_DESKTOPS for name in desktops):
         return BACKEND_DIRECTORY
-    if desktops:
-        return BACKEND_GVFS
-    return BACKEND_DIRECTORY if is_kde(environ, probe) else BACKEND_GVFS
+    if not desktops and is_kde(environ, probe):
+        return BACKEND_DIRECTORY
+    found = (lookup or default_file_manager)()
+    return found[1] if found else BACKEND_GVFS
 
 
-def file_manager_name(environ=None, probe=None) -> str | None:
+def file_manager_name(environ=None, probe=None, lookup=None) -> str | None:
     desktops = current_desktops(environ)
+    if not desktops and is_kde(environ, probe):
+        return "Dolphin"
+    if not any(name in GVFS_DESKTOPS or name in DIRECTORY_DESKTOPS for name in desktops):
+        found = (lookup or default_file_manager)()
+        if found:
+            return found[0]
     if not desktops:
-        return "Dolphin" if is_kde(environ, probe) else None
+        return None
     for desktop, manager in FILE_MANAGERS:
         if desktop in desktops:
             return manager
     return None
 
 
-def unsupported_file_manager(environ=None) -> str | None:
+def unsupported_file_manager(environ=None, lookup=None) -> str | None:
     desktops = current_desktops(environ)
     if any(name in GVFS_DESKTOPS or name in DIRECTORY_DESKTOPS for name in desktops):
+        return None
+    if (lookup or default_file_manager)():
         return None
     if not any(name in UNSUPPORTED_DESKTOPS for name in desktops):
         return None

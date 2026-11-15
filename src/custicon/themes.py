@@ -1,3 +1,4 @@
+import configparser
 import os
 from pathlib import Path
 
@@ -89,6 +90,16 @@ def portal_kde_icon_theme() -> str | None:
     return value.get_string() or None
 
 
+def config_icon_theme(path: str, section: str, key: str) -> str | None:
+    parser = configparser.ConfigParser(interpolation=None, strict=False, delimiters=("=",))
+    parser.optionxform = str
+    try:
+        parser.read(os.path.expanduser(path), encoding="utf-8")
+        return parser.get(section, key, fallback="").strip() or None
+    except (OSError, ValueError, configparser.Error):
+        return None
+
+
 def portal_icon_theme() -> str | None:
     value = read_portal_setting(INTERFACE_SCHEMA, ICON_THEME_KEY)
     if value is None:
@@ -121,7 +132,11 @@ def active_icon_theme() -> str:
     from . import environment
 
     if environment.is_kde():
-        name = portal_kde_icon_theme()
+        name = portal_kde_icon_theme() or config_icon_theme("~/.config/kdeglobals", "Icons", "Theme")
+        if name:
+            return name
+    elif "LXQT" in environment.current_desktops() and environment.detect_backend() == environment.BACKEND_DIRECTORY:
+        name = config_icon_theme("~/.config/lxqt/lxqt.conf", "General", "icon_theme")
         if name:
             return name
     return portal_icon_theme() or settings_icon_theme() or DEFAULT_THEME

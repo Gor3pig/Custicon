@@ -34,7 +34,7 @@ Le code est dans `src/custicon/`. La logique ne dépend de GTK que pour la réso
 | `compose.py` | Assemblage du SVG final, recoloration du pictogramme, teinte du dossier, nettoyage des fichiers fournis. |
 | `metadata.py` | Lecture, écriture et suppression de `metadata::custom-icon` (moteur GVfs), avec relecture. |
 | `dotdirectory.py` | Moteur `.directory` : édition ligne à ligne de `Icon=`, écriture atomique, refus des liens symboliques et des fichiers trop gros, relecture. |
-| `environment.py` | Détection du bureau (`XDG_CURRENT_DESKTOP`, sonde du portail KDE en repli) et choix du moteur ; bureau inconnu ou mixte = GVfs ; liste des bureaux non pris en charge. |
+| `environment.py` | Détection du bureau (`XDG_CURRENT_DESKTOP`, sonde du portail KDE en repli) et choix du moteur ; bureau inconnu = gestionnaire par défaut lu dans `mimeapps.list` (Dolphin, PCManFM-Qt : `.directory`), sinon GVfs ; bureau mixte = GVfs ; liste des bureaux non pris en charge. |
 | `store.py` | Registre JSON, images générées rangées par empreinte du contenu, copies des pictogrammes, apparence mémorisée (`defaults.json`), styles (`styles.json`) et pictogrammes récents et favoris (`picker.json`). |
 | `service.py` | Appliquer (un dossier ou plusieurs avec `apply_many`, qui continue après un échec et rend un compte rendu), réinitialiser (un dossier ou tous), annuler un retrait, retrouver un dossier déplacé, régénérer, styles, nettoyage. Seul point d’entrée de l’interface. |
 | `environment.py` | Adaptation à l’exécution dans un bac à sable Flatpak, détection de l’accès au dossier personnel. |
