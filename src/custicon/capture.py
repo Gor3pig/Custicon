@@ -11,14 +11,14 @@ gi.require_version("Graphene", "1.0")
 gi.require_version("Gsk", "4.0")
 from gi.repository import Adw, Gdk, GLib, Graphene, Gsk, Gtk
 
-from .app import Application
+from .app import Application, StartupErrorWindow
 from .iconsets import PHOSPHOR_DIRECTORY
 from .metadata import write_custom_icon
 from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationReport, RestoreReport, Service, Settings
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setedit", "setpicker", "restored")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setedit", "setpicker", "starterror", "restored")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
@@ -291,6 +291,10 @@ def main(argv: list[str]) -> int:
 
         def on_activate(application) -> None:
             window = application.props.active_window
+            if screen == "starterror":
+                window.destroy()
+                window = StartupErrorWindow(application, RuntimeError("example of an unexpected error"))
+                window.present()
             arrange(screen, window, demo)
 
             attempts = [0]

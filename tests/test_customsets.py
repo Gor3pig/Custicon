@@ -1,13 +1,16 @@
 import json
 import os
+import threading
+import time
 import unittest
 from dataclasses import replace
 from pathlib import Path
 from unittest import mock
 
 from custicon import customsets
-from custicon.customsets import MAX_SETS, add_icons, icon_names, import_set, list_sets, remove_icon, remove_set, slugify
+from custicon.customsets import MAX_SETS, add_icons, icon_names, import_set, list_sets, read_regular_file, remove_icon, remove_set, slugify
 from custicon.errors import IconNotFoundError, IconSetError
+from custicon.iconsets import IconSets
 from custicon.service import Service, Settings
 from custicon.store import Store
 
@@ -164,6 +167,119 @@ class ImportTests(SetFolderCase):
         (self.sets / "fine" / "meta.json").write_text("{not json")
         (self.sets / "fine" / "index.json").write_text("[]")
         self.assertEqual([(i.slug, i.name) for i in list_sets(self.sets)], [("fine", "fine")])
+
+
+class SafeReadTests(SetFolderCase):
+    def test_a_regular_file_is_read(self):
+        path = self.add("a.svg")
+        self.assertEqual(read_regular_file(path), glyph_svg().encode())
+
+    def test_links_special_files_and_missing_paths_give_nothing(self):
+        real = self.add("a.svg")
+        os.symlink(real, self.source / "link.svg")
+        os.mkfifo(self.source / "fifo.svg")
+        (self.source / "dir.svg").mkdir()
+        for name in ("link.svg", "fifo.svg", "dir.svg", "absent.svg"):
+            self.assertIsNone(read_regular_file(self.source / name), name)
+
+    def test_a_file_over_the_limit_gives_nothing(self):
+        big = self.source / "big.svg"
+        big.write_bytes(b"x" * (customsets.MAX_FILE_BYTES + 1))
+        self.assertIsNone(read_regular_file(big))
+        exact = self.source / "exact.svg"
+        exact.write_bytes(b"x" * customsets.MAX_FILE_BYTES)
+        self.assertEqual(len(read_regular_file(exact)), customsets.MAX_FILE_BYTES)
+
+    def test_a_file_that_grows_after_the_size_check_gives_nothing(self):
+        big = self.source / "grows.svg"
+        big.write_bytes(b"x" * (customsets.MAX_FILE_BYTES + 10))
+        real = os.fstat(os.open(big, os.O_RDONLY))
+        small = os.stat_result((real.st_mode, real.st_ino, real.st_dev, 1, 0, 0, 10, 0, 0, 0))
+        with mock.patch.object(customsets.os, "fstat", return_value=small):
+            self.assertIsNone(read_regular_file(big))
+
+    def test_a_link_swapped_in_after_the_check_is_not_followed(self):
+        target = self.add("secret.svg", "#123456")
+        path = self.add("swap.svg")
+        path.unlink()
+        os.symlink(target, path)
+        self.assertIsNone(customsets.usable_icon(path))
+
+    def test_the_file_is_opened_without_following_links_and_without_blocking(self):
+        path = self.add("a.svg")
+        with mock.patch.object(customsets.os, "open", wraps=os.open) as opened:
+            read_regular_file(path)
+        flags = opened.call_args.args[1]
+        self.assertTrue(flags & os.O_NOFOLLOW)
+        self.assertTrue(flags & os.O_NONBLOCK)
+
+
+class SymlinkInSetTests(SetFolderCase):
+    def setUp(self):
+        super().setUp()
+        self.add("one.svg")
+        self.add("two.svg")
+        import_set(self.sets, self.source, "Set")
+        secret = self.root / "secret.svg"
+        secret.write_text(glyph_svg("#112233"))
+        os.symlink(secret, self.sets / "set" / "planted.svg")
+
+    def test_a_planted_link_is_not_an_icon(self):
+        self.assertEqual(icon_names(self.sets, "set"), ["one", "two"])
+        self.assertEqual([info.count for info in list_sets(self.sets)], [2])
+
+    def test_a_planted_link_to_a_folder_is_not_a_set(self):
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "a.svg").write_text(glyph_svg())
+        os.symlink(outside, self.sets / "sneaky")
+        self.assertEqual([info.slug for info in list_sets(self.sets)], ["set"])
+        for action in (lambda: icon_names(self.sets, "sneaky"), lambda: add_icons(self.sets, "sneaky", []), lambda: remove_icon(self.sets, "sneaky", "a")):
+            with self.assertRaises(IconSetError):
+                action()
+        self.assertTrue((outside / "a.svg").exists())
+
+    def test_the_set_neither_lists_nor_serves_a_planted_link(self):
+        icon_set = IconSets(user_root=self.sets)["mine-set"]
+        self.assertEqual(icon_set.all_names(), ["mine-set:one", "mine-set:two"])
+        with self.assertRaises(IconNotFoundError):
+            icon_set.file("mine-set:planted")
+
+    def test_a_link_that_appears_after_loading_is_still_refused(self):
+        icon_set = IconSets(user_root=self.sets)["mine-set"]
+        icon_set.all_names()
+        os.unlink(self.sets / "set" / "two.svg")
+        os.symlink(self.root / "secret.svg", self.sets / "set" / "two.svg")
+        with self.assertRaises(IconNotFoundError):
+            icon_set.file("mine-set:two")
+
+
+class ServiceLockTests(SetFolderCase):
+    def test_set_operations_never_overlap(self):
+        service = Service(Store(self.root / "data"))
+        active = []
+        overlaps = []
+
+        def slow(*_args, **_kwargs):
+            active.append(1)
+            if len(active) > 1:
+                overlaps.append(1)
+            time.sleep(0.15)
+            active.pop()
+
+        with mock.patch.object(customsets, "import_set", side_effect=slow), mock.patch.object(customsets, "remove_set", side_effect=slow), mock.patch.object(customsets, "add_icons", side_effect=slow), mock.patch.object(customsets, "remove_icon", side_effect=slow):
+            jobs = [
+                lambda: service.import_set(self.source, "A"),
+                lambda: service.remove_set("a"),
+                lambda: service.add_icons("a", []),
+                lambda: service.remove_icon("a", "x"),
+            ]
+            threads = [threading.Thread(target=job) for job in jobs]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        self.assertEqual(overlaps, [])
 
 
 class IconEditingTests(SetFolderCase):

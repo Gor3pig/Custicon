@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 18:01+0100\n"
+"POT-Creation-Date: 2026-11-15 18:22+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -10,6 +10,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid ""
+"An unexpected error stopped the window from opening. Your folders and icons "
+"are not changed."
+msgstr "Une erreur inattendue a empêché l’ouverture de la fenêtre. Vos dossiers et vos icônes ne sont pas modifiés."
+
+msgid "Custicon Could Not Start"
+msgstr "Custicon n’a pas pu démarrer"
+
+msgid "Quit"
+msgstr "Quitter"
 
 msgid ""
 "The logos are released under CC0 1.0 Universal (public domain). The brands "
@@ -701,9 +712,6 @@ msgstr "Aide"
 msgid "About %s"
 msgstr "À propos de %s"
 
-msgid "Quit"
-msgstr "Quitter"
-
 msgid "Add Folder"
 msgstr "Ajouter un dossier"
 
@@ -763,7 +771,9 @@ msgid "Folder Not Accessible"
 msgstr "Dossier inaccessible"
 
 msgid "Custicon cannot read this folder. Choose a folder on this computer."
-msgstr "Custicon ne peut pas lire ce dossier. Choisissez un dossier de cet ordinateur."
+msgstr ""
+"Custicon ne peut pas lire ce dossier. Choisissez un dossier de cet "
+"ordinateur."
 
 msgid "Could Not Read the Saved Data"
 msgstr "Impossible de lire les données enregistrées"

@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 
 import math
+import threading
 
 from .color import auto_glyph_color, is_hex_color
 from .compose import (
@@ -265,6 +266,7 @@ class Service:
         self._accent_color = accent_color
         self._themes: dict[str, IconTheme] = {}
         self._sets = IconSets(user_root=store.sets_dir)
+        self._sets_lock = threading.RLock()
         iconsets.default_sets().set_user_root(store.sets_dir)
 
     @property
@@ -794,25 +796,29 @@ class Service:
         return customsets.list_sets(self._store.sets_dir)
 
     def import_set(self, folder: Path | str, name: str) -> ImportReport:
-        report = customsets.import_set(self._store.sets_dir, Path(folder), name)
-        self._refresh_sets()
+        with self._sets_lock:
+            report = customsets.import_set(self._store.sets_dir, Path(folder), name)
+            self._refresh_sets()
         return report
 
     def set_icons(self, slug: str) -> list[str]:
         return customsets.icon_names(self._store.sets_dir, slug)
 
     def add_icons(self, slug: str, files: list) -> AddReport:
-        report = customsets.add_icons(self._store.sets_dir, slug, files)
-        self._refresh_sets()
+        with self._sets_lock:
+            report = customsets.add_icons(self._store.sets_dir, slug, files)
+            self._refresh_sets()
         return report
 
     def remove_icon(self, slug: str, icon: str) -> None:
-        customsets.remove_icon(self._store.sets_dir, slug, icon)
-        self._refresh_sets()
+        with self._sets_lock:
+            customsets.remove_icon(self._store.sets_dir, slug, icon)
+            self._refresh_sets()
 
     def remove_set(self, slug: str) -> None:
-        customsets.remove_set(self._store.sets_dir, slug)
-        self._refresh_sets()
+        with self._sets_lock:
+            customsets.remove_set(self._store.sets_dir, slug)
+            self._refresh_sets()
 
     def _refresh_sets(self) -> None:
         self._sets.refresh()

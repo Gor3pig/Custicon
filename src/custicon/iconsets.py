@@ -64,7 +64,7 @@ class IconSet:
             source = index.get("source", "")
         except (OSError, ValueError, KeyError, TypeError, AttributeError):
             icons, revision, source = {}, 1, ""
-        present = {path.name[: -len(SVG_SUFFIX)] for path in self.directory.glob("*" + SVG_SUFFIX)}
+        present = self._present()
         if icons:
             icons = {name: entry for name, entry in icons.items() if name in present and isinstance(entry, dict)}
         else:
@@ -75,6 +75,9 @@ class IconSet:
         self._names = sorted(self.prefix + name for name in icons)
         self._folded = {name: [normalize_text(tag) for tag in entry.get("t", []) if isinstance(tag, str)] for name, entry in icons.items()}
         self._words = {name: [set(tag.split()) for tag in tags] for name, tags in self._folded.items()}
+
+    def _present(self) -> set[str]:
+        return {path.name[: -len(SVG_SUFFIX)] for path in self.directory.glob("*" + SVG_SUFFIX)}
 
     @property
     def revision(self) -> int:
@@ -169,6 +172,15 @@ class PhosphorSet(IconSet):
 
 class UserSet(IconSet):
     user = True
+
+    def _present(self) -> set[str]:
+        return {path.name[: -len(SVG_SUFFIX)] for path in self.directory.glob("*" + SVG_SUFFIX) if customsets.is_set_icon(path)}
+
+    def file(self, name: str) -> Path:
+        path = super().file(name)
+        if not customsets.is_set_icon(path):
+            raise IconNotFoundError(f"{name} not found in the {self.key} set")
+        return path
 
     def _load(self) -> None:
         loaded = self._loaded

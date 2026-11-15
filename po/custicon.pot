@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 18:01+0100\n"
+"POT-Creation-Date: 2026-11-15 18:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+msgid ""
+"An unexpected error stopped the window from opening. Your folders and icons "
+"are not changed."
+msgstr ""
+
+msgid "Custicon Could Not Start"
+msgstr ""
+
+msgid "Quit"
+msgstr ""
 
 msgid ""
 "The logos are released under CC0 1.0 Universal (public domain). The brands "
@@ -677,9 +688,6 @@ msgstr ""
 
 #, python-format
 msgid "About %s"
-msgstr ""
-
-msgid "Quit"
 msgstr ""
 
 msgid "Add Folder"

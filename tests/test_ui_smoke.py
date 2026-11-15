@@ -483,6 +483,57 @@ class RepairUiTests(WindowTestCase):
         self.assertIsNone(self.window.get_visible_dialog())
 
 
+@unittest.skipUnless(DISPLAY_AVAILABLE, "interface tests only run on a Broadway display (GDK_BACKEND=broadway)")
+class StartupErrorTests(WorkspaceTestCase):
+    def setUp(self):
+        from custicon import app as app_module
+
+        Adw.init()
+        self.app_module = app_module
+        self.root = self.make_workspace()
+        self.service = Service(Store(self.root / "data"))
+        if not _OPEN_APPLICATION:
+            application = app_module.Application(self.service, unique=False)
+            application.register(None)
+            _OPEN_APPLICATION.append(application)
+        self.application = _OPEN_APPLICATION[0]
+        self.application._service = self.service
+        self.addCleanup(lambda: [window.destroy() for window in self.application.get_windows()])
+
+    def test_a_failing_window_is_replaced_by_an_error_window_that_says_why(self):
+        with mock.patch.object(self.app_module, "MainWindow", side_effect=RuntimeError("boom")):
+            with mock.patch.object(self.app_module.traceback, "print_exc") as printed:
+                self.application.do_activate()
+        settle()
+        window = self.application.props.active_window
+        self.assertIsInstance(window, self.app_module.StartupErrorWindow)
+        self.assertTrue(window.get_visible())
+        self.assertIn("RuntimeError: boom", window.description)
+        printed.assert_called_once()
+
+    def test_a_half_built_window_does_not_stay_behind(self):
+        def broken(application, service):
+            Gtk.ApplicationWindow(application=application)
+            raise ValueError("half built")
+
+        with mock.patch.object(self.app_module, "MainWindow", side_effect=broken):
+            self.application.do_activate()
+        settle()
+        windows = self.application.get_windows()
+        self.assertEqual(len(windows), 1)
+        self.assertIsInstance(windows[0], self.app_module.StartupErrorWindow)
+
+    def test_opening_a_folder_with_a_failing_window_does_not_raise(self):
+        with mock.patch.object(self.app_module, "MainWindow", side_effect=RuntimeError("boom")):
+            self.application.do_open([Gio.File.new_for_path(str(self.root))], 1, "")
+        self.assertIsInstance(self.application.props.active_window, self.app_module.StartupErrorWindow)
+
+    def test_a_working_window_is_still_the_normal_case(self):
+        self.application.do_activate()
+        settle()
+        self.assertIsInstance(self.application.props.active_window, window_module.MainWindow)
+
+
 class CustomSetUiTests(WindowTestCase):
     class Answer:
         def __init__(self, response):

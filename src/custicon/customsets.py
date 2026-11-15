@@ -10,7 +10,8 @@ from pathlib import Path
 
 from .compose import GlyphStyle, load_glyph
 from .errors import CusticonError, IconSetError
-from .render import PNG_MAGIC, read_icon_bytes
+from .layout import MAX_FILE_BYTES
+from .render import PNG_MAGIC
 from .textutil import normalize_text
 
 KEY_PREFIX = "mine-"
@@ -94,27 +95,51 @@ def list_sets(root: Path) -> list[SetInfo]:
         return []
     found = []
     for directory in children:
-        if directory.name.startswith(".") or SLUG_PATTERN.fullmatch(directory.name) is None or not directory.is_dir():
+        if directory.name.startswith(".") or SLUG_PATTERN.fullmatch(directory.name) is None or directory.is_symlink() or not directory.is_dir():
             continue
         try:
-            count = sum(1 for file in directory.glob("*" + SVG_SUFFIX) if file.is_file())
+            count = sum(1 for file in directory.glob("*" + SVG_SUFFIX) if is_set_icon(file))
         except OSError:
             continue
         found.append(SetInfo(directory.name, read_name(directory, directory.name), count))
     return sorted(found, key=lambda info: normalize_text(info.name))
 
 
-def usable_icon(path: Path) -> bytes | None:
+def read_regular_file(path: Path) -> bytes | None:
+    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
     try:
-        if not stat.S_ISREG(path.lstat().st_mode):
+        descriptor = os.open(path, flags)
+    except OSError:
+        return None
+    try:
+        handle = os.fdopen(descriptor, "rb")
+    except OSError:
+        os.close(descriptor)
+        return None
+    with handle:
+        try:
+            info = os.fstat(handle.fileno())
+            if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_FILE_BYTES:
+                return None
+            data = handle.read(MAX_FILE_BYTES + 1)
+        except OSError:
             return None
-        data = read_icon_bytes(path)
-        if data.startswith(PNG_MAGIC):
-            return None
+    return data if len(data) <= MAX_FILE_BYTES else None
+
+
+def usable_icon(path: Path) -> bytes | None:
+    data = read_regular_file(path)
+    if data is None or data.startswith(PNG_MAGIC):
+        return None
+    try:
         load_glyph(data, CHECK_STYLE, set())
     except (CusticonError, OSError, RecursionError, ValueError):
         return None
     return data
+
+
+def is_set_icon(file: Path) -> bool:
+    return not file.is_symlink() and file.is_file()
 
 
 @dataclass
@@ -125,7 +150,7 @@ class AddReport:
 
 
 def set_directory(root: Path, slug: str) -> Path:
-    if not isinstance(slug, str) or SLUG_PATTERN.fullmatch(slug) is None or not (root / slug).is_dir():
+    if not isinstance(slug, str) or SLUG_PATTERN.fullmatch(slug) is None or (root / slug).is_symlink() or not (root / slug).is_dir():
         raise IconSetError("unknown set")
     return root / slug
 
@@ -133,7 +158,7 @@ def set_directory(root: Path, slug: str) -> Path:
 def icon_names(root: Path, slug: str) -> list[str]:
     directory = set_directory(root, slug)
     try:
-        return sorted(file.name[: -len(SVG_SUFFIX)] for file in directory.glob("*" + SVG_SUFFIX) if file.is_file())
+        return sorted(file.name[: -len(SVG_SUFFIX)] for file in directory.glob("*" + SVG_SUFFIX) if is_set_icon(file))
     except OSError as error:
         raise IconSetError(f"cannot read the set: {error.strerror}") from error
 
