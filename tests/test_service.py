@@ -158,6 +158,19 @@ class ApplyTests(ServiceTestCase):
         self.assertIsNotNone(read_custom_icon(link))
         self.assertIsNone(read_custom_icon(folder))
 
+    def test_resetting_a_link_never_touches_the_customized_target(self):
+        folder = self.make_folder()
+        link = self.workspace / "link"
+        link.symlink_to(folder)
+        self.service.apply(folder, STAR)
+        self.assertEqual(self.service.reset(link), RESET_UNKNOWN)
+        self.assertIsNotNone(self.store.get(str(folder)))
+        self.assertIsNotNone(read_custom_icon(folder))
+        self.service.forget(link)
+        self.assertIsNotNone(self.store.get(str(folder)))
+        self.assertEqual(self.service.reset_many([link]).restored, [])
+        self.assertIsNotNone(read_custom_icon(folder))
+
     def test_a_broken_link_is_not_a_folder(self):
         link = self.workspace / "broken"
         link.symlink_to(self.workspace / "nowhere")
@@ -179,6 +192,12 @@ class ApplyTests(ServiceTestCase):
         link.symlink_to(folder)
         entry = self.service.apply(link, STAR, backend="directory")
         self.assertEqual(entry.folder, str(folder))
+
+    def test_a_lone_surrogate_in_a_text_setting_is_refused(self):
+        for settings in (Settings(glyph_text="\ud800"), Settings(glyph_name="a\udc80"), Settings(glyph_name="phosphor:star", badge_glyph="\ud800")):
+            with self.assertRaises(InvalidSettingsError):
+                self.service.build(settings)
+        self.assertEqual(self.store.all(), {})
 
     def test_a_file_is_not_a_folder(self):
         file = self.workspace / "plain.txt"

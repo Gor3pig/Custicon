@@ -54,6 +54,16 @@ RESET_FOLDER_MISSING = "folder-missing"
 RESET_UNKNOWN = "unknown"
 
 
+def is_clean_text(text) -> bool:
+    if not isinstance(text, str) or "\0" in text:
+        return False
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 @dataclass(frozen=True)
 class Settings:
     glyph_name: str | None = None
@@ -77,7 +87,7 @@ class Settings:
     def validate(self) -> None:
         self._validate_badge()
         for text in (self.glyph_name, self.glyph_file, self.glyph_text, self.color, self.glyph_copy, self.folder_tint):
-            if text is not None and (not isinstance(text, str) or "\0" in text):
+            if text is not None and not is_clean_text(text):
                 raise InvalidSettingsError("invalid text in the settings")
         if not isinstance(self.tint, bool) or not isinstance(self.accent, bool):
             raise InvalidSettingsError("invalid tint or accent setting")
@@ -109,7 +119,7 @@ class Settings:
 
     def _validate_badge(self) -> None:
         for text in (self.badge_glyph, self.badge_color):
-            if text is not None and (not isinstance(text, str) or "\0" in text or not text):
+            if text is not None and (not is_clean_text(text) or not text):
                 raise InvalidSettingsError("invalid text in the badge settings")
         if self.badge_color is not None and not is_hex_color(self.badge_color):
             raise InvalidSettingsError(f"invalid badge color {self.badge_color!r}")
@@ -771,18 +781,19 @@ class Service:
             given = str(Path(folder).expanduser())
         except (RuntimeError, ValueError):
             given = str(folder)
-        candidates = [given]
-        for keep_link in (True, False):
-            try:
-                candidates.append(str(self._resolved(folder, keep_link)))
-            except FolderError:
-                pass
-        resolved = candidates[-1]
-        for key in dict.fromkeys(candidates):
+        try:
+            link = str(self._resolved(folder, True))
+            real = str(self._resolved(folder, False))
+        except FolderError:
+            link = real = given
+        for key in dict.fromkeys((given, link, real)):
             entry = self._store.get(key)
-            if entry is not None:
-                return key, entry
-        return resolved, None
+            if entry is None:
+                continue
+            if key == real and key != link and self._keeps_links(entry.backend):
+                continue
+            return key, entry
+        return real, None
 
     def _glyph_source(self, theme: IconTheme, settings: Settings) -> Path | bytes | None:
         if not (settings.glyph_name or settings.glyph_file or settings.glyph_text):

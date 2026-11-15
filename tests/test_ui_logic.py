@@ -144,6 +144,11 @@ class DamagedEntryTests(unittest.TestCase):
         draft = self.draft(glyph_name=["a"], glyph_file=3)
         self.assertFalse(draft.ready)
 
+    def test_a_text_that_cannot_be_encoded_is_ignored(self):
+        draft = self.draft(glyph_text="\ud800", badge_glyph="\udc80")
+        self.assertFalse(draft.has_glyph)
+        self.assertIsNone(draft.badge_glyph)
+
     def test_a_name_wins_over_a_file(self):
         draft = self.draft(glyph_name="a-symbolic", glyph_file="/x.svg")
         self.assertEqual((draft.glyph_name, draft.glyph_file), ("a-symbolic", None))

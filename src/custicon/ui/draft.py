@@ -5,7 +5,7 @@ import math
 
 from ..color import is_hex_color
 from ..compose import BADGE_CORNERS, BADGE_DEFAULT_COLOR, BADGE_DEFAULT_SIZE, BADGE_MAX_SIZE, BADGE_MIN_SIZE
-from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE, Settings
+from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE, Settings, is_clean_text
 from ..store import Entry
 
 DEFAULT_COLOR = "#3584e4"
@@ -20,7 +20,7 @@ def clean_number(value, lower: float, upper: float, default: float) -> float:
 
 
 def clean_text(value) -> str | None:
-    return value if isinstance(value, str) and value and "\0" not in value else None
+    return value if isinstance(value, str) and value and is_clean_text(value) else None
 
 
 @dataclass(frozen=True)
