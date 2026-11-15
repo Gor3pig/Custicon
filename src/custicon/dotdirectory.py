@@ -5,6 +5,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+import gi
+
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+
 from .errors import MetadataError
 
 FILE_NAME = ".directory"
@@ -13,6 +18,9 @@ KEY = "Icon"
 MAX_BYTES = 1024 * 1024
 BOM = "\ufeff"
 RETRIES = 3
+NOTIFY_PATH = "/"
+NOTIFY_INTERFACE = "org.kde.KDirNotify"
+NOTIFY_SIGNAL = "FilesChanged"
 
 
 @dataclass(frozen=True)
@@ -272,3 +280,15 @@ def write_icon(folder: Path | str, value: str | None, created_by_us: bool = Fals
             raise MetadataError(f"the value was not stored for {folder}")
         return Written(before is None and value is not None, False)
     raise MetadataError(f"{FILE_NAME} changed while it was being edited")
+
+
+def notify(folder: Path | str) -> bool:
+    path = Path(folder)
+    uris = [path.as_uri(), file_of(path).as_uri()]
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.emit_signal(None, NOTIFY_PATH, NOTIFY_INTERFACE, NOTIFY_SIGNAL, GLib.Variant("(as)", (uris,)))
+        bus.flush_sync(None)
+    except GLib.Error:
+        return False
+    return True

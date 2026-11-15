@@ -269,6 +269,7 @@ def tint_folder(folder: ET.Element, color: str, taken_ids: set[str]) -> None:
 
 
 HEX_COLOR = re.compile(r"#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-zA-Z])")
+KDE_COLOR_SCHEME_ID = "current-color-scheme"
 FLAT_TINT_ATTRIBUTES = ("fill", "stroke", "stop-color", "flood-color", "color")
 
 
@@ -360,8 +361,11 @@ def flat_tint_folder(folder: ET.Element, color: str) -> bool:
         style = element.get("style")
         if style is not None:
             element.set("style", convert(style))
-        if local_name(element.tag) == "style" and element.text:
-            element.text = convert(element.text)
+        if local_name(element.tag) == "style":
+            if element.text:
+                element.text = convert(element.text)
+            if element.get("id") == KDE_COLOR_SCHEME_ID:
+                del element.attrib["id"]
     return changed
 
 

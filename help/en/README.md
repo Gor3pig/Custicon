@@ -283,7 +283,7 @@ the interface falls back to software drawing and becomes sluggish: check with `f
 restore it with `flatpak override --user --device=dri io.github.gor3pig.Custicon`.
 
 **What changes with KDE Plasma or LXQt?**
-The icon is stored in a small hidden `.directory` file inside the folder, so it follows the folder when you copy, move or synchronize it, and it shows up in tools such as Git. Remove the icons in Custicon before moving a folder away, and before uninstalling Custicon with data removal. The folder is drawn by your file manager: with an old version of Qt (Plasma 5), a tinted folder may look different from the preview. On other desktops (Hyprland, sway...), Custicon reads the default folder handler of your session (`mimeapps.list`) to know whether it is Dolphin or PCManFM-Qt. This mode was checked with the real file managers, not yet on every Plasma version.
+The icon is stored in a small hidden `.directory` file inside the folder, so it follows the folder when you copy, move or synchronize it, and it shows up in tools such as Git. Remove the icons in Custicon before moving a folder away, and before uninstalling Custicon with data removal. Dolphin refreshes the icon by itself when you apply or remove it. The folder is drawn by your file manager: with an old version of Qt (Plasma 5), a tinted folder may look different from the preview. On other desktops (Hyprland, sway...), Custicon reads the default folder handler of your session (`mimeapps.list`) to know whether it is Dolphin or PCManFM-Qt. This mode was checked with the real file managers, not yet on every Plasma version.
 
 **Why can only folders inside the home folder be chosen?**
 For your file manager to see the icon, Custicon has to write to the real path of the folder. External

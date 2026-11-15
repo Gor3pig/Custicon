@@ -180,3 +180,18 @@ class RasterTintTests(unittest.TestCase):
         for href in ("data:image/jpeg;base64,AAAA", "https://example.org/a.png", ""):
             root = ET.fromstring(f'{SVG_OPEN} width="8" height="8"><image width="8" height="8" xlink:href="{href}" xmlns:xlink="http://www.w3.org/1999/xlink"/></svg>')
             self.assertFalse(flat_tint_folder(root, "#e01b24"), href)
+
+
+class ColorSchemeTests(unittest.TestCase):
+    def test_the_style_that_kde_rewrites_with_its_palette_loses_its_identifier(self):
+        root = ET.fromstring(folder('<path class="a" style="fill:currentColor"/>', '<defs><style type="text/css" id="current-color-scheme">.a{color:#3daee9}</style></defs>'))
+        self.assertTrue(flat_tint_folder(root, "#e01b24"))
+        text = ET.tostring(root, encoding="unicode")
+        self.assertNotIn("current-color-scheme", text)
+        self.assertNotIn("#3daee9", text)
+        self.assertIn("currentColor", text)
+
+    def test_another_style_keeps_its_identifier(self):
+        root = ET.fromstring(folder('<path class="a"/>', '<style id="mine">.a{fill:#3daee9}</style>'))
+        flat_tint_folder(root, "#e01b24")
+        self.assertIn('id="mine"', ET.tostring(root, encoding="unicode"))

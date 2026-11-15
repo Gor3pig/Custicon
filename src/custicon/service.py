@@ -678,6 +678,7 @@ class Service:
     def _write_mark(target: Path, uri: str | None, backend: str, directory_created: bool = False) -> None:
         if backend == BACKEND_DIRECTORY:
             dotdirectory.write_icon(target, uri, created_by_us=directory_created)
+            dotdirectory.notify(target)
         else:
             write_custom_icon(target, uri)
 

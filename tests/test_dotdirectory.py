@@ -623,3 +623,48 @@ class MutationGapTests(WorkspaceTestCase):
         with mock.patch.object(dd, "read_icon", return_value=None):
             with self.assertRaisesRegex(MetadataError, "was not stored"):
                 dd.write_icon(self.folder, self.uri())
+
+
+class NotifyTests(WorkspaceTestCase):
+    def setUp(self):
+        self.folder = self.make_workspace() / "folder"
+        self.folder.mkdir()
+
+    def test_the_folder_and_its_file_are_announced_to_the_file_manager(self):
+        bus = mock.Mock()
+        with mock.patch.object(dd.Gio, "bus_get_sync", return_value=bus):
+            self.assertTrue(dd.notify(self.folder))
+        args = bus.emit_signal.call_args.args
+        self.assertEqual(args[1:4], ("/", "org.kde.KDirNotify", "FilesChanged"))
+        self.assertEqual(args[4].unpack(), ([self.folder.as_uri(), (self.folder / ".directory").as_uri()],))
+        bus.flush_sync.assert_called_once()
+
+    def test_a_missing_session_bus_is_not_an_error(self):
+        with mock.patch.object(dd.Gio, "bus_get_sync", side_effect=dd.GLib.Error("no bus")):
+            self.assertFalse(dd.notify(self.folder))
+        bus = mock.Mock()
+        bus.emit_signal.side_effect = dd.GLib.Error("refused")
+        with mock.patch.object(dd.Gio, "bus_get_sync", return_value=bus):
+            self.assertFalse(dd.notify(self.folder))
+
+    def test_writing_and_removing_through_the_service_notify_only_for_this_engine(self):
+        from custicon.service import Service
+        from custicon.store import Store
+        from .support import folder_svg, glyph_svg, make_theme
+
+        themes_dir = self.folder.parent / "themes"
+        themes_dir.mkdir()
+        make_theme(themes_dir, "Blue", folder=folder_svg("#3366cc"), glyphs={"star-symbolic": glyph_svg()})
+        from custicon.service import Settings
+
+        for backend, expected in (("directory", 2), ("gvfs", 0)):
+            target = self.folder.parent / backend
+            target.mkdir()
+            service = Service(Store(self.folder.parent / f"data-{backend}"), theme_name=lambda: "Blue", search_dirs=[str(themes_dir)], backend=backend)
+            with mock.patch.object(dd, "notify") as notify:
+                try:
+                    service.apply(target, Settings(glyph_name="star-symbolic"))
+                    service.reset(target)
+                except MetadataError:
+                    pass
+            self.assertEqual(notify.call_count, expected, backend)
