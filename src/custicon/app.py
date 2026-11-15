@@ -21,7 +21,7 @@ ICON_SIZES = ("16", "24", "32", "48", "64", "96", "128", "256", "512")
 
 
 def default_service() -> Service:
-    return Service(Store(Path(environment.own_data_home() or GLib.get_user_data_dir()) / "custicon"))
+    return Service(Store(Path(environment.own_data_home() or GLib.get_user_data_dir()) / "custicon"), backend=environment.detect_backend())
 
 
 def register_development_icons() -> None:

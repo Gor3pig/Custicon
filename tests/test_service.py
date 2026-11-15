@@ -592,6 +592,98 @@ class RegenerationTests(ServiceTestCase):
         self.assertEqual(read_custom_icon(folder), self.store.icon_uri(self.store.get(str(folder)).digest))
 
 
+class ResetManyTests(ServiceTestCase):
+    def test_every_customized_folder_gets_its_icon_back(self):
+        folders = [self.make_folder(name) for name in ("a", "b", "c")]
+        self.service.apply_many(folders, STAR)
+        report = self.service.reset_many(folders)
+        self.assertEqual(report.restored, [str(folder) for folder in folders])
+        self.assertEqual((report.kept, report.missing, report.failed), ([], [], {}))
+        for folder in folders:
+            self.assertIsNone(read_custom_icon(folder))
+            self.assertIsNone(self.store.get(str(folder)))
+
+    def test_an_unusable_path_is_reported_and_the_others_are_still_done(self):
+        done = self.make_folder("a")
+        self.service.apply(done, STAR)
+        report = self.service.reset_many(["bad\0path", done])
+        self.assertEqual(report.restored, [str(done)])
+        self.assertEqual(list(report.failed), ["bad\0path"])
+
+    def test_a_folder_that_was_never_customized_is_ignored(self):
+        done, plain = self.make_folder("a"), self.make_folder("b")
+        self.service.apply(done, STAR)
+        report = self.service.reset_many([plain, done])
+        self.assertEqual(report.restored, [str(done)])
+        self.assertEqual((report.kept, report.missing, report.failed), ([], [], {}))
+
+    def test_an_icon_changed_by_the_user_is_kept_and_reported(self):
+        a, b = self.make_folder("a"), self.make_folder("b")
+        self.service.apply_many([a, b], STAR)
+        write_custom_icon(a, USER_ICON)
+        report = self.service.reset_many([a, b])
+        self.assertEqual(report.kept, [str(a)])
+        self.assertEqual(report.restored, [str(b)])
+        self.assertEqual(read_custom_icon(a), USER_ICON)
+
+    def test_a_missing_folder_is_forgotten_and_reported(self):
+        a, b = self.make_folder("a"), self.make_folder("b")
+        self.service.apply_many([a, b], STAR)
+        shutil.rmtree(a)
+        report = self.service.reset_many([a, b])
+        self.assertEqual(report.missing, [str(a)])
+        self.assertEqual(report.restored, [str(b)])
+        self.assertIsNone(self.store.get(str(a)))
+
+    def test_a_failure_does_not_stop_the_others(self):
+        a, b, c = (self.make_folder(name) for name in "abc")
+        self.service.apply_many([a, b, c], STAR)
+        real = service_module.write_custom_icon
+        calls = []
+
+        def flaky(target, value):
+            calls.append(target)
+            if Path(target) == b:
+                raise MetadataError("refused")
+            return real(target, value)
+
+        with mock.patch.object(service_module, "write_custom_icon", side_effect=flaky):
+            report = self.service.reset_many([a, b, c])
+        self.assertEqual(report.restored, [str(a), str(c)])
+        self.assertEqual(list(report.failed), [str(b)])
+
+    def test_the_previous_icon_of_each_folder_is_restored(self):
+        a, b = self.make_folder("a"), self.make_folder("b")
+        write_custom_icon(a, USER_ICON)
+        self.service.apply_many([a, b], STAR)
+        self.service.reset_many([a, b])
+        self.assertEqual(read_custom_icon(a), USER_ICON)
+        self.assertIsNone(read_custom_icon(b))
+
+    def test_an_empty_list_changes_nothing(self):
+        report = self.service.reset_many([])
+        self.assertEqual((report.restored, report.kept, report.missing, report.failed), ([], [], [], {}))
+
+    def test_a_folder_listed_twice_is_restored_once(self):
+        folder = self.make_folder()
+        self.service.apply(folder, STAR)
+        report = self.service.reset_many([folder, folder])
+        self.assertEqual(report.restored, [str(folder)])
+
+    def test_the_content_of_the_folders_is_never_touched(self):
+        folders = [self.make_folder(name) for name in ("a", "b")]
+        before = [tree_fingerprint(folder) for folder in folders]
+        self.service.apply_many(folders, STAR)
+        self.service.reset_many(folders)
+        self.assertEqual([tree_fingerprint(folder) for folder in folders], before)
+
+    def test_reset_all_still_gives_the_same_report(self):
+        folders = [self.make_folder(name) for name in ("a", "b")]
+        self.service.apply_many(folders, STAR)
+        report = self.service.reset_all()
+        self.assertEqual(sorted(report.restored), sorted(str(folder) for folder in folders))
+
+
 class WindowStateServiceTests(ServiceTestCase):
     def test_nothing_is_remembered_at_first(self):
         self.assertIsNone(self.service.window_state())

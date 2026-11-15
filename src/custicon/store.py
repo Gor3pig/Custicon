@@ -25,6 +25,8 @@ BACKUP_SUFFIX = ".bak"
 ICONS_DIR = "icons"
 GLYPHS_DIR = "glyphs"
 REGISTRY_VERSION = 1
+DEFAULT_BACKEND = "gvfs"
+BACKENDS = ("gvfs", "directory")
 DIGEST_LENGTH = 32
 DIGEST_PATTERN = re.compile(r"[0-9a-f]{32}")
 ICON_FILE_PATTERN = re.compile(r"[0-9a-f]{32}\.svg")
@@ -41,6 +43,8 @@ class Entry:
     color: str
     settings: dict
     previous: str | None
+    backend: str = "gvfs"
+    directory_created: bool = False
 
 
 class Store:
@@ -284,6 +288,8 @@ class Store:
                 color=item["color"],
                 settings=item["settings"],
                 previous=item["previous"],
+                backend=item.get("backend", DEFAULT_BACKEND),
+                directory_created=item.get("directory_created", False),
             )
             Store._check_entry(entry)
             entries[entry.folder] = entry
@@ -296,6 +302,10 @@ class Store:
                 raise TypeError("registry fields must be strings")
         if entry.previous is not None and not isinstance(entry.previous, str):
             raise TypeError("previous must be a string or null")
+        if entry.backend not in BACKENDS:
+            raise ValueError("unknown icon backend")
+        if not isinstance(entry.directory_created, bool):
+            raise TypeError("directory_created must be a boolean")
         if not os.path.isabs(entry.folder) or "\0" in entry.folder:
             raise ValueError("the folder must be an absolute path")
         if DIGEST_PATTERN.fullmatch(entry.digest) is None:
@@ -309,10 +319,19 @@ class Store:
             isinstance(key, str) and isinstance(value, SCALAR_TYPES) for key, value in values.items()
         )
 
+    @staticmethod
+    def _entry_document(entry: Entry) -> dict:
+        document = asdict(entry)
+        if document["backend"] == DEFAULT_BACKEND:
+            del document["backend"]
+        if not document["directory_created"]:
+            del document["directory_created"]
+        return document
+
     def _save(self, entries: dict[str, Entry]) -> None:
         document = {
             "version": REGISTRY_VERSION,
-            "entries": [asdict(entries[folder]) for folder in sorted(entries)],
+            "entries": [Store._entry_document(entries[folder]) for folder in sorted(entries)],
         }
         try:
             data = json.dumps(document, indent=2, ensure_ascii=False).encode()

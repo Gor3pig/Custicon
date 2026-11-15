@@ -16,6 +16,8 @@ from .errors import (
     MetadataError,
     StoreError,
 )
+from . import dotdirectory
+from .environment import BACKEND_DIRECTORY, BACKEND_GVFS
 from .metadata import read_custom_icon, write_custom_icon
 from .render import is_png, read_icon_bytes
 from .store import GLYPH_FILE_PATTERN, MAX_NAME_LENGTH, MAX_STYLE_NAME, MAX_STYLES, Entry, Store
@@ -166,7 +168,9 @@ class Service:
         theme_name: Callable[[], str] = active_icon_theme,
         search_dirs: list[str] | None = None,
         accent_color: Callable[[], str] = system_accent_color,
+        backend: str = BACKEND_GVFS,
     ):
+        self._backend = backend
         self._store = store
         self._theme_name = theme_name
         self._search_dirs = search_dirs
@@ -224,18 +228,24 @@ class Service:
         folder_file = self._theme(theme_name or self._theme_name()).folder_file()
         return tinted_folder_svg(folder_file, folder_tint).decode(), folder_tint
 
-    def apply(self, folder: Path | str, settings: Settings) -> Entry:
+    def apply(self, folder: Path | str, settings: Settings, backend: str | None = None) -> Entry:
         target = self._checked_folder(folder)
         key = str(target)
         existing = self._store.get(key)
+        migrated = existing is not None and backend is None and existing.backend != self._backend
+        base = None if migrated else existing
+        backend = existing.backend if base is not None else (backend or self._backend)
         settings.validate()
         glyph_file, glyph_copy = self._keep_glyph(settings, existing)
+        if migrated:
+            self._clear_mark(target, existing)
         built = self.build(settings, glyph_file=glyph_file)
         digest = self._store.save_icon(built.svg)
         try:
-            current = read_custom_icon(target)
+            current = self._read_mark(target, backend)
+            directory_created = self._directory_created(target, backend, base)
             if self._store.owns_uri(current):
-                previous = existing.previous if existing else None
+                previous = base.previous if base else None
             else:
                 previous = current
             stored = replace(
@@ -244,15 +254,15 @@ class Service:
                 folder_tint=built.folder_tint if settings.folder_tint_accent else settings.folder_tint,
                 glyph_revision=self._glyph_revision(settings),
             ).to_dict()
-            entry = Entry(key, digest, built.theme, built.color, stored, previous)
+            entry = Entry(key, digest, built.theme, built.color, stored, previous, backend, directory_created)
             self._store.put(entry)
         except CusticonError:
             self._discard(digest, glyph_copy, existing)
             raise
         try:
-            write_custom_icon(target, self._store.icon_uri(digest))
+            self._write_mark(target, self._store.icon_uri(digest), backend, directory_created)
         except CusticonError:
-            self._undo(target, key, current, existing)
+            self._undo(target, key, current, base, backend, directory_created)
             self._discard(digest, glyph_copy, existing)
             raise
         if existing is not None:
@@ -262,6 +272,13 @@ class Service:
             if old_copy != glyph_copy:
                 self._store.release_glyph(old_copy)
         return entry
+
+    def _clear_mark(self, target: Path, entry: Entry) -> None:
+        try:
+            if self._store.owns_uri(self._read_mark(target, entry.backend)):
+                self._write_mark(target, entry.previous, entry.backend, entry.directory_created)
+        except CusticonError:
+            pass
 
     def apply_many(self, folders: list[Path | str], settings: Settings) -> ApplyReport:
         report = ApplyReport()
@@ -280,8 +297,8 @@ class Service:
         outcome = RESET_FOLDER_MISSING
         if target.is_dir():
             outcome = RESET_KEPT_USER_ICON
-            if read_custom_icon(target) == self._store.icon_uri(entry.digest):
-                write_custom_icon(target, entry.previous)
+            if self._read_mark(target, entry.backend) == self._store.icon_uri(entry.digest):
+                self._write_mark(target, entry.previous, entry.backend, entry.directory_created)
                 outcome = RESET_RESTORED
         self._store.remove(key)
         self._release(entry)
@@ -303,6 +320,23 @@ class Service:
                 report.missing.append(entry.folder)
         return report
 
+    def reset_many(self, folders: list[Path | str]) -> ResetReport:
+        report = ResetReport()
+        for folder in folders:
+            try:
+                key = str(self._resolved(folder))
+                outcome = self.reset(folder)
+            except (CusticonError, OSError) as error:
+                report.failed[str(folder)] = str(error)
+                continue
+            if outcome == RESET_RESTORED:
+                report.restored.append(key)
+            elif outcome == RESET_KEPT_USER_ICON:
+                report.kept.append(key)
+            elif outcome == RESET_FOLDER_MISSING:
+                report.missing.append(key)
+        return report
+
     def snapshot(self, key: str) -> Snapshot | None:
         entry = self._store.get(key)
         if entry is None:
@@ -321,7 +355,7 @@ class Service:
         copy = entry.settings.get("glyph_copy")
         if snapshot.glyph is not None and isinstance(copy, str):
             self._store.save_glyph(snapshot.glyph, Path(copy).suffix)
-        return self.apply(Path(entry.folder), Settings.from_dict(entry.settings))
+        return self.apply(Path(entry.folder), Settings.from_dict(entry.settings), entry.backend)
 
     def relocate(self, old: str, folder: Path | str) -> Entry:
         entry = self._store.get(old)
@@ -333,14 +367,15 @@ class Service:
         key = str(target)
         if self._store.get(key) is not None:
             raise FolderError("this folder is already customized")
-        current = read_custom_icon(target)
+        current = self._read_mark(target, entry.backend)
         uri = self._store.icon_uri(entry.digest)
         previous = entry.previous if self._store.owns_uri(current) else current
-        moved = replace(entry, folder=key, previous=previous)
+        directory_created = self._directory_created(target, entry.backend, None)
+        moved = replace(entry, folder=key, previous=previous, directory_created=directory_created)
         self._store.put(moved)
         try:
             if current != uri:
-                write_custom_icon(target, uri)
+                self._write_mark(target, uri, entry.backend, directory_created)
         except CusticonError:
             self._store.remove(key)
             raise
@@ -551,7 +586,7 @@ class Service:
         if not target.is_dir():
             return STATUS_FOLDER_MISSING
         try:
-            current = read_custom_icon(target)
+            current = self._read_mark(target, entry.backend)
         except MetadataError:
             return STATUS_UNREADABLE
         if current != self._store.icon_uri(entry.digest):
@@ -619,7 +654,7 @@ class Service:
         name = self._store.save_glyph(data, ".png" if is_png(data) else ".svg")
         return self._store.glyph_path(name), name
 
-    def _undo(self, target: Path, key: str, current: str | None, existing: Entry | None) -> None:
+    def _undo(self, target: Path, key: str, current: str | None, existing: Entry | None, backend: str = BACKEND_GVFS, directory_created: bool = False) -> None:
         try:
             if existing is None:
                 self._store.remove(key)
@@ -628,9 +663,31 @@ class Service:
         except CusticonError:
             pass
         try:
-            write_custom_icon(target, current)
+            self._write_mark(target, current, backend, directory_created)
         except CusticonError:
             pass
+
+    @staticmethod
+    def _read_mark(target: Path, backend: str) -> str | None:
+        if backend == BACKEND_DIRECTORY:
+            return dotdirectory.read_icon(target)
+        return read_custom_icon(target)
+
+    @staticmethod
+    def _write_mark(target: Path, uri: str | None, backend: str, directory_created: bool = False) -> None:
+        if backend == BACKEND_DIRECTORY:
+            dotdirectory.write_icon(target, uri, created_by_us=directory_created)
+        else:
+            write_custom_icon(target, uri)
+
+    @staticmethod
+    def _directory_created(target: Path, backend: str, existing: Entry | None) -> bool:
+        if backend != BACKEND_DIRECTORY:
+            return False
+        absent = not dotdirectory.file_of(target).exists()
+        if existing is not None:
+            return existing.directory_created or absent
+        return absent
 
     def _discard(self, digest: str, glyph_copy: str | None, existing: Entry | None) -> None:
         self._store.release(digest)

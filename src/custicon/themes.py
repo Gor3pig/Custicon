@@ -16,6 +16,9 @@ PORTAL_PATH = "/org/freedesktop/portal/desktop"
 PORTAL_SETTINGS = "org.freedesktop.portal.Settings"
 INTERFACE_SCHEMA = "org.gnome.desktop.interface"
 ICON_THEME_KEY = "icon-theme"
+KDE_NAMESPACE_PATTERN = "org.kde.kdeglobals.*"
+KDE_ICONS_NAMESPACE = "org.kde.kdeglobals.Icons"
+KDE_ICON_THEME_KEY = "Theme"
 DEFAULT_THEME = "Adwaita"
 APPEARANCE_NAMESPACE = "org.freedesktop.appearance"
 ACCENT_KEY = "accent-color"
@@ -60,6 +63,32 @@ def read_portal_setting(namespace: str, key: str):
     return value
 
 
+def portal_has_kde() -> bool:
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        reply = bus.call_sync(
+            PORTAL_NAME,
+            PORTAL_PATH,
+            PORTAL_SETTINGS,
+            "ReadAll",
+            GLib.Variant("(as)", ([KDE_NAMESPACE_PATTERN],)),
+            GLib.VariantType("(a{sa{sv}})"),
+            Gio.DBusCallFlags.NONE,
+            -1,
+            None,
+        )
+    except GLib.Error:
+        return False
+    return bool(reply.get_child_value(0).n_children())
+
+
+def portal_kde_icon_theme() -> str | None:
+    value = read_portal_setting(KDE_ICONS_NAMESPACE, KDE_ICON_THEME_KEY)
+    if value is None or value.get_type_string() != "s":
+        return None
+    return value.get_string() or None
+
+
 def portal_icon_theme() -> str | None:
     value = read_portal_setting(INTERFACE_SCHEMA, ICON_THEME_KEY)
     if value is None:
@@ -89,6 +118,12 @@ def settings_icon_theme() -> str | None:
 
 
 def active_icon_theme() -> str:
+    from . import environment
+
+    if environment.is_kde():
+        name = portal_kde_icon_theme()
+        if name:
+            return name
     return portal_icon_theme() or settings_icon_theme() or DEFAULT_THEME
 
 
