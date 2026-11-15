@@ -66,6 +66,23 @@ Le pictogramme est posé sur la vraie icône de dossier de votre thème d’icô
 
 </td>
 </tr>
+<tr>
+<td width="33%" valign="top">
+
+**Pastille**<br>Un petit rond de couleur avec son propre pictogramme dans un coin du dossier, à côté du pictogramme central.
+
+</td>
+<td width="33%" valign="top">
+
+**Sauvegarder**<br>Tous vos dossiers, styles et favoris dans un seul fichier, restauré en un clic sur n’importe quel ordinateur.
+
+</td>
+<td width="33%" valign="top">
+
+**Partout**<br>GNOME, KDE Plasma, Cinnamon, MATE ou LXQt : la bonne méthode est choisie automatiquement.
+
+</td>
+</tr>
 </table>
 
 <p align="center"><b><a href="help/fr/README.md">Lire le guide d’utilisation →</a></b><br>Tout ce que Custicon sait faire, pas à pas.</p>

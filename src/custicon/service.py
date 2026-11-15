@@ -582,13 +582,19 @@ class Service:
             raise StoreError(f"cannot write {Path(path).name}: {error.strerror}") from error
         return BackupSummary(len(entries), len(styles), len(set(memory.recent) | set(memory.favorites)))
 
-    def import_backup(self, path: Path | str) -> RestoreReport:
+    def inspect_backup(self, path: Path | str) -> int:
+        return len(backup.folder_items(self._read_backup(path)))
+
+    def _read_backup(self, path: Path | str) -> dict:
         try:
             with open(path, "rb") as handle:
                 data = handle.read(backup.MAX_BYTES + 1)
         except OSError as error:
             raise StoreError(f"cannot read {Path(path).name}: {error.strerror}") from error
-        document = backup.parse(data)
+        return backup.parse(data)
+
+    def import_backup(self, path: Path | str) -> RestoreReport:
+        document = self._read_backup(path)
         report = RestoreReport()
         for folder, values in backup.folder_items(document):
             self._restore_folder(folder, values, report)

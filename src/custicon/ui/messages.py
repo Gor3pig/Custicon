@@ -13,8 +13,10 @@ from ..service import (
     STATUS_ICON_CHANGED,
     STATUS_ICON_FILE_MISSING,
     STATUS_UNREADABLE,
+    BackupSummary,
     RegenerationReport,
     ResetReport,
+    RestoreReport,
 )
 
 
@@ -73,6 +75,37 @@ def reset_report_lines(report: ResetReport) -> list[str]:
     if report.failed:
         count = len(report.failed)
         lines.append(ngettext("%d icon could not be removed", "%d icons could not be removed", count) % count)
+    return lines
+
+
+def backup_summary_lines(summary: BackupSummary) -> list[str]:
+    return [
+        ngettext("%d customized folder", "%d customized folders", summary.folders) % summary.folders,
+        ngettext("%d named style", "%d named styles", summary.styles) % summary.styles,
+        ngettext("%d recent or favorite pictogram", "%d recent or favorite pictograms", summary.pictograms) % summary.pictograms,
+    ]
+
+
+def restore_report_lines(report: RestoreReport) -> list[str]:
+    lines = []
+    if report.restored:
+        count = len(report.restored)
+        lines.append(ngettext("%d icon restored", "%d icons restored", count) % count)
+    if report.missing:
+        count = len(report.missing)
+        lines.append(ngettext("%d folder not found, ignored", "%d folders not found, ignored", count) % count)
+    if report.kept:
+        count = len(report.kept)
+        lines.append(ngettext("%d folder whose icon was changed elsewhere, left as it is", "%d folders whose icon was changed elsewhere, left as they are", count) % count)
+    if report.failed:
+        count = len(report.failed)
+        lines.append(ngettext("%d icon could not be restored", "%d icons could not be restored", count) % count)
+    if report.styles_added:
+        count = report.styles_added
+        lines.append(ngettext("%d style added", "%d styles added", count) % count)
+    if report.styles_rejected:
+        count = report.styles_rejected
+        lines.append(ngettext("%d style ignored because it is not valid", "%d styles ignored because they are not valid", count) % count)
     return lines
 
 

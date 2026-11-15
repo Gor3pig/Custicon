@@ -19,14 +19,25 @@ from custicon.service import (
     STATUS_ICON_FILE_MISSING,
     STATUS_OK,
     STATUS_UNREADABLE,
+    BackupSummary,
     RegenerationReport,
     ResetReport,
+    RestoreReport,
     Settings,
 )
 from custicon.store import Entry
 from custicon.ui.draft import DEFAULT_COLOR, DEFAULT_FOLDER_TINT, Draft
 from custicon.ui.format import normalize_text, display_path, folder_name, from_percent, is_portal_path, is_text_path, percent_text, to_percent
-from custicon.ui.messages import banner_action, describe_error, report_lines, reset_report_lines, status_banner, status_label
+from custicon.ui.messages import (
+    backup_summary_lines,
+    banner_action,
+    describe_error,
+    report_lines,
+    reset_report_lines,
+    restore_report_lines,
+    status_banner,
+    status_label,
+)
 
 
 class DraftTests(unittest.TestCase):
@@ -478,3 +489,78 @@ class ResetReportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BadgeDraftTests(unittest.TestCase):
+    def draft(self, **settings):
+        return Draft.from_entry(Entry("/f", "0" * 32, "Adwaita", "#438de6", {"glyph_name": "star-symbolic", **settings}, None))
+
+    def test_a_folder_without_badge_loads_with_the_badge_off(self):
+        draft = self.draft()
+        self.assertFalse(draft.badge_active)
+        self.assertEqual((draft.badge_corner, draft.badge_size), ("br", 0.3))
+
+    def test_a_stored_badge_is_loaded_with_all_its_settings(self):
+        draft = self.draft(badge_glyph="heart-symbolic", badge_color="#3a944a", badge_corner="tl", badge_size=0.4)
+        self.assertTrue(draft.badge_active)
+        self.assertEqual((draft.badge_glyph, draft.badge_color, draft.badge_corner, draft.badge_size), ("heart-symbolic", "#3a944a", "tl", 0.4))
+
+    def test_damaged_badge_values_fall_back(self):
+        draft = self.draft(badge_glyph="heart-symbolic", badge_color="green", badge_corner="middle", badge_size="big")
+        self.assertEqual((draft.badge_color, draft.badge_corner, draft.badge_size), ("#e62d42", "br", 0.3))
+        self.assertEqual(self.draft(badge_glyph="h", badge_size=9).badge_size, 0.5)
+        self.assertEqual(self.draft(badge_glyph="h", badge_size=0.01).badge_size, 0.15)
+        self.assertEqual(self.draft(badge_glyph="h", badge_size=float("nan")).badge_size, 0.3)
+        self.assertEqual(self.draft(badge_glyph="h", badge_size=True).badge_size, 0.3)
+
+    def test_an_unusable_badge_glyph_means_no_badge(self):
+        for value in ("", 3, ["a"], "a\0b"):
+            self.assertFalse(self.draft(badge_glyph=value).badge_active, value)
+
+    def test_the_settings_carry_the_badge_only_when_it_is_active(self):
+        off = Draft(folder=Path("/f"), glyph_name="a-symbolic", badge_glyph="heart-symbolic")
+        self.assertIsNone(off.to_settings().badge_glyph)
+        self.assertNotIn("badge_glyph", off.to_settings().to_dict())
+        on = replace(off, badge_on=True, badge_corner="bl", badge_color="#3a944a", badge_size=0.2)
+        settings = on.to_settings()
+        self.assertEqual((settings.badge_glyph, settings.badge_corner, settings.badge_color, settings.badge_size), ("heart-symbolic", "bl", "#3a944a", 0.2))
+
+    def test_switching_on_without_a_pictogram_is_not_active(self):
+        self.assertFalse(Draft(folder=Path("/f"), badge_on=True).badge_active)
+
+    def test_the_badge_is_not_part_of_the_remembered_appearance(self):
+        draft = Draft(folder=Path("/f"), glyph_name="a-symbolic", badge_on=True, badge_glyph="h")
+        self.assertNotIn("badge_glyph", draft.appearance())
+        self.assertTrue(draft.with_default_appearance().badge_active)
+        self.assertTrue(draft.with_appearance({"size": 2.0}).badge_active)
+
+    def test_a_round_trip_through_the_settings_keeps_the_badge(self):
+        draft = Draft(folder=Path("/f"), glyph_name="a-symbolic", badge_on=True, badge_glyph="h", badge_corner="tr", badge_color="#3a944a", badge_size=0.25)
+        entry = Entry("/f", "0" * 32, "Adwaita", "#438de6", draft.to_settings().to_dict(), None)
+        again = Draft.from_entry(entry)
+        self.assertEqual((again.badge_on, again.badge_glyph, again.badge_corner, again.badge_color, again.badge_size), (True, "h", "tr", "#3a944a", 0.25))
+
+
+class BackupMessageTests(unittest.TestCase):
+    def test_the_summary_has_one_line_per_kind(self):
+        lines = backup_summary_lines(BackupSummary(7, 4, 12))
+        self.assertEqual(lines, ["7 customized folders", "4 named styles", "12 recent or favorite pictograms"])
+        self.assertEqual(backup_summary_lines(BackupSummary(1, 1, 1)), ["1 customized folder", "1 named style", "1 recent or favorite pictogram"])
+
+    def test_an_empty_restore_report_has_no_lines(self):
+        self.assertEqual(restore_report_lines(RestoreReport()), [])
+
+    def test_each_restore_outcome_is_counted(self):
+        report = RestoreReport(restored=["a", "b"], missing=["c"], kept=["d"], failed={"e": "x", "f": "y", "g": "z"}, styles_added=4, styles_rejected=2)
+        lines = restore_report_lines(report)
+        self.assertEqual(len(lines), 6)
+        self.assertIn("2 icons restored", lines[0])
+        self.assertIn("1 folder not found", lines[1])
+        self.assertIn("1 folder whose icon", lines[2])
+        self.assertIn("3 icons could not", lines[3])
+        self.assertIn("4 styles added", lines[4])
+        self.assertIn("2 styles ignored", lines[5])
+
+    def test_singular_forms_are_used(self):
+        lines = restore_report_lines(RestoreReport(restored=["a"], styles_added=1, styles_rejected=1))
+        self.assertEqual(lines, ["1 icon restored", "1 style added", "1 style ignored because it is not valid"])

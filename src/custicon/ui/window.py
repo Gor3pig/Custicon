@@ -1,3 +1,5 @@
+from dataclasses import replace
+from datetime import date
 from pathlib import Path
 
 import gi
@@ -28,7 +30,16 @@ from .draft import Draft
 from .editor import BIG_SIZE, SMALL_SIZES, Editor
 from .filemanager import manager_name
 from .format import display_path, folder_name, is_portal_path, is_text_path, normalize_text
-from .messages import banner_action, describe_error, report_lines, reset_report_lines, status_banner, status_label
+from .messages import (
+    backup_summary_lines,
+    banner_action,
+    describe_error,
+    report_lines,
+    reset_report_lines,
+    restore_report_lines,
+    status_banner,
+    status_label,
+)
 from .picker import PickerDialog
 from .textures import texture_from_file, texture_from_svg_text
 from .windowstate import initial_state, screen_size
@@ -148,6 +159,8 @@ class MainWindow(Adw.ApplicationWindow):
             ("regenerate", self._start_regeneration),
             ("export-styles", self._export_styles),
             ("import-styles", self._import_styles),
+            ("backup", self._backup_settings),
+            ("restore", self._restore_settings),
             ("reset-all", self._confirm_reset_all),
             ("search", self._start_search),
         )
@@ -161,6 +174,8 @@ class MainWindow(Adw.ApplicationWindow):
         menu.append(_("Regenerate All Icons"), "win.regenerate")
         menu.append(_("Export Styles…"), "win.export-styles")
         menu.append(_("Import Styles…"), "win.import-styles")
+        menu.append(_("Save Settings…"), "win.backup")
+        menu.append(_("Restore Settings…"), "win.restore")
         menu.append(_("Remove All Icons…"), "win.reset-all")
         menu.append(_("Help"), "app.help")
         menu.append(_("About %s") % APP_NAME, "app.about")
@@ -252,6 +267,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.editor.on_apply = self._apply
         self.editor.on_remove = self._confirm_remove
         self.editor.on_choose_glyph = self._choose_glyph
+        self.editor.on_choose_badge_glyph = self._choose_badge_glyph
         self.editor.on_browse_glyph = self._browse_glyph
         self.editor.on_pick_suggestion = self._on_suggestion_picked
         self.editor.on_banner_action = self._on_banner_action
@@ -728,6 +744,26 @@ class MainWindow(Adw.ApplicationWindow):
         )
         picker.present(self)
 
+    def _choose_badge_glyph(self) -> None:
+        draft = self.editor.draft
+        if draft is None:
+            return
+        picker = PickerDialog(
+            self._service.icon_theme(),
+            draft.badge_glyph,
+            self._on_badge_glyph_chosen,
+            self._service.icon_sets(),
+            folder_name(draft.folder),
+            self._service.picker_memory(),
+            self._service.set_favorite,
+            self._suggestions_for(folder_name(draft.folder), PICKER_SUGGESTION_LIMIT),
+        )
+        picker.present(self)
+
+    def _on_badge_glyph_chosen(self, name: str) -> None:
+        self._service.remember_glyph(name)
+        self.editor.update_glyph(replace(self.editor.draft, badge_glyph=name, badge_on=True))
+
     def _on_glyph_chosen(self, name: str) -> None:
         self._service.remember_glyph(name)
         self.editor.update_glyph(self.editor.draft.with_glyph_name(name))
@@ -1074,6 +1110,88 @@ class MainWindow(Adw.ApplicationWindow):
             self.toast(_("%(imported)d imported, %(ignored)d ignored because they are not valid") % {"imported": imported, "ignored": rejected})
         else:
             self.toast(ngettext("%d style imported.", "%d styles imported.", imported) % imported)
+
+    def _backup_settings(self) -> None:
+        dialog = Gtk.FileDialog(title=_("Save Settings"), initial_name=f"custicon-{date.today().isoformat()}.json")
+        dialog.save(self, None, self._backup_save_chosen)
+
+    def _backup_save_chosen(self, dialog, result) -> None:
+        try:
+            gfile = dialog.save_finish(result)
+        except GLib.Error:
+            return
+        path = gfile.get_path()
+        if path is None:
+            self._alert(_("Could Not Save the Settings"), _("Choose a location on this computer."))
+            return
+        try:
+            summary = self._service.export_backup(path)
+        except CusticonError as error:
+            self._alert(_("Could Not Save the Settings"), describe_error(error))
+            return
+        lines = "\n".join(backup_summary_lines(summary))
+        self._alert(
+            _("Settings Saved"),
+            _("The file “%s” was saved.") % Path(path).name + "\n\n" + lines + "\n\n" + _("The file only holds paths and settings, never images."),
+        )
+
+    def _restore_settings(self) -> None:
+        dialog = Gtk.FileDialog(title=_("Restore Settings"))
+        dialog.open(self, None, self._backup_open_chosen)
+
+    def _backup_open_chosen(self, dialog, result) -> None:
+        try:
+            gfile = dialog.open_finish(result)
+        except GLib.Error:
+            return
+        path = gfile.get_path()
+        if path is None:
+            self._alert(_("Could Not Restore the Settings"), _("Choose a file on this computer."))
+            return
+        try:
+            count = self._service.inspect_backup(path)
+        except CusticonError as error:
+            self._alert(_("Could Not Restore the Settings"), describe_error(error))
+            return
+        dialog = Adw.AlertDialog(
+            heading=_("Restore the Settings?"),
+            body=ngettext(
+                "The icon of %d folder will be regenerated with the settings of the file. Folders that no longer exist are ignored. Your current styles are kept and completed.",
+                "The icons of %d folders will be regenerated with the settings of the file. Folders that no longer exist are ignored. Your current styles are kept and completed.",
+                count,
+            )
+            % count,
+        )
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("restore", _("Restore"))
+        dialog.set_response_appearance("restore", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.choose(self, None, lambda d, answer, chosen=path: self._restore_confirmed(d, answer, chosen))
+
+    def _restore_confirmed(self, dialog, result, path: str) -> None:
+        if dialog.choose_finish(result) != "restore":
+            return
+        self.restore_from(path)
+
+    def restore_from(self, path: str) -> None:
+        try:
+            report = self._service.import_backup(path)
+        except CusticonError as error:
+            self._alert(_("Could Not Restore the Settings"), describe_error(error))
+            return
+        self._choosing_off()
+        self.reload()
+        self._refresh_styles()
+        self._show_restore_report(report)
+
+    def _show_restore_report(self, report) -> None:
+        body = "\n".join(restore_report_lines(report))
+        if report.failed:
+            body += "\n\n" + "\n".join(f"{folder_name(folder)}: {message.splitlines()[0]}" for folder, message in report.failed.items())
+        if report.restored:
+            body += "\n\n" + _("Press F5 in %s to see the changes.") % manager_name()
+        self._alert(_("Restoration Finished"), body.strip() or _("The file contained nothing to restore."))
 
     def _show_permission_help(self) -> None:
         dialog = Adw.AlertDialog(

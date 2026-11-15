@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 02:35+0100\n"
+"POT-Creation-Date: 2026-11-15 11:32+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -71,6 +71,38 @@ msgstr "Teinter le pictogramme"
 
 msgid "For a file: applies the chosen color"
 msgstr "Pour un fichier : applique la couleur choisie"
+
+msgid "Corner Badge"
+msgstr "Pastille de coin"
+
+msgid "A small colored disc with its own pictogram, next to the central one"
+msgstr ""
+"Un petit rond de couleur avec son propre pictogramme, à côté du pictogramme "
+"central"
+
+msgid "Top Left"
+msgstr "Haut gauche"
+
+msgid "Top Right"
+msgstr "Haut droite"
+
+msgid "Bottom Left"
+msgstr "Bas gauche"
+
+msgid "Bottom Right"
+msgstr "Bas droite"
+
+msgid "Badge Color"
+msgstr "Couleur du rond"
+
+msgid "Badge Size"
+msgstr "Taille de la pastille"
+
+msgid "Badge Pictogram"
+msgstr "Pictogramme de la pastille"
+
+msgid "Corner"
+msgstr "Coin"
 
 msgid "Type 1 to 3 characters"
 msgstr "Saisissez 1 à 3 caractères"
@@ -218,6 +250,60 @@ msgid "%d icon could not be removed"
 msgid_plural "%d icons could not be removed"
 msgstr[0] "%d icône n’a pas pu être retirée"
 msgstr[1] "%d icônes n’ont pas pu être retirées"
+
+#, python-format
+msgid "%d customized folder"
+msgid_plural "%d customized folders"
+msgstr[0] "%d dossier personnalisé"
+msgstr[1] "%d dossiers personnalisés"
+
+#, python-format
+msgid "%d named style"
+msgid_plural "%d named styles"
+msgstr[0] "%d style nommé"
+msgstr[1] "%d styles nommés"
+
+#, python-format
+msgid "%d recent or favorite pictogram"
+msgid_plural "%d recent or favorite pictograms"
+msgstr[0] "%d pictogramme récent ou favori"
+msgstr[1] "%d pictogrammes récents ou favoris"
+
+#, python-format
+msgid "%d icon restored"
+msgid_plural "%d icons restored"
+msgstr[0] "%d icône restaurée"
+msgstr[1] "%d icônes restaurées"
+
+#, python-format
+msgid "%d folder not found, ignored"
+msgid_plural "%d folders not found, ignored"
+msgstr[0] "%d dossier introuvable, ignoré"
+msgstr[1] "%d dossiers introuvables, ignorés"
+
+#, python-format
+msgid "%d folder whose icon was changed elsewhere, left as it is"
+msgid_plural "%d folders whose icon was changed elsewhere, left as they are"
+msgstr[0] "%d dossier dont l’icône a été changée ailleurs, laissé tel quel"
+msgstr[1] "%d dossiers dont l’icône a été changée ailleurs, laissés tels quels"
+
+#, python-format
+msgid "%d icon could not be restored"
+msgid_plural "%d icons could not be restored"
+msgstr[0] "%d icône n’a pas pu être restaurée"
+msgstr[1] "%d icônes n’ont pas pu être restaurées"
+
+#, python-format
+msgid "%d style added"
+msgid_plural "%d styles added"
+msgstr[0] "%d style ajouté"
+msgstr[1] "%d styles ajoutés"
+
+#, python-format
+msgid "%d style ignored because it is not valid"
+msgid_plural "%d styles ignored because they are not valid"
+msgstr[0] "%d style ignoré car il n’est pas valide"
+msgstr[1] "%d styles ignorés car ils ne sont pas valides"
 
 #, python-format
 msgid "%d icon updated"
@@ -440,6 +526,12 @@ msgstr "Exporter les styles…"
 
 msgid "Import Styles…"
 msgstr "Importer des styles…"
+
+msgid "Save Settings…"
+msgstr "Sauvegarder les réglages…"
+
+msgid "Restore Settings…"
+msgstr "Restaurer les réglages…"
 
 msgid "Remove All Icons…"
 msgstr "Retirer toutes les icônes…"
@@ -797,6 +889,59 @@ msgid_plural "%d styles imported."
 msgstr[0] "%d style importé."
 msgstr[1] "%d styles importés."
 
+msgid "Save Settings"
+msgstr "Sauvegarder les réglages"
+
+msgid "Could Not Save the Settings"
+msgstr "Impossible de sauvegarder les réglages"
+
+msgid "Settings Saved"
+msgstr "Réglages sauvegardés"
+
+#, python-format
+msgid "The file “%s” was saved."
+msgstr "Le fichier « %s » a été enregistré."
+
+msgid "The file only holds paths and settings, never images."
+msgstr ""
+"Le fichier ne contient que des chemins et des réglages, jamais d’images."
+
+msgid "Restore Settings"
+msgstr "Restaurer les réglages"
+
+msgid "Could Not Restore the Settings"
+msgstr "Impossible de restaurer les réglages"
+
+msgid "Restore the Settings?"
+msgstr "Restaurer les réglages ?"
+
+#, python-format
+msgid ""
+"The icon of %d folder will be regenerated with the settings of the file. "
+"Folders that no longer exist are ignored. Your current styles are kept and "
+"completed."
+msgid_plural ""
+"The icons of %d folders will be regenerated with the settings of the file. "
+"Folders that no longer exist are ignored. Your current styles are kept and "
+"completed."
+msgstr[0] ""
+"L’icône de %d dossier va être régénérée avec les réglages du fichier. Les "
+"dossiers qui n’existent plus sont ignorés. Vos styles actuels sont conservés "
+"et complétés."
+msgstr[1] ""
+"Les icônes de %d dossiers vont être régénérées avec les réglages du fichier. "
+"Les dossiers qui n’existent plus sont ignorés. Vos styles actuels sont "
+"conservés et complétés."
+
+msgid "Restore"
+msgstr "Restaurer"
+
+msgid "Restoration Finished"
+msgstr "Restauration terminée"
+
+msgid "The file contained nothing to restore."
+msgstr "Le fichier ne contenait rien à restaurer."
+
 msgid "Allow Access to Your Home Folder"
 msgstr "Autoriser l’accès à votre dossier personnel"
 
@@ -867,10 +1012,23 @@ msgid "Customize or restore several folders at once"
 msgstr "Personnalisez ou restaurez plusieurs dossiers à la fois"
 
 msgid ""
+"Add a small colored badge with its own pictogram in a corner of the folder"
+msgstr ""
+"Ajoutez une petite pastille de couleur avec son propre pictogramme dans un "
+"coin du dossier"
+
+msgid ""
 "Save named styles, and regenerate every icon after a change of icon theme"
 msgstr ""
 "Enregistrez des styles nommés et régénérez toutes les icônes après un "
 "changement de thème d’icônes"
+
+msgid ""
+"Save all your settings in one file and restore them later, for example on a "
+"new computer"
+msgstr ""
+"Sauvegardez tous vos réglages dans un seul fichier et restaurez-les plus "
+"tard, par exemple sur un nouvel ordinateur"
 
 msgid "Remove an icon at any time: the folder gets back the icon it had before"
 msgstr ""
@@ -910,6 +1068,9 @@ msgstr ""
 
 msgid "Tint the folder and keep its shading"
 msgstr "Teintez le dossier en conservant ses ombres"
+
+msgid "A small colored badge in a corner of the folder"
+msgstr "Une petite pastille de couleur dans un coin du dossier"
 
 msgid "Follow every customized folder and find the ones that moved"
 msgstr ""
@@ -979,6 +1140,17 @@ msgid "The texts now speak of your file manager instead of Nautilus only"
 msgstr ""
 "Les textes parlent désormais de votre gestionnaire de fichiers, et plus "
 "seulement de Nautilus"
+
+msgid ""
+"A corner badge: a small colored disc with its own pictogram next to the "
+"central one"
+msgstr ""
+"Une pastille de coin : un petit rond de couleur avec son propre pictogramme, "
+"à côté du pictogramme central"
+
+msgid "Save all your settings in one file and restore them later"
+msgstr ""
+"Sauvegardez tous vos réglages dans un seul fichier et restaurez-les plus tard"
 
 msgid ""
 "A complete page in the app store, with screenshots, keywords and categories "

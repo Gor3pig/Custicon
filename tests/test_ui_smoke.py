@@ -2112,6 +2112,25 @@ class FakeSaveDialog:
         return self._file
 
 
+class FakeRemoteDialog:
+    def __init__(self):
+        self._file = Gio.File.new_for_uri("https://example.org/backup.json")
+
+    def save_finish(self, _result):
+        return self._file
+
+    def open_finish(self, _result):
+        return self._file
+
+
+class FakeFailingDialog:
+    def save_finish(self, _result):
+        raise GLib.Error("dismissed")
+
+    def open_finish(self, _result):
+        raise GLib.Error("dismissed")
+
+
 class StylesUiTests(WindowTestCase):
     BLUE = {"color": "#3366cc", "accent": False, "size": 1.5, "offset_x": 0.1, "offset_y": -0.1, "tint": False}
 
@@ -2994,3 +3013,249 @@ class PermissionHelpTests(WindowTestCase):
             self.window._folders_chosen(FakeFoldersDialog("/run/user/1000/doc/abcd1234/Projects"), None)
         settle()
         self.assertIsNone(self.window.get_visible_dialog().get_extra_child())
+
+
+class BadgeUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.editor = self.window.editor
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        settle()
+
+    def test_the_badge_is_off_by_default_with_its_settings_hidden(self):
+        self.assertFalse(self.editor.badge_switch.get_active())
+        self.assertFalse(self.editor.badge_details.get_visible())
+        self.assertFalse(self.editor.draft.badge_active)
+        self.assertNotIn("badge_glyph", self.editor.draft.to_settings().to_dict())
+
+    def test_turning_it_on_shows_the_settings_and_picks_a_default_pictogram(self):
+        self.editor.badge_switch.set_active(True)
+        settle()
+        self.assertTrue(self.editor.badge_details.get_visible())
+        self.assertTrue(self.editor.draft.badge_active)
+        self.assertEqual(self.editor.draft.badge_glyph, "phosphor:check")
+        self.assertEqual(self.editor.draft.to_settings().badge_corner, "br")
+
+    def test_the_corner_color_and_size_reach_the_settings(self):
+        self.editor.badge_switch.set_active(True)
+        self.editor.badge_corner_buttons["tl"].set_active(True)
+        self.editor.badge_palette.choose_color("#3a944a")
+        self.editor.badge_size_slider.adjustment.set_value(40)
+        settle()
+        settings = self.editor.draft.to_settings()
+        self.assertEqual((settings.badge_corner, settings.badge_color), ("tl", "#3a944a"))
+        self.assertAlmostEqual(settings.badge_size, 0.4)
+
+    def test_only_one_corner_is_selected_at_a_time(self):
+        self.editor.badge_switch.set_active(True)
+        for corner in ("tr", "bl"):
+            self.editor.badge_corner_buttons[corner].set_active(True)
+            active = [name for name, button in self.editor.badge_corner_buttons.items() if button.get_active()]
+            self.assertEqual(active, [corner])
+
+    def test_choosing_a_pictogram_turns_the_badge_on(self):
+        self.window._on_badge_glyph_chosen("heart-symbolic")
+        settle()
+        self.assertTrue(self.editor.badge_switch.get_active())
+        self.assertEqual(self.editor.draft.badge_glyph, "heart-symbolic")
+        self.assertIn("heart", self.editor.badge_glyph_label.get_text().lower())
+
+    def test_the_central_pictogram_is_not_touched_by_the_badge(self):
+        self.window._on_badge_glyph_chosen("heart-symbolic")
+        settle()
+        self.assertEqual(self.editor.draft.glyph_name, "star-symbolic")
+
+    def test_turning_it_off_keeps_the_choices_for_later(self):
+        self.window._on_badge_glyph_chosen("heart-symbolic")
+        self.editor.badge_corner_buttons["bl"].set_active(True)
+        self.editor.badge_switch.set_active(False)
+        settle()
+        self.assertFalse(self.editor.draft.badge_active)
+        self.assertNotIn("badge_glyph", self.editor.draft.to_settings().to_dict())
+        self.editor.badge_switch.set_active(True)
+        settle()
+        self.assertEqual((self.editor.draft.badge_glyph, self.editor.draft.badge_corner), ("heart-symbolic", "bl"))
+
+    def test_applying_stores_the_badge_and_reselecting_the_folder_shows_it(self):
+        self.window._on_badge_glyph_chosen("heart-symbolic")
+        self.editor.badge_corner_buttons["tr"].set_active(True)
+        settle()
+        self.window._apply()
+        settle()
+        key = self.row_keys()[0]
+        stored = Settings.from_dict(self.service.store.get(key).settings)
+        self.assertEqual((stored.badge_glyph, stored.badge_corner), ("heart-symbolic", "tr"))
+        self.assertIn("<circle", self.service.store.icon_path(self.service.store.get(key).digest).read_text())
+        other = self.make_folder("other")
+        self.window.add_folder(other)
+        settle()
+        self.assertFalse(self.editor.badge_switch.get_active())
+        self.window.reload(select=key)
+        settle()
+        self.assertTrue(self.editor.badge_switch.get_active())
+        self.assertEqual(self.editor.draft.badge_corner, "tr")
+        self.assertTrue(self.editor.badge_corner_buttons["tr"].get_active())
+
+    def test_a_folder_without_badge_stays_free_of_badge_settings(self):
+        self.window._apply()
+        settle()
+        key = self.row_keys()[0]
+        self.assertNotIn("badge", json.dumps(self.service.store.get(key).settings))
+
+    def test_resetting_the_appearance_leaves_the_badge_alone(self):
+        self.window._on_badge_glyph_chosen("heart-symbolic")
+        settle()
+        self.editor._on_reset_appearance(None)
+        settle()
+        self.assertTrue(self.editor.draft.badge_active)
+
+    def test_the_badge_is_applied_to_every_folder_of_a_batch(self):
+        folders = [self.make_folder(name) for name in ("one", "two")]
+        self.window.add_folders(folders)
+        settle()
+        self.editor.update_glyph(self.editor.draft.with_glyph_name("star-symbolic"))
+        self.window._on_badge_glyph_chosen("heart-symbolic")
+        settle()
+        self.window._apply()
+        settle()
+        for folder in folders:
+            stored = self.service.store.get(str(folder.resolve()))
+            self.assertEqual(Settings.from_dict(stored.settings).badge_glyph, "heart-symbolic")
+
+    def test_regeneration_keeps_the_badge(self):
+        self.window._on_badge_glyph_chosen("heart-symbolic")
+        settle()
+        self.window._apply()
+        settle()
+        key = self.row_keys()[0]
+        self.service.regenerate_all()
+        self.assertIn("<circle", self.service.store.icon_path(self.service.store.get(key).digest).read_text())
+
+    def test_a_missing_badge_pictogram_blocks_the_apply_button_with_a_message(self):
+        self.editor.update_glyph(replace(self.editor.draft, badge_on=True, badge_glyph="missing-symbolic"))
+        settle(lambda: not self.editor.apply_button.get_sensitive())
+        self.assertFalse(self.editor.apply_button.get_sensitive())
+
+    def test_the_new_card_does_not_push_the_editor_out_of_the_window(self):
+        self.window.set_default_size(960, 680)
+        settle()
+        self.assertLessEqual(self.editor.columns.get_width(), self.editor.scrolled.get_width())
+
+
+class BackupUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.target = self.root / "backup.json"
+
+    def customize(self, name="docs"):
+        return self.add_and_apply(name)
+
+    def dialog_text(self):
+        dialog = self.window.get_visible_dialog()
+        self.assertIsNotNone(dialog)
+        return dialog.get_heading(), dialog.get_body()
+
+    def test_the_menu_offers_both_actions(self):
+        self.assertIsNotNone(self.window.lookup_action("backup"))
+        self.assertIsNotNone(self.window.lookup_action("restore"))
+
+    def test_saving_writes_the_file_and_reports_what_it_holds(self):
+        self.customize()
+        self.window._backup_save_chosen(FakeSaveDialog(str(self.target)), None)
+        settle()
+        heading, body = self.dialog_text()
+        self.assertEqual(heading, "Settings Saved")
+        self.assertIn("1 customized folder", body)
+        self.assertIn("never images", body)
+        self.assertTrue(self.target.is_file())
+
+    def test_cancelling_the_save_dialog_does_nothing(self):
+        self.window._backup_save_chosen(FakeFailingDialog(), None)
+        settle()
+        self.assertFalse(self.target.exists())
+        self.assertIsNone(self.window.get_visible_dialog())
+
+    def test_a_destination_that_is_not_on_this_computer_is_refused(self):
+        self.window._backup_save_chosen(FakeRemoteDialog(), None)
+        settle()
+        heading, body = self.dialog_text()
+        self.assertEqual(heading, "Could Not Save the Settings")
+        self.assertIn("on this computer", body)
+
+    def test_a_file_that_is_not_on_this_computer_is_refused(self):
+        self.window._backup_open_chosen(FakeRemoteDialog(), None)
+        settle()
+        heading, body = self.dialog_text()
+        self.assertEqual(heading, "Could Not Restore the Settings")
+        self.assertIn("on this computer", body)
+
+    def test_cancelling_the_open_dialog_does_nothing(self):
+        self.window._backup_open_chosen(FakeFailingDialog(), None)
+        settle()
+        self.assertIsNone(self.window.get_visible_dialog())
+
+    def test_an_unwritable_destination_shows_an_error(self):
+        self.window._backup_save_chosen(FakeSaveDialog(str(self.root / "absent" / "backup.json")), None)
+        settle()
+        self.assertEqual(self.dialog_text()[0], "Could Not Save the Settings")
+
+    def test_choosing_a_file_asks_for_confirmation_with_the_folder_count(self):
+        self.customize()
+        self.service.export_backup(self.target)
+        self.window._backup_open_chosen(FakeSaveDialog(str(self.target)), None)
+        settle()
+        heading, body = self.dialog_text()
+        self.assertEqual(heading, "Restore the Settings?")
+        self.assertIn("The icon of 1 folder", body)
+
+    def test_a_file_that_is_not_a_backup_is_refused_before_asking(self):
+        self.target.write_text("nonsense")
+        self.window._backup_open_chosen(FakeSaveDialog(str(self.target)), None)
+        settle()
+        self.assertEqual(self.dialog_text()[0], "Could Not Restore the Settings")
+
+    def test_cancelling_the_confirmation_changes_nothing(self):
+        folder = self.customize()
+        self.service.export_backup(self.target)
+        self.service.reset(folder)
+        self.window.reload()
+        self.window._restore_confirmed(FakeAnswer("cancel"), None, str(self.target))
+        settle()
+        self.assertIsNone(self.service.store.get(str(folder.resolve())))
+
+    def test_confirming_restores_the_icons_and_reports(self):
+        folder = self.customize()
+        self.service.export_backup(self.target)
+        self.service.reset(folder)
+        self.window.reload()
+        settle()
+        self.window._restore_confirmed(FakeAnswer("restore"), None, str(self.target))
+        settle()
+        self.assertIsNotNone(self.service.store.get(str(folder.resolve())))
+        heading, body = self.dialog_text()
+        self.assertEqual(heading, "Restoration Finished")
+        self.assertIn("1 icon restored", body)
+        self.assertIn("Press F5", body)
+        self.assertIn(str(folder.resolve()), self.row_keys())
+
+    def test_the_report_lists_missing_and_failed_folders(self):
+        folder = self.customize()
+        self.service.export_backup(self.target)
+        document = json.loads(self.target.read_text())
+        document["folders"].append({"folder": str(self.workspace / "gone"), "settings": {"glyph_name": "star-symbolic"}})
+        document["folders"].append({"folder": str(folder), "settings": {"glyph_name": "star-symbolic", "size": 99}})
+        self.target.write_text(json.dumps(document))
+        self.window.restore_from(str(self.target))
+        settle()
+        body = self.dialog_text()[1]
+        self.assertIn("1 folder not found, ignored", body)
+        self.assertIn("1 icon could not be restored", body)
+        self.assertIn(f"{folder.name}:", body)
+
+    def test_an_empty_backup_says_so(self):
+        self.target.write_text('{"format": "custicon-backup", "version": 1}')
+        self.window.restore_from(str(self.target))
+        settle()
+        self.assertIn("nothing to restore", self.dialog_text()[1])

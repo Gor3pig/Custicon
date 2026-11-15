@@ -18,6 +18,8 @@ itself. This guide describes every step.
 - [Applying and seeing the result](#applying-and-seeing-the-result)
 - [Managing your folders](#managing-your-folders)
 - [Several folders at once](#several-folders-at-once)
+- [Corner badge](#corner-badge)
+- [Saving and restoring your settings](#saving-and-restoring-your-settings)
 - [Removing an icon](#removing-an-icon)
 - [After a theme change](#after-a-theme-change)
 
@@ -183,6 +185,38 @@ From two folders, the editor shows “3 folders” and the **Apply to 3 Folders*
 the appearance as usual, then apply: every folder gets them, replacing its previous icon. If some folders fail,
 the others are still done and a report lists the failures. Turn the selection mode off with the same button.
 To remove the icons of several folders at once, tick them in the selection mode: the button **Remove 3 Icons** asks for confirmation, then a notification offers **Undo** for the whole batch.
+
+## Corner badge
+
+A badge is a small colored disc with its own pictogram, placed in a corner of the folder, next to the central
+pictogram. It is handy to mark a state (a lock, a check mark, a star) without hiding the main pictogram.
+
+<img src="../../data/screenshots/en-badge.png" alt="The corner badge settings" width="800">
+
+Turn on **Corner Badge** at the bottom of the editor. The settings appear:
+- **Badge Pictogram**: **Choose…** opens the same picker as the main pictogram (a check mark is proposed first).
+- **Corner**: one of the four corners, bottom right by default.
+- **Badge Color**: the palette of the pictograms, or your own color.
+- **Badge Size**: from 15 % to 50 % of the width of the folder, 30 % by default.
+
+The preview shows the badge at once. The badge is stored with the folder, follows regenerations, applies to every folder
+of a selection, and is not part of the settings kept for the next folders. Turn the switch off to remove it:
+your choices are kept in the editor if you turn it on again.
+
+## Saving and restoring your settings
+
+**Save Settings…** (main menu) writes one file with everything Custicon knows: the customized folders with their
+settings, the named styles, the remembered appearance and your recent and favorite pictograms. The file only holds
+paths and settings, never images, and a dialog tells you what it contains.
+
+**Restore Settings…** reads such a file, for example after a reinstall or on a new computer. After a confirmation, every icon
+is regenerated with the settings of the file. A report tells what happened:
+- folders that no longer exist are ignored;
+- a folder whose icon was changed outside Custicon is left as it is;
+- a pictogram file that has disappeared is reported, without stopping the others;
+- your current styles and favorites are kept and completed, and your remembered appearance is not overwritten.
+
+Restoring twice gives the same result. Then press F5 in your file manager.
 
 ## Removing an icon
 

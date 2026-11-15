@@ -9,9 +9,10 @@ from gi.repository import Adw, Gdk, Gtk, Pango
 
 from .. import iconsets
 from ..i18n import _, ngettext
+from ..compose import BADGE_CORNERS, BADGE_MAX_SIZE, BADGE_MIN_SIZE
 from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
 from ..textglyph import MAX_CHARACTERS
-from .draft import Draft
+from .draft import DEFAULT_BADGE_GLYPH, Draft
 from .filemanager import manager_name
 from .format import display_path, folder_name, from_percent, percent_text, to_percent
 from .palette import Palette, hex_of, rgba_of
@@ -106,6 +107,7 @@ class Editor(Gtk.Box):
         self.on_apply = None
         self.on_remove = None
         self.on_choose_glyph = None
+        self.on_choose_badge_glyph = None
         self.on_browse_glyph = None
         self.on_pick_suggestion = None
         self.on_banner_action = None
@@ -128,16 +130,23 @@ class Editor(Gtk.Box):
         columns.append(self._build_preview())
         columns.append(self._build_controls())
         self.columns = columns
-        clamp = Adw.Clamp(maximum_size=960, tightening_threshold=720, child=columns)
-        breakpoint_bin = Adw.BreakpointBin(width_request=300, height_request=200)
-        breakpoint_bin.set_child(clamp)
+        badge_card = self._build_badge_card()
+        badge_card.set_margin_start(16)
+        badge_card.set_margin_end(16)
+        badge_card.set_margin_bottom(12)
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        content.append(columns)
+        content.append(badge_card)
+        clamp = Adw.Clamp(maximum_size=960, tightening_threshold=720, child=content)
+        scrolled = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
+        scrolled.set_child(clamp)
+        breakpoint_bin = Adw.BreakpointBin(width_request=300, height_request=200, vexpand=True)
+        breakpoint_bin.set_child(scrolled)
         narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse(NARROW_CONDITION))
         narrow.add_setter(columns, "orientation", Gtk.Orientation.VERTICAL)
         breakpoint_bin.add_breakpoint(narrow)
-        scrolled = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
-        scrolled.set_child(breakpoint_bin)
         self.scrolled = scrolled
-        self.append(scrolled)
+        self.append(breakpoint_bin)
         self.append(self._build_action_bar())
 
     def _build_preview(self) -> Gtk.Widget:
@@ -241,6 +250,75 @@ class Editor(Gtk.Box):
         sources.append(self.tint_row)
         column.append(sources)
         return column
+
+    def _build_badge_card(self) -> Gtk.Widget:
+        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, margin_top=8, margin_bottom=8, margin_start=12, margin_end=12)
+        titles = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True, valign=Gtk.Align.CENTER)
+        title = Gtk.Label(label=_("Corner Badge"), xalign=0.0)
+        title.add_css_class("heading")
+        subtitle = Gtk.Label(label=_("A small colored disc with its own pictogram, next to the central one"), xalign=0.0, wrap=True, max_width_chars=60)
+        subtitle.add_css_class("caption")
+        subtitle.add_css_class("dim-label")
+        titles.append(title)
+        titles.append(subtitle)
+        self.badge_switch = Gtk.Switch(valign=Gtk.Align.CENTER)
+        self.badge_switch.update_property([Gtk.AccessibleProperty.LABEL], [_("Corner Badge")])
+        self.badge_switch.connect("notify::active", self._on_badge_switch)
+        header.append(titles)
+        header.append(self.badge_switch)
+
+        chip = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.badge_glyph_label = Gtk.Label(xalign=0.0, hexpand=True, ellipsize=Pango.EllipsizeMode.END)
+        self.badge_glyph_label.add_css_class("dim-label")
+        self.badge_choose_button = Gtk.Button(label=_("Choose…"), valign=Gtk.Align.CENTER)
+        self.badge_choose_button.connect("clicked", lambda *_: self.on_choose_badge_glyph and self.on_choose_badge_glyph())
+        chip.append(self.badge_glyph_label)
+        chip.append(self.badge_choose_button)
+
+        corners = Gtk.Grid(row_spacing=6, column_spacing=6, halign=Gtk.Align.END)
+        self.badge_corner_buttons = {}
+        group = None
+        names = {"tl": _("Top Left"), "tr": _("Top Right"), "bl": _("Bottom Left"), "br": _("Bottom Right")}
+        for index, corner in enumerate(BADGE_CORNERS):
+            button = Gtk.ToggleButton(tooltip_text=names[corner])
+            button.set_size_request(34, 34)
+            button.update_property([Gtk.AccessibleProperty.LABEL], [names[corner]])
+            button.set_child(self._corner_mark(corner))
+            if group is None:
+                group = button
+            else:
+                button.set_group(group)
+            button.connect("toggled", self._on_badge_corner, corner)
+            self.badge_corner_buttons[corner] = button
+            corners.attach(button, index % 2, index // 2, 1, 1)
+
+        self.badge_palette = Palette(_("Badge Color"), "none", self._on_badge_palette, plain=True)
+        self.badge_size_slider = Slider(_("Badge Size"), to_percent(BADGE_MIN_SIZE), to_percent(BADGE_MAX_SIZE), 30)
+        self.badge_size_slider.connect_changed(self._on_badge_size)
+        self.badge_details = card_of(
+            [
+                labelled_row(_("Badge Pictogram"), chip),
+                labelled_row(_("Corner"), corners),
+                labelled_row(_("Badge Color"), self.badge_palette),
+                self.badge_size_slider.row,
+            ]
+        )
+        self.badge_details.remove_css_class("card")
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        card.add_css_class("card")
+        card.append(header)
+        divider = Gtk.Separator()
+        card.append(divider)
+        card.append(self.badge_details)
+        self.badge_divider = divider
+        return card
+
+    @staticmethod
+    def _corner_mark(corner: str) -> Gtk.Widget:
+        mark = Gtk.Box(halign=Gtk.Align.START if corner.endswith("l") else Gtk.Align.END, valign=Gtk.Align.START if corner.startswith("t") else Gtk.Align.END)
+        dot = Gtk.Image(icon_name="media-record-symbolic", pixel_size=12)
+        mark.append(dot)
+        return mark
 
     def _build_letters_popover(self) -> Gtk.Popover:
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin_top=10, margin_bottom=10, margin_start=10, margin_end=10)
@@ -390,8 +468,20 @@ class Editor(Gtk.Box):
         self.tint_row.set_sensitive(bool(draft.glyph_file))
         self.folder_tint_palette.set_state(draft.folder_tint_mode, draft.folder_tint)
         self.color_palette.set_state(draft.color_mode, draft.color)
+        self._show_badge(draft)
         self._show_sliders(draft)
         self.reset_button.set_sensitive(not draft.has_default_appearance())
+
+    def _show_badge(self, draft: Draft) -> None:
+        self.badge_switch.set_active(draft.badge_on)
+        self.badge_glyph_label.set_text(
+            iconsets.display_name(draft.badge_glyph, iconsets.current_language()) if draft.badge_glyph else _("No pictogram chosen")
+        )
+        self.badge_palette.set_state("custom", draft.badge_color)
+        self.badge_corner_buttons[draft.badge_corner].set_active(True)
+        self.badge_size_slider.set_value(to_percent(draft.badge_size))
+        self.badge_details.set_visible(draft.badge_on)
+        self.badge_divider.set_visible(draft.badge_on)
 
     def _show_sliders(self, draft: Draft) -> None:
         self.size_slider.set_value(to_percent(draft.size))
@@ -495,6 +585,32 @@ class Editor(Gtk.Box):
             self._update(color_mode=mode)
         else:
             self._update(color_mode=mode, color=color)
+
+    def _on_badge_switch(self, switch, _param) -> None:
+        if self._loading or self._draft is None:
+            return
+        active = switch.get_active()
+        changes = {"badge_on": active}
+        if active and not self._draft.badge_glyph:
+            changes["badge_glyph"] = DEFAULT_BADGE_GLYPH
+        self._draft = replace(self._draft, **changes)
+        self._loading = True
+        try:
+            self._show_badge(self._draft)
+        finally:
+            self._loading = False
+        self._emit_change()
+
+    def _on_badge_corner(self, button, corner: str) -> None:
+        if button.get_active():
+            self._update(badge_corner=corner)
+
+    def _on_badge_palette(self, _mode: str, color: str | None) -> None:
+        if color is not None:
+            self._update(badge_color=color)
+
+    def _on_badge_size(self, value: float) -> None:
+        self._update(badge_size=from_percent(value))
 
     def _on_size(self, value: float) -> None:
         self._update(size=from_percent(value))

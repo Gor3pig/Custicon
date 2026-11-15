@@ -18,6 +18,8 @@ teinter le dossier lui-même. Ce guide décrit chaque étape.
 - [Appliquer et voir le résultat](#appliquer-et-voir-le-résultat)
 - [Gérer ses dossiers](#gérer-ses-dossiers)
 - [Plusieurs dossiers à la fois](#plusieurs-dossiers-à-la-fois)
+- [Pastille de coin](#pastille-de-coin)
+- [Sauvegarder et restaurer ses réglages](#sauvegarder-et-restaurer-ses-réglages)
 - [Retirer une icône](#retirer-une-icône)
 - [Après un changement de thème](#après-un-changement-de-thème)
 
@@ -183,6 +185,38 @@ Deux façons de donner le même pictogramme et le même aspect à plusieurs doss
 et l’apparence comme d’habitude, puis appliquez : chaque dossier les reçoit, à la place de son icône précédente. Si certains échouent,
 les autres sont quand même faits et un compte rendu liste les échecs. Quittez le mode sélection avec le même bouton.
 Pour retirer les icônes de plusieurs dossiers d’un coup, cochez-les en mode sélection : le bouton **Retirer 3 icônes** demande une confirmation, puis une notification propose **Annuler** pour tout le lot.
+
+## Pastille de coin
+
+Une pastille est un petit rond de couleur avec son propre pictogramme, placé dans un coin du dossier, à côté du
+pictogramme central. Elle sert à marquer un état (un cadenas, une coche, une étoile) sans cacher le pictogramme principal.
+
+<img src="../../data/screenshots/fr-badge.png" alt="Les réglages de la pastille de coin" width="800">
+
+Activez **Pastille de coin** en bas de l’éditeur. Les réglages apparaissent :
+- **Pictogramme de la pastille** : **Choisir…** ouvre le même sélecteur que pour le pictogramme principal (une coche est proposée d’abord).
+- **Coin** : l’un des quatre coins, en bas à droite par défaut.
+- **Couleur du rond** : la palette des pictogrammes, ou votre propre couleur.
+- **Taille de la pastille** : de 15 % à 50 % de la largeur du dossier, 30 % par défaut.
+
+L’aperçu montre la pastille tout de suite. Elle est enregistrée avec le dossier, suit les régénérations, s’applique à tous les dossiers
+d’une sélection, et ne fait pas partie des réglages gardés pour les prochains dossiers. Désactivez l’interrupteur pour la retirer :
+vos choix restent dans l’éditeur si vous le réactivez.
+
+## Sauvegarder et restaurer ses réglages
+
+**Sauvegarder les réglages…** (menu principal) écrit un fichier unique avec tout ce que Custicon connaît : les dossiers personnalisés avec leurs
+réglages, les styles nommés, l’apparence mémorisée et vos pictogrammes récents et favoris. Le fichier ne contient que des chemins
+et des réglages, jamais d’images, et une fenêtre vous dit ce qu’il contient.
+
+**Restaurer les réglages…** relit un tel fichier, par exemple après une réinstallation ou sur un nouvel ordinateur. Après une confirmation,
+chaque icône est régénérée avec les réglages du fichier. Un compte rendu indique ce qui s’est passé :
+- les dossiers qui n’existent plus sont ignorés ;
+- un dossier dont l’icône a été changée en dehors de Custicon est laissé tel quel ;
+- un fichier de pictogramme disparu est signalé, sans arrêter les autres ;
+- vos styles et favoris actuels sont conservés et complétés, et votre apparence mémorisée n’est pas écrasée.
+
+Restaurer deux fois donne le même résultat. Appuyez ensuite sur F5 dans votre gestionnaire de fichiers.
 
 ## Retirer une icône
 

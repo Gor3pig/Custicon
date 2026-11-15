@@ -13,19 +13,20 @@ from gi.repository import Adw, Gdk, GLib, Graphene, Gsk, Gtk
 
 from .app import Application
 from .metadata import write_custom_icon
-from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationReport, Service, Settings
+from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationReport, RestoreReport, Service, Settings
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "restored")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
 DIALOG_SETTLE_MS = 3200
-DIALOG_SCREENS = ("darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report")
+DIALOG_SCREENS = ("darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge")
 SET_SCREENS = {"darkpicker": ("emoji", "chat"), "phosphor": ("phosphor", ""), "emoji": ("emoji", "chat"), "brands": ("brands", "git")}
 WIDE = (1000, 720)
 NARROW = (400, 720)
+TALL = (1000, 768)
 FOLDERS = (
     ("Projets", "applications-engineering-symbolic", "#33d17a"),
     ("Musique", "phosphor:music-notes", "#9141ac"),
@@ -111,13 +112,39 @@ def show_custom(window) -> bool:
     return False
 
 
+def show_badge(window) -> bool:
+    editor = window.editor
+    editor.badge_switch.set_active(True)
+    editor.badge_corner_buttons["br"].set_active(True)
+    editor.badge_palette.choose_color("#e62d42")
+    GLib.timeout_add(DIALOG_DELAY_MS * 3, scroll_down, editor)
+    return False
+
+
+def scroll_down(editor) -> bool:
+    adjustment = editor.scrolled.get_vadjustment()
+    adjustment.set_value(adjustment.get_upper())
+    return False
+
+
+def show_restored(window, demo) -> bool:
+    report = RestoreReport(
+        restored=[str(demo.folders[name]) for name in ("Projets", "Musique", "Photos")],
+        missing=[str(demo.root / "Anciens")],
+        kept=[str(demo.folders["Archives"])],
+        styles_added=2,
+    )
+    window._show_restore_report(report)
+    return False
+
+
 def show_about(window) -> bool:
     window.get_application().activate_action("about", None)
     return False
 
 
 def arrange(screen: str, window, demo: Demo) -> None:
-    size = NARROW if screen == "narrow" else WIDE
+    size = NARROW if screen == "narrow" else (TALL if screen == "badge" else WIDE)
     window.set_default_size(*size)
     Gtk.Settings.get_default().set_property("gtk-enable-animations", False)
     scheme = Adw.ColorScheme.FORCE_DARK if screen in ("dark", "darkpicker") else Adw.ColorScheme.FORCE_LIGHT
@@ -150,6 +177,12 @@ def arrange(screen: str, window, demo: Demo) -> None:
         GLib.timeout_add(DIALOG_DELAY_MS, show_custom, window)
     if screen == "about":
         GLib.timeout_add(DIALOG_DELAY_MS, show_about, window)
+    if screen == "badge":
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, show_badge, window)
+    if screen == "restored":
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, show_restored, window, demo)
     if screen == "confirm":
         GLib.timeout_add(DIALOG_DELAY_MS, window._confirm_remove)
     if screen == "toast":

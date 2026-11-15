@@ -66,6 +66,23 @@ The pictogram is placed on the real folder icon of your current icon theme, and 
 
 </td>
 </tr>
+<tr>
+<td width="33%" valign="top">
+
+**Badge**<br>A small colored disc with its own pictogram in a corner of the folder, next to the central one.
+
+</td>
+<td width="33%" valign="top">
+
+**Back up**<br>All your folders, styles and favorites in one file, restored in one click on any computer.
+
+</td>
+<td width="33%" valign="top">
+
+**Everywhere**<br>GNOME, KDE Plasma, Cinnamon, MATE or LXQt: the right method is chosen automatically.
+
+</td>
+</tr>
 </table>
 
 <p align="center"><b><a href="help/en/README.md">Read the user guide →</a></b><br>Everything Custicon can do, step by step.</p>

@@ -177,7 +177,7 @@ class CustomChoice:
 
 
 class Palette(Adw.WrapBox):
-    def __init__(self, label: str, base_mode: str, on_changed=None):
+    def __init__(self, label: str, base_mode: str, on_changed=None, plain: bool = False):
         super().__init__(child_spacing=6, line_spacing=6, accessible_role=Gtk.AccessibleRole.GROUP)
         ensure_css()
         self._base_mode = base_mode
@@ -191,8 +191,10 @@ class Palette(Adw.WrapBox):
         self.update_property([Gtk.AccessibleProperty.LABEL], [label])
         self._buttons: dict = {}
         self._areas: dict = {}
-        self._add("base", None, base_mode, self._base_label)
-        self._add("accent", self._accent, "accent", _("System Accent"))
+        self._plain = plain
+        if not plain:
+            self._add("base", None, base_mode, self._base_label)
+            self._add("accent", self._accent, "accent", _("System Accent"))
         for color, name in PALETTE_COLORS:
             self._add(color, color, None, name)
         self.custom_button = CustomSwatch()
@@ -263,6 +265,8 @@ class Palette(Adw.WrapBox):
                 if normalized not in self._buttons:
                     self.custom_button.set_rgba(rgba_of(normalized))
                 self._mode, self._color = "custom", normalized
+            elif self._plain:
+                self._mode, self._color = "custom", self.custom_hex()
             elif mode == "accent":
                 self._mode, self._color = "accent", None
             else:
