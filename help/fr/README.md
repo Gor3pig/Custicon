@@ -174,7 +174,7 @@ et un fichier est refusé. Si Custicon tourne déjà, la même fenêtre est réu
 
 Un lien vers un dossier, par exemple sur votre bureau, peut avoir sa propre icône. Avec GNOME, Cinnamon et MATE, l’icône est posée sur le
 lien lui-même : le dossier vers lequel il pointe garde la sienne, et chacun peut avoir un aspect différent. Avec KDE Plasma et LXQt,
-l’icône est conservée dans le fichier `.directory` du vrai dossier, donc le lien et sa cible partagent la même icône. Un lien cassé ne
+l’icône est conservée dans le fichier `.directory` du vrai dossier, donc le lien, sa cible et tout autre lien vers ce dossier partagent la même icône. Un lien cassé ne
 peut pas être personnalisé.
 
 ### Plusieurs dossiers à la fois

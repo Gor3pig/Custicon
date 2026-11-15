@@ -2,7 +2,7 @@
 Name=io.github.gor3pig.Custicon
 Branch=master
 Title=Custicon
-Comment=Customize the icon of a folder in Nautilus
+Comment=Customize folder icons in your desktop environment
 Url=https://gor3pig.github.io/Custicon/repo/
 SuggestRemoteName=custicon
 Homepage=https://gor3pig.github.io/Custicon/

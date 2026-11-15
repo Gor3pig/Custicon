@@ -17,7 +17,7 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "restored")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "restored")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
@@ -121,6 +121,16 @@ def show_badge(window) -> bool:
     return False
 
 
+def show_list(window, demo) -> None:
+    service = demo.service
+    service.apply(demo.folders["Projets"], Settings(glyph_name="applications-engineering-symbolic", folder_tint="#33d17a", badge_glyph="phosphor:check", badge_color="#2190a4"))
+    service.apply(demo.folders["Photos"], Settings(badge_glyph="phosphor:lock", badge_color="#e62d42"))
+    link = demo.root / "Raccourci"
+    link.symlink_to(demo.folders["Musique"])
+    service.apply(link, Settings(glyph_name="phosphor:star", folder_tint="#e01b24", color="#ffffff"))
+    window.reload(select=str(link))
+
+
 def show_badge_only(window) -> bool:
     show_badge(window)
     window.editor.update_glyph(window.editor.draft.without_glyph())
@@ -186,6 +196,8 @@ def arrange(screen: str, window, demo: Demo) -> None:
     if screen == "badge":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, show_badge, window)
+    if screen == "list":
+        show_list(window, demo)
     if screen == "badgeonly":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, show_badge_only, window)
