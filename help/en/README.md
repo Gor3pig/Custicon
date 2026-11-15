@@ -170,6 +170,12 @@ Right-click a folder in your file manager, then **Open with Custicon**. You can 
 or run `flatpak run io.github.gor3pig.Custicon /path/to/folder`. Several folders open as a batch (see below),
 and a file is refused. If Custicon is already running, the same window is reused.
 
+### Symbolic links to folders
+
+A link to a folder, for example on your desktop, can have its own icon. With GNOME, Cinnamon and MATE the icon is put on the link
+itself: the folder it points to keeps its own icon, and each can look different. With KDE Plasma and LXQt the icon is kept in the
+`.directory` file of the real folder, so the link and its target share the same icon. A broken link cannot be customized.
+
 ### Several folders at once
 
 Two ways to give the same pictogram and the same look to several folders:

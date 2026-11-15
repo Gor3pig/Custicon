@@ -101,11 +101,83 @@ class ApplyTests(ServiceTestCase):
         self.assertEqual(inherited.svg, self.service.build(STAR, "Blue").svg)
         self.assertEqual(inherited.folder_file.parts[-4], "Blue")
 
-    def test_apply_to_a_symlinked_folder_uses_the_real_path(self):
+    def test_apply_to_a_symlinked_folder_marks_the_link_itself(self):
         folder = self.make_folder()
         link = self.workspace / "link"
         link.symlink_to(folder)
         entry = self.service.apply(link, STAR)
+        self.assertEqual(entry.folder, str(link))
+        self.assertIsNotNone(read_custom_icon(link))
+        self.assertIsNone(read_custom_icon(folder))
+
+    def test_a_link_and_its_target_keep_their_own_icons(self):
+        folder = self.make_folder()
+        link = self.workspace / "link"
+        link.symlink_to(folder)
+        self.service.apply(folder, STAR)
+        self.service.apply(link, replace(STAR, color="#ff0000"))
+        self.assertEqual(sorted(self.store.all()), sorted([str(folder), str(link)]))
+        self.assertNotEqual(read_custom_icon(folder), read_custom_icon(link))
+        self.service.reset(link)
+        self.assertIsNone(read_custom_icon(link))
+        self.assertIsNotNone(read_custom_icon(folder))
+
+    def test_a_link_reached_through_dots_keeps_its_name(self):
+        folder = self.make_folder()
+        link = self.workspace / "link"
+        link.symlink_to(folder)
+        (self.workspace / "x").mkdir()
+        entry = self.service.apply(self.workspace / "x" / ".." / "link", STAR)
+        self.assertEqual(entry.folder, str(link))
+
+    def test_a_relative_link_is_accepted(self):
+        folder = self.make_folder("real")
+        link = self.workspace / "rel"
+        link.symlink_to("real")
+        self.assertEqual(self.service.apply(link, STAR).folder, str(link))
+
+    def test_a_link_to_a_link_marks_the_last_link_only(self):
+        folder = self.make_folder("real")
+        first = self.workspace / "first"
+        second = self.workspace / "second"
+        first.symlink_to(folder)
+        second.symlink_to(first)
+        self.assertEqual(self.service.apply(second, STAR).folder, str(second))
+        self.assertIsNone(read_custom_icon(first))
+
+    def test_a_saved_link_is_restored_as_the_link(self):
+        folder = self.make_folder()
+        link = self.workspace / "link"
+        link.symlink_to(folder)
+        self.service.apply(link, STAR)
+        file = self.workspace / "backup.json"
+        self.service.export_backup(file)
+        self.service.reset(link)
+        report = self.service.import_backup(file)
+        self.assertEqual(report.restored, [str(link)])
+        self.assertIsNotNone(read_custom_icon(link))
+        self.assertIsNone(read_custom_icon(folder))
+
+    def test_a_broken_link_is_not_a_folder(self):
+        link = self.workspace / "broken"
+        link.symlink_to(self.workspace / "nowhere")
+        with self.assertRaises(FolderError):
+            self.service.apply(link, STAR)
+        self.assertEqual(self.store.all(), {})
+
+    def test_a_link_to_a_file_is_not_a_folder(self):
+        file = self.workspace / "plain.txt"
+        file.write_text("x")
+        link = self.workspace / "tofile"
+        link.symlink_to(file)
+        with self.assertRaises(FolderError):
+            self.service.apply(link, STAR)
+
+    def test_with_the_directory_engine_a_link_is_the_real_folder(self):
+        folder = self.make_folder()
+        link = self.workspace / "link"
+        link.symlink_to(folder)
+        entry = self.service.apply(link, STAR, backend="directory")
         self.assertEqual(entry.folder, str(folder))
 
     def test_a_file_is_not_a_folder(self):

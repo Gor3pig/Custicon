@@ -275,11 +275,11 @@ class ApplyIntegrityTests(ServiceTestCase):
         folder = self.make_folder()
         link = self.workspace / "link"
         link.symlink_to(folder)
-        entry = self.service.apply(folder, STAR)
-        self.store.remove(entry.folder)
-        self.store.put(Entry(str(link), *[getattr(entry, name) for name in ("digest", "theme", "color", "settings", "previous")]))
+        entry = self.service.apply(link, STAR)
+        self.assertEqual(entry.folder, str(link))
         self.assertEqual(self.service.reset(link), RESET_RESTORED)
         self.assertIsNone(self.store.get(str(link)))
+        self.assertIsNone(read_custom_icon(folder))
 
     def test_forget_finds_an_entry_stored_under_an_unresolved_path(self):
         folder = self.make_folder()

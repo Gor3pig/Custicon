@@ -653,8 +653,8 @@ class MainWindow(Adw.ApplicationWindow):
         resolved = []
         for folder in folders:
             try:
-                real = folder.resolve()
-            except (OSError, RuntimeError):
+                real = self._service.folder_key(folder)
+            except (CusticonError, OSError, RuntimeError):
                 continue
             if real not in resolved:
                 resolved.append(real)
@@ -719,8 +719,8 @@ class MainWindow(Adw.ApplicationWindow):
     def add_folder(self, path: Path) -> None:
         self._choosing_off()
         try:
-            key = str(path.resolve())
-        except (OSError, RuntimeError):
+            key = str(self._service.folder_key(path))
+        except (CusticonError, OSError, RuntimeError):
             self._alert(_("Folder Not Accessible"), _("Custicon needs the real location of the folder. Choose a folder inside your home folder."))
             return
         if self._entry(key) is None:

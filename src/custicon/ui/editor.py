@@ -429,7 +429,7 @@ class Editor(Gtk.Box):
             self._draft = draft
             self.name_label.set_text(folder_name(draft.folder))
             self.path_label.set_text(display_path(draft.folder))
-            self.path_label.set_tooltip_text(str(draft.folder))
+            self.path_label.set_tooltip_text(self._folder_tooltip(draft.folder))
             self._show_widgets(draft)
             self.banner.set_title(banner_text or "")
             self.banner.set_button_label(banner_action)
@@ -454,6 +454,15 @@ class Editor(Gtk.Box):
         self.remove_button.set_label(ngettext("Remove %d Icon", "Remove %d Icons", removable) % removable if removable else _("Remove Icon"))
         self.remove_button.add_css_class("destructive-action")
         self.remove_button.set_visible(removable > 0)
+
+    @staticmethod
+    def _folder_tooltip(folder: Path) -> str:
+        try:
+            if folder.is_symlink():
+                return _("Link to %s") % folder.resolve()
+        except (OSError, RuntimeError):
+            pass
+        return str(folder)
 
     def glyph_text(self, draft: Draft) -> str:
         if draft.glyph_name:

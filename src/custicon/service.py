@@ -293,7 +293,7 @@ class Service:
         return tinted_folder_svg(folder_file, folder_tint).decode(), folder_tint
 
     def apply(self, folder: Path | str, settings: Settings, backend: str | None = None) -> Entry:
-        target = self._checked_folder(folder)
+        target = self._checked_folder(folder, self._keeps_links(backend or self._backend))
         key = str(target)
         existing = self._store.get(key)
         migrated = existing is not None and backend is None and existing.backend != self._backend
@@ -357,7 +357,7 @@ class Service:
         key, entry = self._locate(folder)
         if entry is None:
             return RESET_UNKNOWN
-        target = self._resolved(key)
+        target = self._resolved(key, self._keeps_links(entry.backend))
         outcome = RESET_FOLDER_MISSING
         if target.is_dir():
             outcome = RESET_KEPT_USER_ICON
@@ -388,7 +388,7 @@ class Service:
         report = ResetReport()
         for folder in folders:
             try:
-                key = str(self._resolved(folder))
+                key = str(self.folder_key(folder))
                 outcome = self.reset(folder)
             except (CusticonError, OSError) as error:
                 report.failed[str(folder)] = str(error)
@@ -427,7 +427,7 @@ class Service:
             raise FolderError("this folder is not in the list")
         if Path(old).is_dir():
             raise FolderError("this folder still exists")
-        target = self._checked_folder(folder)
+        target = self._checked_folder(folder, self._keeps_links(entry.backend))
         key = str(target)
         if self._store.get(key) is not None:
             raise FolderError("this folder is already customized")
@@ -610,7 +610,7 @@ class Service:
 
     def _restore_folder(self, folder: str, values: dict, report: RestoreReport) -> None:
         try:
-            target = self._resolved(folder)
+            target = self._resolved(folder, self._keeps_links(self._backend))
             key = str(target)
             if not target.is_dir():
                 report.missing.append(key)
@@ -740,14 +740,24 @@ class Service:
         return STATUS_OK
 
     @staticmethod
-    def _resolved(folder: Path | str) -> Path:
+    def _keeps_links(backend: str) -> bool:
+        return backend != BACKEND_DIRECTORY
+
+    @staticmethod
+    def _resolved(folder: Path | str, keep_link: bool = False) -> Path:
         try:
-            return Path(folder).expanduser().resolve()
+            path = Path(folder).expanduser()
+            if keep_link and path.is_symlink():
+                return path.parent.resolve() / path.name
+            return path.resolve()
         except (OSError, RuntimeError, ValueError) as error:
             raise FolderError(f"unusable folder path: {error}") from error
 
-    def _checked_folder(self, folder: Path | str) -> Path:
-        target = self._resolved(folder)
+    def folder_key(self, folder: Path | str) -> Path:
+        return self._resolved(folder, self._keeps_links(self._backend))
+
+    def _checked_folder(self, folder: Path | str, keep_link: bool = False) -> Path:
+        target = self._resolved(folder, keep_link)
         try:
             str(target).encode("utf-8")
         except UnicodeEncodeError as error:
@@ -761,11 +771,14 @@ class Service:
             given = str(Path(folder).expanduser())
         except (RuntimeError, ValueError):
             given = str(folder)
-        try:
-            resolved = str(self._resolved(folder))
-        except FolderError:
-            resolved = given
-        for key in dict.fromkeys((given, resolved)):
+        candidates = [given]
+        for keep_link in (True, False):
+            try:
+                candidates.append(str(self._resolved(folder, keep_link)))
+            except FolderError:
+                pass
+        resolved = candidates[-1]
+        for key in dict.fromkeys(candidates):
             entry = self._store.get(key)
             if entry is not None:
                 return key, entry
