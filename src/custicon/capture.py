@@ -18,12 +18,12 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setpicker", "restored")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setedit", "setpicker", "restored")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
 DIALOG_SETTLE_MS = 3200
-DIALOG_SCREENS = ("repair", "sets", "setpicker", "darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge")
+DIALOG_SCREENS = ("repair", "sets", "setedit", "setpicker", "darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge")
 SET_SCREENS = {"setpicker": ("mine-mes-icones", ""), "darkpicker": ("emoji", "chat"), "phosphor": ("phosphor", ""), "emoji": ("emoji", "chat"), "brands": ("brands", "git")}
 WIDE = (1000, 720)
 NARROW = (400, 720)
@@ -132,6 +132,19 @@ def make_sample_set(demo) -> None:
     demo.service.import_set(source, "Mes icônes")
 
 
+def show_set_editor(window) -> bool:
+    window._open_sets()
+    GLib.timeout_add(DIALOG_DELAY_MS, expand_first_set, window)
+    return False
+
+
+def expand_first_set(window) -> bool:
+    dialog = window.get_visible_dialog()
+    for row in dialog._rows.values():
+        row.set_expanded(True)
+    return False
+
+
 def show_list(window, demo) -> None:
     service = demo.service
     service.apply(demo.folders["Projets"], Settings(glyph_name="applications-engineering-symbolic", folder_tint="#33d17a", badge_glyph="phosphor:check", badge_color="#2190a4"))
@@ -207,11 +220,14 @@ def arrange(screen: str, window, demo: Demo) -> None:
     if screen == "badge":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, show_badge, window)
-    if screen in ("sets", "setpicker"):
+    if screen in ("sets", "setedit", "setpicker"):
         make_sample_set(demo)
     if screen == "sets":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, window._open_sets)
+    if screen == "setedit":
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, show_set_editor, window)
     if screen == "list":
         show_list(window, demo)
     if screen == "repair":

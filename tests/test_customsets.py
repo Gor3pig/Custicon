@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 from custicon import customsets
-from custicon.customsets import MAX_SETS, import_set, list_sets, remove_set, slugify
+from custicon.customsets import MAX_SETS, add_icons, icon_names, import_set, list_sets, remove_icon, remove_set, slugify
 from custicon.errors import IconNotFoundError, IconSetError
 from custicon.service import Service, Settings
 from custicon.store import Store
@@ -158,6 +158,94 @@ class ImportTests(SetFolderCase):
         self.assertEqual([(i.slug, i.name) for i in list_sets(self.sets)], [("fine", "fine")])
 
 
+class IconEditingTests(SetFolderCase):
+    def setUp(self):
+        super().setUp()
+        self.add("one.svg")
+        self.add("two.svg")
+        import_set(self.sets, self.source, "Set")
+        self.extra = self.root / "extra"
+        self.extra.mkdir()
+
+    def revision(self):
+        return json.loads((self.sets / "set" / "index.json").read_text())["revision"]
+
+    def test_icons_are_listed_by_name(self):
+        self.assertEqual(icon_names(self.sets, "set"), ["one", "two"])
+
+    def test_new_files_are_added_to_the_set(self):
+        three = self.add("Three Icon.svg", folder=self.extra)
+        four = self.add("four.svg", folder=self.extra)
+        report = add_icons(self.sets, "set", [three, four])
+        self.assertEqual((report.added, report.replaced, report.ignored), (2, 0, 0))
+        self.assertEqual(icon_names(self.sets, "set"), ["four", "one", "three-icon", "two"])
+        self.assertEqual(self.revision(), 1)
+        self.assertEqual([path.name for path in self.sets.iterdir() if path.name.startswith(".")], [])
+
+    def test_a_file_with_the_same_name_replaces_the_icon_and_raises_the_revision(self):
+        newer = self.extra / "one.svg"
+        newer.write_text(glyph_svg().replace("M0 0h16v16H0z", "M3 3h10v10H3z"))
+        report = add_icons(self.sets, "set", [newer])
+        self.assertEqual((report.added, report.replaced, report.ignored), (0, 1, 0))
+        self.assertIn("M3 3h10v10H3z", (self.sets / "set" / "one.svg").read_text())
+        self.assertEqual(self.revision(), 2)
+
+    def test_an_identical_file_changes_nothing(self):
+        same = self.add("one.svg", folder=self.extra)
+        report = add_icons(self.sets, "set", [same])
+        self.assertEqual((report.added, report.replaced, report.ignored), (0, 0, 1))
+        self.assertEqual(self.revision(), 1)
+
+    def test_unusable_files_are_ignored(self):
+        (self.extra / "broken.svg").write_text("<svg")
+        (self.extra / "notes.txt").write_text("x")
+        (self.extra / "pic.svg").write_bytes(solid_png((1, 0, 0)))
+        good = self.add("good.svg", folder=self.extra)
+        report = add_icons(self.sets, "set", [self.extra / "broken.svg", self.extra / "notes.txt", self.extra / "pic.svg", good, self.extra / "nowhere.svg", good])
+        self.assertEqual((report.added, report.ignored), (1, 5))
+
+    def test_only_svg_files_are_taken_even_when_the_content_is_valid(self):
+        disguised = self.extra / "valid.txt"
+        disguised.write_text(glyph_svg())
+        report = add_icons(self.sets, "set", [disguised])
+        self.assertEqual((report.added, report.ignored), (0, 1))
+
+    def test_the_same_name_twice_in_one_call_keeps_the_first(self):
+        first = self.add("dup.svg", folder=self.extra)
+        other = self.root / "other"
+        other.mkdir()
+        second = self.add("Dup.svg", folder=other)
+        report = add_icons(self.sets, "set", [first, second])
+        self.assertEqual((report.added, report.ignored), (1, 1))
+
+    def test_the_file_limit_applies_to_additions_but_not_to_replacements(self):
+        files = [self.add(f"n{number}.svg", folder=self.extra) for number in range(3)]
+        with mock.patch.object(customsets, "MAX_FILES", 3):
+            report = add_icons(self.sets, "set", files)
+            self.assertEqual((report.added, report.ignored), (1, 2))
+            again = self.extra / "one.svg"
+            again.write_text(glyph_svg().replace("M0 0h16v16H0z", "M1 1h5v5H1z"))
+            self.assertEqual(add_icons(self.sets, "set", [again]).replaced, 1)
+
+    def test_an_unknown_set_is_refused(self):
+        for slug in ("nope", "../x", "", None):
+            with self.assertRaises(IconSetError, msg=repr(slug)):
+                add_icons(self.sets, slug, [])
+
+    def test_an_icon_can_be_removed_but_never_the_last_one(self):
+        remove_icon(self.sets, "set", "one")
+        self.assertEqual(icon_names(self.sets, "set"), ["two"])
+        with self.assertRaisesRegex(IconSetError, "at least one"):
+            remove_icon(self.sets, "set", "two")
+
+    def test_removing_refuses_unknown_names_and_paths(self):
+        (self.root / "victim.svg").write_text(glyph_svg())
+        for icon in ("absent", "../../victim", "", None, "one.svg"):
+            with self.assertRaisesRegex(IconSetError, "unknown icon", msg=repr(icon)):
+                remove_icon(self.sets, "set", icon)
+        self.assertTrue((self.root / "victim.svg").is_file())
+
+
 class ServiceSetTests(SetFolderCase):
     def setUp(self):
         super().setUp()
@@ -222,6 +310,28 @@ class ServiceSetTests(SetFolderCase):
         report = fresh.import_backup(backup)
         self.assertEqual(report.restored, [])
         self.assertEqual(list(report.failed), [str(self.folder)])
+
+    def test_added_icons_are_found_by_the_set_and_removed_ones_keep_working(self):
+        entry = self.service.apply(self.folder, Settings(glyph_name=self.name))
+        extra = self.root / "extra"
+        extra.mkdir()
+        (extra / "brand new.svg").write_text(glyph_svg())
+        self.assertEqual(self.service.add_icons("mine", [extra / "brand new.svg"]).added, 1)
+        self.assertEqual(self.service.icon_sets()["mine-mine"].symbolic_names("brand"), ["mine-mine:brand-new"])
+        self.service.remove_icon("mine", "my-icon")
+        self.assertEqual(self.service.set_icons("mine"), ["brand-new", "other"])
+        self.assertNotIn("mine-mine:my-icon", self.service.icon_sets()["mine-mine"].all_names())
+        report = self.service.regenerate_all()
+        self.assertEqual(report.failed, {})
+        self.assertEqual(self.store.get(str(self.folder)).digest, entry.digest)
+
+    def test_replacing_an_icon_marks_the_folders_that_use_the_set_as_outdated(self):
+        entry = self.service.apply(self.folder, Settings(glyph_name=self.name))
+        extra = self.root / "extra"
+        extra.mkdir()
+        (extra / "my-icon.svg").write_text(glyph_svg().replace("M0 0h16v16H0z", "M2 2h12v12H2z"))
+        self.assertEqual(self.service.add_icons("mine", [extra / "my-icon.svg"]).replaced, 1)
+        self.assertEqual(self.service.outdated(), [entry.folder])
 
     def test_the_builtin_sets_are_unchanged(self):
         icon_sets = self.service.icon_sets()

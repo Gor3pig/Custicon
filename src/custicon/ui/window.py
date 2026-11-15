@@ -368,7 +368,27 @@ class MainWindow(Adw.ApplicationWindow):
         self.problems_banner.set_revealed(count > 0)
 
     def _open_sets(self) -> None:
-        SetsDialog(self._service, self._alert, self._pick_set_folder, self._update_outdated_banner).present(self)
+        SetsDialog(self._service, self._alert, self._pick_set_folder, self._update_outdated_banner, self._pick_set_files).present(self)
+
+    def _pick_set_files(self, callback) -> None:
+        chooser = Gtk.FileDialog(title=_("Choose SVG Files"))
+        svg = Gtk.FileFilter()
+        svg.set_name(_("SVG files"))
+        svg.add_suffix("svg")
+        svg.add_mime_type("image/svg+xml")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(svg)
+        chooser.set_filters(filters)
+        chooser.set_default_filter(svg)
+        chooser.open_multiple(self, None, lambda dialog, result: self._set_files_chosen(dialog, result, callback))
+
+    def _set_files_chosen(self, dialog, result, callback) -> None:
+        try:
+            model = dialog.open_multiple_finish(result)
+        except GLib.Error:
+            return
+        paths = [Path(item.get_path()) for item in model if item.get_path()]
+        callback(paths)
 
     def _pick_set_folder(self, callback) -> None:
         chooser = Gtk.FileDialog(title=_("Choose a Folder of SVG Files"))

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 16:47+0100\n"
+"POT-Creation-Date: 2026-11-15 17:18+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -525,13 +525,73 @@ msgstr ""
 msgid "No custom set yet"
 msgstr ""
 
+msgid "Remove Set"
+msgstr ""
+
 #, python-format
 msgid "%d icon"
 msgid_plural "%d icons"
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "Add Icons…"
+msgstr ""
+
+msgid "Search in this set"
+msgstr ""
+
+msgid "Could Not Read the Set"
+msgstr ""
+
 msgid "Remove"
+msgstr ""
+
+msgid "Search to see the other icons"
+msgstr ""
+
+msgid "Remove This Icon?"
+msgstr ""
+
+#, python-format
+msgid ""
+"“%s” is removed from the set. The folders already customized with it keep "
+"their icon."
+msgstr ""
+
+msgid "Could Not Remove the Icon"
+msgstr ""
+
+msgid "Could Not Add the Icons"
+msgstr ""
+
+#, python-format
+msgid "%(added)d icon added"
+msgid_plural "%(added)d icons added"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%(replaced)d replaced"
+msgid_plural "%(replaced)d replaced"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%(ignored)d ignored"
+msgid_plural "%(ignored)d ignored"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Nothing was added."
+msgstr ""
+
+msgid ""
+"The folders that use a replaced icon are marked as outdated: Regenerate "
+"updates them."
+msgstr ""
+
+#, python-format
+msgid "Icons Added to “%s”"
 msgstr ""
 
 msgid "Remove This Set?"
@@ -561,12 +621,6 @@ msgstr ""
 
 msgid "Could Not Add the Set"
 msgstr ""
-
-#, python-format
-msgid "%(added)d icon added"
-msgid_plural "%(added)d icons added"
-msgstr[0] ""
-msgstr[1] ""
 
 #, python-format
 msgid ", %(ignored)d ignored (unreadable, too large or already present)."
@@ -671,6 +725,12 @@ msgid "%d folder to check"
 msgid_plural "%d folders to check"
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "Choose SVG Files"
+msgstr ""
+
+msgid "SVG files"
+msgstr ""
 
 msgid "Choose a Folder of SVG Files"
 msgstr ""
@@ -884,9 +944,6 @@ msgid ""
 "modified."
 msgstr ""
 
-msgid "Could Not Remove the Icon"
-msgstr ""
-
 #, python-format
 msgid "“%s” was no longer in the list."
 msgstr ""
@@ -1083,6 +1140,11 @@ msgid ""
 msgstr ""
 
 msgid ""
+"Use your own SVG icons as a set in the picker, and repair the folders that "
+"need a check in one dialog"
+msgstr ""
+
+msgid ""
 "Save named styles, and regenerate every icon after a change of icon theme"
 msgstr ""
 
@@ -1143,6 +1205,27 @@ msgid "Nautilus"
 msgstr ""
 
 msgid "Dolphin"
+msgstr ""
+
+msgid "Your own icon sets, a repair dialog, and icons on symbolic links."
+msgstr ""
+
+msgid ""
+"Add a folder of SVG files as a set of your own, then add or remove icons one "
+"by one: it appears in the picker and keeps working even if you remove the set"
+msgstr ""
+
+msgid ""
+"A bar tells you how many folders need a check, and one dialog repairs them, "
+"only the way you choose"
+msgstr ""
+
+msgid ""
+"A symbolic link to a folder, on your desktop for example, can have its own "
+"icon with GNOME, Cinnamon and MATE"
+msgstr ""
+
+msgid "Safer handling of damaged data and of unusual text in saved settings"
 msgstr ""
 
 msgid ""

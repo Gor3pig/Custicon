@@ -100,6 +100,8 @@ dans ses données (vous pouvez ensuite déplacer ou supprimer le dossier d’ori
 
 - Les icônes sont teintées comme celles de Phosphor : préférez des formes simples.
 - Jusqu’à 8 jeux et 2 000 fichiers SVG par jeu ; un fichier peut peser jusqu’à 2 Mo.
+- Cliquez sur la flèche d’un jeu pour voir ses icônes. **Ajouter des icônes…** ajoute plusieurs fichiers SVG d’un coup (un fichier de même nom qu’une icône existante la remplace, un fichier identique est ignoré),
+  **Chercher dans ce jeu** réduit la liste, et **Retirer** à côté d’une icône l’enlève après une confirmation (un jeu garde toujours au moins une icône).
 - Ajouter un dossier sous un nom qui existe déjà remplace ce jeu ; les dossiers personnalisés avec lui sont alors signalés comme périmés, et **Régénérer** les met à jour.
 - **Retirer** supprime un jeu sans jamais changer les dossiers déjà personnalisés : Custicon garde une copie des icônes qu’ils utilisent.
 - Custicon ne vérifie pas la licence de vos icônes : assurez-vous d’avoir le droit de les utiliser. Un fichier de sauvegarde ne contient jamais d’images : sur un autre ordinateur, ajoutez d’abord le jeu avant de restaurer.

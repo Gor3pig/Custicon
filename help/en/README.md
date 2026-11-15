@@ -100,6 +100,8 @@ the same name once simplified). The set then has its own button in the picker, a
 
 - The icons are tinted like the Phosphor ones: use simple shapes.
 - Up to 8 sets and 2,000 SVG files per set; a file may be up to 2 MB.
+- Click the arrow of a set to see its icons. **Add Icons…** adds several SVG files at once (a file with the name of an existing icon replaces it, an identical one is ignored),
+  **Search in this set** narrows the list, and **Remove** next to an icon takes it out after a confirmation (a set always keeps at least one icon).
 - Adding a folder under a name that already exists replaces that set; the folders customized with it are then reported as outdated, and **Regenerate** updates them.
 - **Remove** deletes a set but never changes the folders already customized: Custicon keeps a copy of the icons they use.
 - Custicon does not check the licence of your icons: make sure you may use them. A backup file never contains images, so on another computer add the set again before restoring.

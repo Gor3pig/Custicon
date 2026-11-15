@@ -543,6 +543,84 @@ class CustomSetUiTests(WindowTestCase):
         self.assertEqual(self.service.custom_sets(), [])
         self.assertEqual(len(self.rows()), 1)
 
+    def expand(self, slug="mine"):
+        self.dialog._rows[slug].set_expanded(True)
+        settle()
+        return self.dialog._icon_rows[slug]
+
+    def test_a_set_unfolds_to_its_icons(self):
+        self.import_it()
+        rows = self.expand()
+        self.assertEqual([row.get_title() for row in rows], ["my-icon", "other"])
+
+    def test_the_search_narrows_the_icons_of_a_set(self):
+        self.import_it()
+        self.expand()
+        search = None
+
+        def walk(widget):
+            nonlocal search
+            child = widget.get_first_child()
+            while child is not None:
+                if isinstance(child, Gtk.SearchEntry):
+                    search = child
+                walk(child)
+                child = child.get_next_sibling()
+
+        walk(self.dialog._rows["mine"])
+        search.set_text("my icon")
+        self.assertTrue(settle(lambda: len(self.dialog._icon_rows["mine"]) == 1))
+        self.assertEqual([row.get_title() for row in self.dialog._icon_rows["mine"]], ["my-icon"])
+
+    def test_removing_an_icon_needs_the_confirmation(self):
+        self.import_it()
+        self.expand()
+        info = self.service.custom_sets()[0]
+        self.dialog._remove_icon_confirmed(self.Answer("cancel"), None, info, "my-icon")
+        self.assertEqual(self.service.set_icons("mine"), ["my-icon", "other"])
+        self.dialog._remove_icon_confirmed(self.Answer("remove"), None, info, "my-icon")
+        self.assertEqual(self.service.set_icons("mine"), ["other"])
+        self.assertEqual([row.get_title() for row in self.dialog._icon_rows["mine"]], ["other"])
+        self.assertEqual(self.dialog._rows["mine"].get_subtitle(), "1 icon")
+
+    def test_adding_icons_reports_added_replaced_and_ignored(self):
+        self.import_it()
+        extra = self.root / "extra"
+        extra.mkdir()
+        (extra / "new one.svg").write_text(glyph_svg())
+        (extra / "other.svg").write_text(glyph_svg().replace("M0 0h16v16H0z", "M2 2h12v12H2z"))
+        (extra / "bad.svg").write_text("<svg")
+        info = self.service.custom_sets()[0]
+        self.dialog._start_adding(info, [extra / "new one.svg", extra / "other.svg", extra / "bad.svg"])
+        self.assertTrue(settle(lambda: not self.dialog._busy))
+        settle()
+        heading, body = self.messages[-1]
+        self.assertEqual(heading, "Icons Added to “Mine”")
+        self.assertIn("1 icon added, 1 replaced, 1 ignored.", body)
+        self.assertIn("marked as outdated", body)
+        self.assertEqual(self.service.set_icons("mine"), ["my-icon", "new-one", "other"])
+        self.assertEqual(self.dialog._rows["mine"].get_subtitle(), "3 icons")
+
+    def test_adding_nothing_does_nothing(self):
+        self.import_it()
+        before = len(self.messages)
+        self.dialog._start_adding(self.service.custom_sets()[0], [])
+        self.assertEqual(len(self.messages), before)
+
+    def test_a_long_list_is_cut_with_a_note(self):
+        self.import_it()
+        with mock.patch("custicon.ui.sets.MAX_SHOWN", 1):
+            rows = self.expand()
+        self.assertEqual(len(rows), 2)
+        self.assertFalse(rows[-1].get_sensitive())
+
+    def test_removing_a_set_forgets_its_state(self):
+        self.import_it()
+        self.expand()
+        self.dialog._remove_confirmed(self.Answer("remove"), None, self.service.custom_sets()[0])
+        self.assertEqual(self.dialog._open_slugs, set())
+        self.assertEqual(self.dialog._rows, {})
+
     def test_the_picker_gets_a_button_for_each_set_and_lists_its_icons(self):
         self.import_it("My Set")
         self.window.add_folder(self.make_folder("docs"))

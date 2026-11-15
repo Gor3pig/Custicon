@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 16:47+0100\n"
+"POT-Creation-Date: 2026-11-15 17:18+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -517,7 +517,9 @@ msgstr "Jeux d’icônes personnels"
 msgid ""
 "Add a folder of SVG files. Custicon keeps a copy, so you can move or delete "
 "the original folder afterwards."
-msgstr "Ajoutez un dossier de fichiers SVG. Custicon en garde une copie : vous pouvez ensuite déplacer ou supprimer le dossier d’origine."
+msgstr ""
+"Ajoutez un dossier de fichiers SVG. Custicon en garde une copie : vous "
+"pouvez ensuite déplacer ou supprimer le dossier d’origine."
 
 msgid "Add a Set from a Folder…"
 msgstr "Ajouter un jeu depuis un dossier…"
@@ -526,10 +528,15 @@ msgstr "Ajouter un jeu depuis un dossier…"
 msgid ""
 "Up to %(sets)d sets and %(files)d SVG files per set. Removing a set does not "
 "change the folders already customized: their icons are kept."
-msgstr "Jusqu’à %(sets)d jeux et %(files)d fichiers SVG par jeu. Retirer un jeu ne change pas les dossiers déjà personnalisés : leurs icônes sont conservées."
+msgstr ""
+"Jusqu’à %(sets)d jeux et %(files)d fichiers SVG par jeu. Retirer un jeu ne "
+"change pas les dossiers déjà personnalisés : leurs icônes sont conservées."
 
 msgid "No custom set yet"
 msgstr "Aucun jeu personnel pour l’instant"
+
+msgid "Remove Set"
+msgstr "Retirer le jeu"
 
 #, python-format
 msgid "%d icon"
@@ -537,8 +544,69 @@ msgid_plural "%d icons"
 msgstr[0] "%d icône"
 msgstr[1] "%d icônes"
 
+msgid "Add Icons…"
+msgstr "Ajouter des icônes…"
+
+msgid "Search in this set"
+msgstr "Chercher dans ce jeu"
+
+msgid "Could Not Read the Set"
+msgstr "Impossible de lire le jeu"
+
 msgid "Remove"
 msgstr "Retirer"
+
+msgid "Search to see the other icons"
+msgstr "Cherchez pour voir les autres icônes"
+
+msgid "Remove This Icon?"
+msgstr "Retirer cette icône ?"
+
+#, python-format
+msgid ""
+"“%s” is removed from the set. The folders already customized with it keep "
+"their icon."
+msgstr ""
+"« %s » est retirée du jeu. Les dossiers déjà personnalisés avec elle gardent "
+"leur icône."
+
+msgid "Could Not Remove the Icon"
+msgstr "Impossible de retirer l’icône"
+
+msgid "Could Not Add the Icons"
+msgstr "Impossible d’ajouter les icônes"
+
+#, python-format
+msgid "%(added)d icon added"
+msgid_plural "%(added)d icons added"
+msgstr[0] "%(added)d icône ajoutée"
+msgstr[1] "%(added)d icônes ajoutées"
+
+#, python-format
+msgid "%(replaced)d replaced"
+msgid_plural "%(replaced)d replaced"
+msgstr[0] "%(replaced)d remplacée"
+msgstr[1] "%(replaced)d remplacées"
+
+#, python-format
+msgid "%(ignored)d ignored"
+msgid_plural "%(ignored)d ignored"
+msgstr[0] "%(ignored)d ignorée"
+msgstr[1] "%(ignored)d ignorées"
+
+msgid "Nothing was added."
+msgstr "Rien n’a été ajouté."
+
+msgid ""
+"The folders that use a replaced icon are marked as outdated: Regenerate "
+"updates them."
+msgstr ""
+"Les dossiers qui utilisent une icône remplacée sont signalés comme périmés : "
+"Régénérer les met à jour."
+
+#, python-format
+msgid "Icons Added to “%s”"
+msgstr "Icônes ajoutées à « %s »"
 
 msgid "Remove This Set?"
 msgstr "Retirer ce jeu ?"
@@ -547,7 +615,9 @@ msgstr "Retirer ce jeu ?"
 msgid ""
 "“%s” is removed. The folders already customized with its pictograms keep "
 "their icons."
-msgstr "« %s » est retiré. Les dossiers déjà personnalisés avec ses pictogrammes gardent leurs icônes."
+msgstr ""
+"« %s » est retiré. Les dossiers déjà personnalisés avec ses pictogrammes "
+"gardent leurs icônes."
 
 msgid "Could Not Remove the Set"
 msgstr "Impossible de retirer le jeu"
@@ -557,7 +627,9 @@ msgstr "Nommer le jeu"
 
 msgid ""
 "The icons are copied as they are. Make sure you are allowed to use them."
-msgstr "Les icônes sont copiées telles quelles. Vérifiez que vous avez le droit de les utiliser."
+msgstr ""
+"Les icônes sont copiées telles quelles. Vérifiez que vous avez le droit de "
+"les utiliser."
 
 msgid "Add"
 msgstr "Ajouter"
@@ -567,12 +639,6 @@ msgstr "Ajout en cours…"
 
 msgid "Could Not Add the Set"
 msgstr "Impossible d’ajouter le jeu"
-
-#, python-format
-msgid "%(added)d icon added"
-msgid_plural "%(added)d icons added"
-msgstr[0] "%(added)d icône ajoutée"
-msgstr[1] "%(added)d icônes ajoutées"
 
 #, python-format
 msgid ", %(ignored)d ignored (unreadable, too large or already present)."
@@ -683,6 +749,12 @@ msgid "%d folder to check"
 msgid_plural "%d folders to check"
 msgstr[0] "%d dossier à vérifier"
 msgstr[1] "%d dossiers à vérifier"
+
+msgid "Choose SVG Files"
+msgstr "Choisir des fichiers SVG"
+
+msgid "SVG files"
+msgstr "Fichiers SVG"
 
 msgid "Choose a Folder of SVG Files"
 msgstr "Choisir un dossier de fichiers SVG"
@@ -926,9 +998,6 @@ msgstr ""
 "Le dossier retrouvera l’icône qu’il avait avant Custicon. Son contenu n’est "
 "pas modifié."
 
-msgid "Could Not Remove the Icon"
-msgstr "Impossible de retirer l’icône"
-
 #, python-format
 msgid "“%s” was no longer in the list."
 msgstr "« %s » ne figurait plus dans la liste."
@@ -1161,6 +1230,13 @@ msgstr ""
 "coin du dossier, avec ou sans pictogramme central"
 
 msgid ""
+"Use your own SVG icons as a set in the picker, and repair the folders that "
+"need a check in one dialog"
+msgstr ""
+"Utilisez vos propres icônes SVG comme un jeu dans le sélecteur, et réparez "
+"en une fois les dossiers à vérifier"
+
+msgid ""
 "Save named styles, and regenerate every icon after a change of icon theme"
 msgstr ""
 "Enregistrez des styles nommés et régénérez toutes les icônes après un "
@@ -1241,6 +1317,35 @@ msgstr "Nautilus"
 
 msgid "Dolphin"
 msgstr "Dolphin"
+
+msgid "Your own icon sets, a repair dialog, and icons on symbolic links."
+msgstr ""
+"Vos propres jeux d’icônes, une boîte pour tout réparer, et des icônes sur "
+"les liens symboliques."
+
+msgid ""
+"Add a folder of SVG files as a set of your own, then add or remove icons one "
+"by one: it appears in the picker and keeps working even if you remove the set"
+msgstr "Ajoutez un dossier de fichiers SVG comme jeu personnel, puis ajoutez ou retirez des icônes une à une : il apparaît dans le sélecteur et continue de fonctionner même si vous retirez le jeu"
+
+msgid ""
+"A bar tells you how many folders need a check, and one dialog repairs them, "
+"only the way you choose"
+msgstr ""
+"Un bandeau indique combien de dossiers sont à vérifier, et une seule boîte "
+"les répare, uniquement comme vous l’avez choisi"
+
+msgid ""
+"A symbolic link to a folder, on your desktop for example, can have its own "
+"icon with GNOME, Cinnamon and MATE"
+msgstr ""
+"Un lien symbolique vers un dossier, sur votre bureau par exemple, peut avoir "
+"sa propre icône avec GNOME, Cinnamon et MATE"
+
+msgid "Safer handling of damaged data and of unusual text in saved settings"
+msgstr ""
+"Meilleure tolérance aux données abîmées et aux textes inhabituels dans les "
+"réglages enregistrés"
 
 msgid ""
 "A corner badge can now be put alone on a folder, and the texts speak of your "
@@ -1566,3 +1671,4 @@ msgstr "Régénérez toutes les icônes après un changement de thème d’icôn
 
 msgid "The content of your folders is never modified"
 msgstr "Le contenu de vos dossiers n’est jamais modifié"
+

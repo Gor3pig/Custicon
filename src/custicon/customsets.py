@@ -117,6 +117,88 @@ def usable_icon(path: Path) -> bytes | None:
     return data
 
 
+@dataclass
+class AddReport:
+    added: int = 0
+    replaced: int = 0
+    ignored: int = 0
+
+
+def set_directory(root: Path, slug: str) -> Path:
+    if not isinstance(slug, str) or SLUG_PATTERN.fullmatch(slug) is None or not (root / slug).is_dir():
+        raise IconSetError("unknown set")
+    return root / slug
+
+
+def icon_names(root: Path, slug: str) -> list[str]:
+    directory = set_directory(root, slug)
+    try:
+        return sorted(file.name[: -len(SVG_SUFFIX)] for file in directory.glob("*" + SVG_SUFFIX) if file.is_file())
+    except OSError as error:
+        raise IconSetError(f"cannot read the set: {error.strerror}") from error
+
+
+def write_index(directory: Path, revision: int) -> None:
+    temporary = directory / (TEMPORARY_PREFIX + INDEX_NAME)
+    temporary.write_text(json.dumps({"revision": revision, "icons": {}}), encoding="utf-8")
+    os.replace(temporary, directory / INDEX_NAME)
+
+
+def add_icons(root: Path, slug: str, files: list) -> AddReport:
+    directory = set_directory(root, slug)
+    report = AddReport()
+    existing = set(icon_names(root, slug))
+    try:
+        staging = Path(tempfile.mkdtemp(prefix=TEMPORARY_PREFIX, dir=root))
+    except OSError as error:
+        raise IconSetError(f"cannot prepare the icons: {error.strerror}") from error
+    try:
+        staged: dict[str, bytes] = {}
+        for path in files:
+            path = Path(path)
+            icon = slugify(path.name[: -len(SVG_SUFFIX)], MAX_ICON_NAME) if path.name.lower().endswith(SVG_SUFFIX) else ""
+            data = usable_icon(path) if icon else None
+            if data is None or icon in staged:
+                report.ignored += 1
+                continue
+            if icon not in existing and len(existing) + len([name for name in staged if name not in existing]) >= MAX_FILES:
+                report.ignored += 1
+                continue
+            staged[icon] = data
+        changed = False
+        for icon, data in staged.items():
+            target = directory / (icon + SVG_SUFFIX)
+            if icon in existing:
+                if target.read_bytes() == data:
+                    report.ignored += 1
+                    continue
+                report.replaced += 1
+                changed = True
+            else:
+                report.added += 1
+            (staging / (icon + SVG_SUFFIX)).write_bytes(data)
+            os.replace(staging / (icon + SVG_SUFFIX), target)
+        if changed:
+            write_index(directory, read_revision(directory) + 1)
+    except OSError as error:
+        raise IconSetError(f"cannot store the icons: {error.strerror}") from error
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    return report
+
+
+def remove_icon(root: Path, slug: str, icon: str) -> None:
+    names = icon_names(root, slug)
+    if not isinstance(icon, str) or icon not in names:
+        raise IconSetError("unknown icon")
+    if len(names) == 1:
+        raise IconSetError("a set keeps at least one icon: remove the set instead")
+    try:
+        (root / slug / (icon + SVG_SUFFIX)).unlink()
+    except OSError as error:
+        raise IconSetError(f"cannot remove the icon: {error.strerror}") from error
+
+
 def import_set(root: Path, source: Path, name: str) -> ImportReport:
     name = clean_name(name)
     slug = slugify(name)

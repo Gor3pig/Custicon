@@ -33,7 +33,7 @@ from .render import is_png, read_icon_bytes
 from .store import GLYPH_FILE_PATTERN, MAX_NAME_LENGTH, MAX_STYLE_NAME, MAX_STYLES, Entry, Store
 from .textglyph import MAX_CHARACTERS, text_to_svg
 from . import customsets, iconsets
-from .customsets import ImportReport, SetInfo
+from .customsets import AddReport, ImportReport, SetInfo
 from .iconsets import IconSets, PhosphorSet
 from .themes import DEFAULT_THEME, IconTheme, active_icon_theme, system_accent_color
 
@@ -797,6 +797,18 @@ class Service:
         report = customsets.import_set(self._store.sets_dir, Path(folder), name)
         self._refresh_sets()
         return report
+
+    def set_icons(self, slug: str) -> list[str]:
+        return customsets.icon_names(self._store.sets_dir, slug)
+
+    def add_icons(self, slug: str, files: list) -> AddReport:
+        report = customsets.add_icons(self._store.sets_dir, slug, files)
+        self._refresh_sets()
+        return report
+
+    def remove_icon(self, slug: str, icon: str) -> None:
+        customsets.remove_icon(self._store.sets_dir, slug, icon)
+        self._refresh_sets()
 
     def remove_set(self, slug: str) -> None:
         customsets.remove_set(self._store.sets_dir, slug)
