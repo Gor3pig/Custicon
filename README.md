@@ -4,7 +4,7 @@
 
 # Custicon
 
-**A pictogram on the icon of your folders, in your file manager.**
+**A pictogram on the icon of your folders, in your desktop environment.**
 
 *Your folders, recognizable at a glance.*
 
@@ -25,7 +25,7 @@
 
 ## What is Custicon?
 
-GNOME Files shows the Documents, Music or Pictures folders with a small pictogram in the middle.
+Your desktop environment shows the Documents, Music or Pictures folders with a small pictogram in the middle.
 **Custicon lets you do the same for any folder.**
 The pictogram is placed on the real folder icon of your current icon theme, and the content of your folders is never touched.
 

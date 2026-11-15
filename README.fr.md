@@ -4,7 +4,7 @@
 
 # Custicon
 
-**Un pictogramme sur l’icône de vos dossiers, dans votre gestionnaire de fichiers.**
+**Un pictogramme sur l’icône de vos dossiers, dans votre environnement de bureau.**
 
 *Vos dossiers, reconnaissables au premier coup d’œil.*
 
@@ -25,7 +25,7 @@
 
 ## Qu’est-ce que Custicon ?
 
-Fichiers de GNOME affiche les dossiers Documents, Musique ou Images avec un petit pictogramme au centre.
+Votre environnement de bureau affiche les dossiers Documents, Musique ou Images avec un petit pictogramme au centre.
 **Custicon permet de faire la même chose pour n’importe quel dossier.**
 Le pictogramme est posé sur la vraie icône de dossier de votre thème d’icônes actuel, et le contenu de vos dossiers n’est jamais touché.
 

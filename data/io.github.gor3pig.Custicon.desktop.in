@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Custicon
-Comment=Customize the icon of a folder in your file manager
+Comment=Customize folder icons in your desktop environment
 Exec=custicon %F
 Icon=io.github.gor3pig.Custicon
 Terminal=false
