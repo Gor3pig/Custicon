@@ -27,7 +27,7 @@ from custicon.service import (
 )
 from custicon.store import Entry
 from custicon.ui.draft import DEFAULT_COLOR, DEFAULT_FOLDER_TINT, Draft
-from custicon.ui.format import normalize_text, display_path, folder_name, from_percent, is_portal_path, is_text_path, percent_text, to_percent
+from custicon.ui.format import normalize_text, display_path, folder_name, from_percent, is_portal_path, is_text_path, number_text, parse_percent, percent_text, to_percent
 from custicon.ui.messages import (
     backup_summary_lines,
     banner_action,
@@ -197,6 +197,26 @@ class FormatTests(unittest.TestCase):
         self.assertFalse(is_portal_path("/home/someone/doc/Projects"))
         self.assertFalse(is_portal_path("/run/user/1000/gvfs/x"))
         self.assertFalse(is_portal_path("/run/media/someone/disk"))
+
+
+class TypedPercentTests(unittest.TestCase):
+    def test_plain_numbers_are_read(self):
+        for text, expected in (("12", 12.0), ("-5", -5.0), ("0", 0.0), ("100.5", 100.5)):
+            self.assertEqual(parse_percent(text), expected, text)
+
+    def test_a_decimal_comma_and_a_percent_sign_are_accepted(self):
+        for text, expected in (("12,5", 12.5), (" 12.5 % ", 12.5), ("12\u00a0%", 12.0), ("7\u202f%", 7.0), ("-0,5", -0.5)):
+            self.assertEqual(parse_percent(text), expected, text)
+
+    def test_text_that_is_not_a_finite_number_is_refused(self):
+        for text in ("", " ", "%", "abc", "12abc", "1,2,3", "nan", "inf", "-inf", "1e999", "--5"):
+            self.assertIsNone(parse_percent(text), text)
+
+    def test_the_shown_number_has_no_useless_decimals(self):
+        self.assertEqual(number_text(150.0), "150")
+        self.assertEqual(number_text(0.0), "0")
+        self.assertEqual(parse_percent(number_text(100.5)), 100.5)
+        self.assertEqual(parse_percent(number_text(-37.5)), -37.5)
 
 
 class MessageTests(unittest.TestCase):

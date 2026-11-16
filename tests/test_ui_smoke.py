@@ -281,12 +281,12 @@ class EditorBehaviourTests(WindowTestCase):
 
     def test_slider_entries_show_the_value(self):
         self.editor.size_slider.adjustment.set_value(150)
-        self.assertEqual(self.editor.size_slider.entry.get_value(), 150)
+        self.assertEqual(self.editor.size_slider.adjustment.get_value(), 150)
 
     def test_a_value_typed_in_the_entry_moves_the_slider_and_the_draft(self):
         slider = self.editor.size_slider
         slider.entry.set_text("37")
-        slider.entry.update()
+        slider.entry.emit("activate")
         self.assertEqual(slider.adjustment.get_value(), 37)
         self.assertAlmostEqual(self.editor.draft.size, 0.37)
 
@@ -295,23 +295,61 @@ class EditorBehaviourTests(WindowTestCase):
 
         slider = self.editor.size_slider
         slider.entry.set_text("99999")
-        slider.entry.update()
+        slider.entry.emit("activate")
         self.assertEqual(self.editor.draft.size, MAX_SIZE)
         slider.entry.set_text("1")
-        slider.entry.update()
+        slider.entry.emit("activate")
         self.assertEqual(self.editor.draft.size, MIN_SIZE)
         self.editor.x_slider.entry.set_text("-99999")
-        self.editor.x_slider.entry.update()
+        self.editor.x_slider.entry.emit("activate")
         self.assertEqual(self.editor.draft.offset_x, -MAX_OFFSET)
+
+    def test_the_entry_shows_the_value_without_useless_decimals(self):
+        from custicon.ui.format import number_text
+
+        slider = self.editor.size_slider
+        slider.adjustment.set_value(150)
+        self.assertEqual(slider.entry.get_text(), number_text(150))
+        slider.adjustment.set_value(100.5)
+        self.assertEqual(slider.entry.get_text(), number_text(100.5))
+
+    def test_text_that_is_not_a_number_is_replaced_by_the_previous_value(self):
+        slider = self.editor.size_slider
+        slider.adjustment.set_value(120)
+        shown = slider.entry.get_text()
+        slider.entry.set_text("abc")
+        slider.entry.emit("activate")
+        self.assertEqual(slider.entry.get_text(), shown)
+        self.assertEqual(slider.adjustment.get_value(), 120)
+
+    def test_leaving_the_entry_applies_what_was_typed(self):
+        slider = self.editor.size_slider
+        slider.entry.set_text("45")
+        controllers = slider.entry.observe_controllers()
+        focus = [controllers.get_item(index) for index in range(controllers.get_n_items()) if isinstance(controllers.get_item(index), Gtk.EventControllerFocus)]
+        self.assertEqual(len(focus), 1)
+        focus[0].emit("leave")
+        self.assertEqual(slider.adjustment.get_value(), 45)
+        self.assertAlmostEqual(self.editor.draft.size, 0.45)
+
+    def test_an_out_of_range_value_is_shown_as_the_limit(self):
+        slider = self.editor.size_slider
+        slider.entry.set_text("99999")
+        slider.entry.emit("activate")
+        self.assertEqual(slider.entry.get_text(), "%g" % slider.adjustment.get_upper())
+
+    def test_the_slider_has_no_plus_or_minus_buttons(self):
+        self.assertIsInstance(self.editor.size_slider.entry, Gtk.Entry)
+        self.assertNotIsInstance(self.editor.size_slider.entry, Gtk.SpinButton)
 
     def test_a_value_typed_between_two_steps_snaps_to_half_a_percent(self):
         slider = self.editor.size_slider
-        slider.entry.set_value(100.3)
+        slider.adjustment.set_value(100.3)
         self.assertEqual(slider.adjustment.get_value(), 100.5)
 
     def test_the_badge_size_accepts_a_typed_value(self):
         self.editor.badge_size_slider.entry.set_text("40")
-        self.editor.badge_size_slider.entry.update()
+        self.editor.badge_size_slider.entry.emit("activate")
         self.assertAlmostEqual(self.editor.draft.badge_size, 0.4)
 
     def test_turning_automatic_color_off_keeps_the_color(self):
@@ -1804,7 +1842,7 @@ class DirectManipulationTests(WindowTestCase):
 
         self.drag(BIG_SIZE * 0.1, 0)
         self.assertAlmostEqual(self.editor.x_slider.adjustment.get_value(), 10.0, places=1)
-        self.assertEqual(self.editor.x_slider.entry.get_value(), 10.0)
+        self.assertEqual(self.editor.x_slider.adjustment.get_value(), 10.0)
 
     def test_the_offsets_are_limited(self):
         from custicon.ui.editor import BIG_SIZE
@@ -1846,7 +1884,7 @@ class DirectManipulationTests(WindowTestCase):
         for _ in range(200):
             self.editor._on_scroll(None, 0, 3)
         self.assertEqual(self.editor.draft.size, MIN_SIZE)
-        self.assertEqual(self.editor.size_slider.entry.get_value(), 20.0)
+        self.assertEqual(self.editor.size_slider.adjustment.get_value(), 20.0)
 
     def test_the_wheel_without_movement_or_without_a_pictogram_is_ignored(self):
         self.assertFalse(self.editor._on_scroll(None, 0, 0))
@@ -3499,7 +3537,7 @@ class MemoryAndLayoutTests(WindowTestCase):
         settle()
         self.window.editor.size_slider.adjustment.set_value(100.3)
         self.assertAlmostEqual(self.window.editor.draft.size, 1.005)
-        self.assertEqual(self.window.editor.size_slider.entry.get_value(), 100.5)
+        self.assertEqual(self.window.editor.size_slider.adjustment.get_value(), 100.5)
 
     def test_the_folder_list_uses_compact_icons(self):
         folder = self.add_and_apply()

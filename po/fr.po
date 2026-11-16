@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 18:40+0100\n"
+"POT-Creation-Date: 2026-11-16 08:15+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -58,78 +58,78 @@ msgstr "Clair"
 msgid "Dark"
 msgstr "Sombre"
 
-#: src/custicon/ui/editor.py:183
+#: src/custicon/ui/editor.py:200
 msgid "Drag the pictogram to move it, scroll to resize it"
 msgstr ""
 "Faites glisser le pictogramme pour le déplacer, utilisez la molette pour le "
 "redimensionner"
 
-#: src/custicon/ui/editor.py:211
+#: src/custicon/ui/editor.py:228
 #, python-format
 msgid "%d px"
 msgstr "%d px"
 
-#: src/custicon/ui/editor.py:233 src/custicon/ui/editor.py:300
+#: src/custicon/ui/editor.py:250 src/custicon/ui/editor.py:317
 msgid "Choose…"
 msgstr "Choisir…"
 
-#: src/custicon/ui/editor.py:236
+#: src/custicon/ui/editor.py:253
 msgid "Remove the central pictogram and keep only the corner badge"
 msgstr "Retirer le pictogramme central et ne garder que la pastille de coin"
 
-#: src/custicon/ui/editor.py:237
+#: src/custicon/ui/editor.py:254
 msgid "Remove the central pictogram"
 msgstr "Retirer le pictogramme central"
 
-#: src/custicon/ui/editor.py:244
+#: src/custicon/ui/editor.py:261
 msgid "Suggestions"
 msgstr "Suggestions"
 
-#: src/custicon/ui/editor.py:247 src/custicon/ui/editor.py:254
+#: src/custicon/ui/editor.py:264 src/custicon/ui/editor.py:271
 msgid "Folder Tint"
 msgstr "Teinte du dossier"
 
-#: src/custicon/ui/editor.py:248 src/custicon/ui/editor.py:255
+#: src/custicon/ui/editor.py:265 src/custicon/ui/editor.py:272
 msgid "Pictogram Color"
 msgstr "Couleur du pictogramme"
 
-#: src/custicon/ui/editor.py:252
+#: src/custicon/ui/editor.py:269
 msgid "Pictogram"
 msgstr "Pictogramme"
 
-#: src/custicon/ui/editor.py:260
+#: src/custicon/ui/editor.py:277
 msgid "Size"
 msgstr "Taille"
 
-#: src/custicon/ui/editor.py:262
+#: src/custicon/ui/editor.py:279
 msgid "Horizontal"
 msgstr "Horizontal"
 
-#: src/custicon/ui/editor.py:264
+#: src/custicon/ui/editor.py:281
 msgid "Vertical"
 msgstr "Vertical"
 
-#: src/custicon/ui/editor.py:269
+#: src/custicon/ui/editor.py:286
 msgid "SVG or PNG File…"
 msgstr "Fichier SVG ou PNG…"
 
-#: src/custicon/ui/editor.py:272
+#: src/custicon/ui/editor.py:289
 msgid "Letters or Symbols…"
 msgstr "Lettres ou symboles…"
 
-#: src/custicon/ui/editor.py:273
+#: src/custicon/ui/editor.py:290
 msgid "Tint the Pictogram"
 msgstr "Teinter le pictogramme"
 
-#: src/custicon/ui/editor.py:273
+#: src/custicon/ui/editor.py:290
 msgid "For a file: applies the chosen color"
 msgstr "Pour un fichier : applique la couleur choisie"
 
-#: src/custicon/ui/editor.py:284 src/custicon/ui/editor.py:292
+#: src/custicon/ui/editor.py:301 src/custicon/ui/editor.py:309
 msgid "Corner Badge"
 msgstr "Pastille de coin"
 
-#: src/custicon/ui/editor.py:286
+#: src/custicon/ui/editor.py:303
 msgid ""
 "A small colored disc with its own pictogram, next to the central one or on "
 "its own"
@@ -137,107 +137,107 @@ msgstr ""
 "Un petit rond de couleur avec son propre pictogramme, à côté du pictogramme "
 "central ou seul"
 
-#: src/custicon/ui/editor.py:308
+#: src/custicon/ui/editor.py:325
 msgid "Top Left"
 msgstr "Haut gauche"
 
-#: src/custicon/ui/editor.py:308
+#: src/custicon/ui/editor.py:325
 msgid "Top Right"
 msgstr "Haut droite"
 
-#: src/custicon/ui/editor.py:308
+#: src/custicon/ui/editor.py:325
 msgid "Bottom Left"
 msgstr "Bas gauche"
 
-#: src/custicon/ui/editor.py:308
+#: src/custicon/ui/editor.py:325
 msgid "Bottom Right"
 msgstr "Bas droite"
 
-#: src/custicon/ui/editor.py:322 src/custicon/ui/editor.py:329
+#: src/custicon/ui/editor.py:339 src/custicon/ui/editor.py:346
 msgid "Badge Color"
 msgstr "Couleur du rond"
 
-#: src/custicon/ui/editor.py:323
+#: src/custicon/ui/editor.py:340
 msgid "Badge Size"
 msgstr "Taille de la pastille"
 
-#: src/custicon/ui/editor.py:327
+#: src/custicon/ui/editor.py:344
 msgid "Badge Pictogram"
 msgstr "Pictogramme de la pastille"
 
-#: src/custicon/ui/editor.py:328
+#: src/custicon/ui/editor.py:345
 msgid "Corner"
 msgstr "Coin"
 
-#: src/custicon/ui/editor.py:352
+#: src/custicon/ui/editor.py:369
 msgid "Type 1 to 3 characters"
 msgstr "Saisissez 1 à 3 caractères"
 
-#: src/custicon/ui/editor.py:355
+#: src/custicon/ui/editor.py:372
 msgid "Letters or Symbols"
 msgstr "Lettres ou symboles"
 
-#: src/custicon/ui/editor.py:364
+#: src/custicon/ui/editor.py:381
 msgid "No saved styles yet"
 msgstr "Aucun style enregistré"
 
-#: src/custicon/ui/editor.py:369
+#: src/custicon/ui/editor.py:386
 msgid "Save Current Appearance…"
 msgstr "Enregistrer l’apparence actuelle…"
 
-#: src/custicon/ui/editor.py:375 src/custicon/ui/window.py:210
+#: src/custicon/ui/editor.py:392 src/custicon/ui/window.py:210
 msgid "Styles"
 msgstr "Styles"
 
-#: src/custicon/ui/editor.py:390 src/custicon/ui/editor.py:392
+#: src/custicon/ui/editor.py:407 src/custicon/ui/editor.py:409
 msgid "Delete Style"
 msgstr "Supprimer le style"
 
-#: src/custicon/ui/editor.py:416
+#: src/custicon/ui/editor.py:433
 #, python-format
 msgid "After applying, press F5 in %s if the icon does not show up."
 msgstr "Après l’application, appuyez sur F5 dans %s si l’icône n’apparaît pas."
 
-#: src/custicon/ui/editor.py:426 src/custicon/ui/editor.py:462
-#: src/custicon/ui/editor.py:478
+#: src/custicon/ui/editor.py:443 src/custicon/ui/editor.py:479
+#: src/custicon/ui/editor.py:495
 msgid "Remove Icon"
 msgstr "Retirer l’icône"
 
-#: src/custicon/ui/editor.py:430
+#: src/custicon/ui/editor.py:447
 msgid "Reset to Defaults"
 msgstr "Rétablir les valeurs par défaut"
 
-#: src/custicon/ui/editor.py:432 src/custicon/ui/editor.py:461
+#: src/custicon/ui/editor.py:449 src/custicon/ui/editor.py:478
 msgid "Apply"
 msgstr "Appliquer"
 
-#: src/custicon/ui/editor.py:474 src/custicon/ui/window.py:891
+#: src/custicon/ui/editor.py:491 src/custicon/ui/window.py:891
 #, python-format
 msgid "%d folder"
 msgid_plural "%d folders"
 msgstr[0] "%d dossier"
 msgstr[1] "%d dossiers"
 
-#: src/custicon/ui/editor.py:477
+#: src/custicon/ui/editor.py:494
 #, python-format
 msgid "Apply to %d Folder"
 msgid_plural "Apply to %d Folders"
 msgstr[0] "Appliquer à %d dossier"
 msgstr[1] "Appliquer à %d dossiers"
 
-#: src/custicon/ui/editor.py:478
+#: src/custicon/ui/editor.py:495
 #, python-format
 msgid "Remove %d Icon"
 msgid_plural "Remove %d Icons"
 msgstr[0] "Retirer %d icône"
 msgstr[1] "Retirer %d icônes"
 
-#: src/custicon/ui/editor.py:486
+#: src/custicon/ui/editor.py:503
 #, python-format
 msgid "Link to %s"
 msgstr "Lien vers %s"
 
-#: src/custicon/ui/editor.py:498 src/custicon/ui/editor.py:515
+#: src/custicon/ui/editor.py:515 src/custicon/ui/editor.py:532
 msgid "No pictogram chosen"
 msgstr "Aucun pictogramme choisi"
 
@@ -245,12 +245,12 @@ msgstr "Aucun pictogramme choisi"
 msgid "your file manager"
 msgstr "votre gestionnaire de fichiers"
 
-#: src/custicon/ui/format.py:28
+#: src/custicon/ui/format.py:29
 #, python-format
 msgid "%d%%"
 msgstr "%d %%"
 
-#: src/custicon/ui/format.py:29
+#: src/custicon/ui/format.py:30
 #, python-format
 msgid "%s%%"
 msgstr "%s %%"
@@ -1611,7 +1611,7 @@ msgstr ""
 "tard, par exemple sur un nouvel ordinateur"
 
 #: data/io.github.gor3pig.Custicon.metainfo.xml.in:25
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:234
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:242
 msgid "Remove an icon at any time: the folder gets back the icon it had before"
 msgstr ""
 "Retirez une icône à tout moment : le dossier retrouve l’icône qu’il avait "
@@ -1697,44 +1697,67 @@ msgid "Dolphin"
 msgstr "Dolphin"
 
 #: data/io.github.gor3pig.Custicon.metainfo.xml.in:116
-msgid ""
-"A light, dark or system theme, typed values for the sliders, a clearer menu, "
-"and an editor that adapts to the window."
-msgstr "Un thème clair, sombre ou du système, des valeurs saisies à la main pour les curseurs, un menu plus clair et un éditeur qui s’adapte à la fenêtre."
+msgid "The value fields next to the sliders are simpler."
+msgstr "Les champs de valeur à côté des curseurs sont plus simples."
 
 #: data/io.github.gor3pig.Custicon.metainfo.xml.in:118
 msgid ""
+"The field next to each slider no longer has plus and minus buttons: type a "
+"value, then press Enter or leave the field"
+msgstr ""
+"Le champ à côté de chaque curseur n’a plus de boutons plus et moins : "
+"saisissez une valeur, puis appuyez sur Entrée ou quittez le champ"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:124
+msgid ""
+"A light, dark or system theme, typed values for the sliders, a clearer menu, "
+"and an editor that adapts to the window."
+msgstr ""
+"Un thème clair, sombre ou du système, des valeurs saisies à la main pour les "
+"curseurs, un menu plus clair et un éditeur qui s’adapte à la fenêtre."
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:126
+msgid ""
 "Choose System, Light or Dark with three round swatches at the top of the "
 "main menu: the choice is kept from one launch to the next"
-msgstr "Choisissez Système, Clair ou Sombre avec trois pastilles rondes en haut du menu principal : le choix est conservé d’un lancement à l’autre"
+msgstr ""
+"Choisissez Système, Clair ou Sombre avec trois pastilles rondes en haut du "
+"menu principal : le choix est conservé d’un lancement à l’autre"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:119
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:127
 msgid ""
 "Type a value in the field next to each slider: size, position and badge size"
-msgstr "Saisissez une valeur dans le champ à côté de chaque curseur : taille, position et taille de la pastille"
+msgstr ""
+"Saisissez une valeur dans le champ à côté de chaque curseur : taille, "
+"position et taille de la pastille"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:120
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:128
 msgid ""
 "The main menu is organized in sections: icons, icon sets, styles and backup"
-msgstr "Le menu principal est organisé en sections : icônes, jeux d’icônes, styles et sauvegarde"
+msgstr ""
+"Le menu principal est organisé en sections : icônes, jeux d’icônes, styles "
+"et sauvegarde"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:121
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:129
 msgid "The custom icon sets dialog is larger"
 msgstr "La boîte des jeux d’icônes personnels est plus grande"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:122
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:130
 msgid ""
 "The editor adapts to narrow and wide windows: the buttons at the bottom wrap "
 "instead of overflowing, and the preview is drawn larger when there is room"
-msgstr "L’éditeur s’adapte aux fenêtres étroites et larges : les boutons du bas passent à la ligne au lieu de déborder, et l’aperçu est dessiné plus grand quand il y a de la place"
+msgstr ""
+"L’éditeur s’adapte aux fenêtres étroites et larges : les boutons du bas "
+"passent à la ligne au lieu de déborder, et l’aperçu est dessiné plus grand "
+"quand il y a de la place"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:128
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:136
 msgid "Your own icon sets, a repair dialog, and icons on symbolic links."
 msgstr ""
 "Vos propres jeux d’icônes, une boîte pour tout réparer, et des icônes sur "
 "les liens symboliques."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:130
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:138
 msgid ""
 "Add a folder of SVG files as a set of your own, then add or remove icons one "
 "by one: it appears in the picker and keeps working even if you remove the set"
@@ -1743,7 +1766,7 @@ msgstr ""
 "retirez des icônes une à une : il apparaît dans le sélecteur et continue de "
 "fonctionner même si vous retirez le jeu"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:131
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:139
 msgid ""
 "A bar tells you how many folders need a check, and one dialog repairs them, "
 "only the way you choose"
@@ -1751,7 +1774,7 @@ msgstr ""
 "Un bandeau indique combien de dossiers sont à vérifier, et une seule boîte "
 "les répare, uniquement comme vous l’avez choisi"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:132
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:140
 msgid ""
 "A symbolic link to a folder, on your desktop for example, can have its own "
 "icon with GNOME, Cinnamon and MATE"
@@ -1759,13 +1782,13 @@ msgstr ""
 "Un lien symbolique vers un dossier, sur votre bureau par exemple, peut avoir "
 "sa propre icône avec GNOME, Cinnamon et MATE"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:133
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:141
 msgid "Safer handling of damaged data and of unusual text in saved settings"
 msgstr ""
 "Meilleure tolérance aux données abîmées et aux textes inhabituels dans les "
 "réglages enregistrés"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:139
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:147
 msgid ""
 "A corner badge can now be put alone on a folder, and the texts speak of your "
 "desktop environment."
@@ -1773,14 +1796,14 @@ msgstr ""
 "Une pastille de coin peut maintenant être posée seule sur un dossier, et les "
 "textes parlent de votre environnement de bureau."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:141
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:149
 msgid ""
 "Remove the central pictogram to keep only the corner badge on the folder icon"
 msgstr ""
 "Retirez le pictogramme central pour ne garder que la pastille de coin sur "
 "l’icône du dossier"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:142
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:150
 msgid ""
 "The About dialog, the store entry and the website now name the desktop "
 "environments instead of one file manager"
@@ -1788,7 +1811,7 @@ msgstr ""
 "La fenêtre À propos, la fiche de l’application et le site citent les "
 "environnements de bureau plutôt qu’un seul gestionnaire de fichiers"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:148
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:156
 msgid ""
 "Custicon now works with KDE Plasma and other desktops, and can remove "
 "several icons at once."
@@ -1796,7 +1819,7 @@ msgstr ""
 "Custicon fonctionne désormais avec KDE Plasma et d’autres bureaux, et peut "
 "retirer plusieurs icônes d’un coup."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:150
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:158
 msgid ""
 "KDE Plasma (Dolphin) and LXQt (PCManFM-Qt) are supported, in addition to "
 "GNOME, Cinnamon and MATE: the right method is chosen automatically"
@@ -1804,7 +1827,7 @@ msgstr ""
 "KDE Plasma (Dolphin) et LXQt (PCManFM-Qt) sont pris en charge, en plus de "
 "GNOME, Cinnamon et MATE : la bonne méthode est choisie automatiquement"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:151
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:159
 msgid ""
 "With Dolphin and PCManFM-Qt the icon is kept in a small hidden .directory "
 "file inside the folder, which is removed when you remove the icon"
@@ -1812,7 +1835,7 @@ msgstr ""
 "Avec Dolphin et PCManFM-Qt, l’icône est conservée dans un petit fichier "
 "caché .directory placé dans le dossier, supprimé quand vous retirez l’icône"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:152
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:160
 msgid ""
 "A banner tells you when your file manager (Thunar, PCManFM, COSMIC Files) "
 "cannot show custom folder icons"
@@ -1821,7 +1844,7 @@ msgstr ""
 "PCManFM, COSMIC Files) ne peut pas afficher d’icônes de dossier "
 "personnalisées"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:153
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:161
 msgid ""
 "Remove the icons of several folders in one step, with a confirmation and an "
 "Undo for the whole batch"
@@ -1829,13 +1852,13 @@ msgstr ""
 "Retirez les icônes de plusieurs dossiers en une seule étape, avec une "
 "confirmation et un bouton Annuler pour tout le lot"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:154
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:162
 msgid "The texts now speak of your file manager instead of Nautilus only"
 msgstr ""
 "Les textes parlent désormais de votre gestionnaire de fichiers, et plus "
 "seulement de Nautilus"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:155
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:163
 msgid ""
 "A corner badge: a small colored disc with its own pictogram next to the "
 "central one"
@@ -1843,12 +1866,12 @@ msgstr ""
 "Une pastille de coin : un petit rond de couleur avec son propre pictogramme, "
 "à côté du pictogramme central"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:156
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:164
 msgid "Save all your settings in one file and restore them later"
 msgstr ""
 "Sauvegardez tous vos réglages dans un seul fichier et restaurez-les plus tard"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:157
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:165
 msgid ""
 "A complete page in the app store, with screenshots, keywords and categories "
 "for every desktop"
@@ -1856,14 +1879,14 @@ msgstr ""
 "Une fiche complète dans la logithèque, avec captures d’écran, mots-clés et "
 "catégories pour tous les bureaux"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:163
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:171
 msgid ""
 "Custicon now works on openSUSE Tumbleweed without changing its permissions."
 msgstr ""
 "Custicon fonctionne désormais sur openSUSE Tumbleweed sans modifier ses "
 "permissions."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:165
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:173
 msgid ""
 "Access to the home folder is now read and write: the read-only form did not "
 "work on every system, and Custicon had to be allowed more access by hand"
@@ -1872,7 +1895,7 @@ msgstr ""
 "en lecture seule ne fonctionnait pas partout, et il fallait accorder plus "
 "d’accès à Custicon à la main"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:166
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:174
 msgid ""
 "Custicon still never writes in your folders: the icon is saved by the GVfs "
 "service of your session"
@@ -1880,7 +1903,7 @@ msgstr ""
 "Custicon n’écrit toujours jamais dans vos dossiers : l’icône est enregistrée "
 "par le service GVfs de votre session"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:167
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:175
 msgid ""
 "The custom color is now a round rainbow swatch that shows the chosen color "
 "in its center"
@@ -1888,14 +1911,14 @@ msgstr ""
 "La couleur personnalisée est désormais une pastille ronde arc-en-ciel qui "
 "affiche en son centre la couleur choisie"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:168
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:176
 msgid ""
 "The help and the documentation describe the permissions as they really are"
 msgstr ""
 "L’aide et la documentation décrivent les permissions telles qu’elles sont "
 "réellement"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:174
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:182
 msgid ""
 "A faster interface, readable in dark mode, and a window that remembers its "
 "size."
@@ -1903,7 +1926,7 @@ msgstr ""
 "Une interface plus rapide, lisible en mode sombre, et une fenêtre qui "
 "retient sa taille."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:176
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:184
 msgid ""
 "Custicon now asks for GPU acceleration by default, so the interface is drawn "
 "by your graphics card"
@@ -1911,7 +1934,7 @@ msgstr ""
 "Custicon demande désormais l’accélération GPU par défaut : l’interface est "
 "dessinée par votre carte graphique"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:177
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:185
 msgid ""
 "The bundled pictograms (Phosphor, emoji, logos) follow the text color and "
 "are readable in the dark style"
@@ -1919,7 +1942,7 @@ msgstr ""
 "Les pictogrammes fournis (Phosphor, émoji, logos) suivent la couleur du "
 "texte et sont lisibles en mode sombre"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:178
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:186
 msgid ""
 "The folder list and the picker are lighter: regaining focus and switching "
 "sets are quicker"
@@ -1927,7 +1950,7 @@ msgstr ""
 "La liste des dossiers et le sélecteur sont plus légers : la reprise du focus "
 "et le changement de jeu sont plus rapides"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:179
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:187
 msgid ""
 "The main preview is smaller, and the window opens at a size that shows "
 "everything, then remembers its size and whether it was maximized"
@@ -1935,7 +1958,7 @@ msgstr ""
 "L’aperçu principal est plus petit, et la fenêtre s’ouvre à une taille où "
 "tout est visible, puis retient sa taille et son état maximisé"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:180
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:188
 msgid ""
 "The help explains how to restore a permission with Flatseal or for an "
 "installation for all users"
@@ -1943,13 +1966,13 @@ msgstr ""
 "L’aide explique comment rétablir une permission avec Flatseal ou pour une "
 "installation pour tous les utilisateurs"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:186
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:194
 msgid "Many more pictograms, a roomier editor and several folders at once."
 msgstr ""
 "Beaucoup plus de pictogrammes, un éditeur plus à l’aise et plusieurs "
 "dossiers à la fois."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:188
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:196
 msgid ""
 "The whole Phosphor set (1,500 pictograms), plus about 1,600 monochrome emoji "
 "and 3,400 brand logos, found by name in English or French"
@@ -1958,7 +1981,7 @@ msgstr ""
 "monochromes et 3 400 logos de marques, trouvés par leur nom en français ou "
 "en anglais"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:189
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:197
 msgid ""
 "Suggestions that follow the name of the folder, and your recent and favorite "
 "pictograms"
@@ -1966,7 +1989,7 @@ msgstr ""
 "Des suggestions selon le nom du dossier, et vos pictogrammes récents et "
 "favoris"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:190
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:198
 msgid ""
 "A new editor in two columns that needs no scrolling: choose colors from a "
 "palette, drag the pictogram on the preview and scroll to resize it"
@@ -1975,7 +1998,7 @@ msgstr ""
 "couleurs dans une palette, faites glisser le pictogramme sur l’aperçu et "
 "utilisez la molette pour le redimensionner"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:191
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:199
 msgid ""
 "Customize several folders at once, from the folder chooser, by dropping "
 "them, or by ticking them in the list"
@@ -1983,7 +2006,7 @@ msgstr ""
 "Personnalisez plusieurs dossiers à la fois, depuis le sélecteur de dossiers, "
 "en les déposant, ou en les cochant dans la liste"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:192
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:200
 msgid ""
 "The README is simpler, and the website now has a slideshow and follows the "
 "language of your browser"
@@ -1991,12 +2014,12 @@ msgstr ""
 "Le README est plus simple, et le site web a désormais un diaporama et suit "
 "la langue de votre navigateur"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:198
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:206
 msgid "More pictograms, a tinted folder and a complete About dialog."
 msgstr ""
 "Plus de pictogrammes, un dossier teinté et une boîte « À propos » complète."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:200
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:208
 msgid ""
 "Choose a pictogram from the new Phosphor set, bundled with Custicon, as well "
 "as from your icon theme"
@@ -2004,7 +2027,7 @@ msgstr ""
 "Choisir un pictogramme dans le nouveau jeu Phosphor, fourni avec Custicon, "
 "comme dans votre thème d’icônes"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:201
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:209
 msgid ""
 "Tint the folder itself: no tint, the accent color of your system, or a color "
 "of your own"
@@ -2012,11 +2035,11 @@ msgstr ""
 "Teinter le dossier lui-même : aucune teinte, la couleur d’accent de votre "
 "système, ou une couleur de votre choix"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:202
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:210
 msgid "The automatic color of the pictogram follows the tinted folder"
 msgstr "La couleur automatique du pictogramme suit le dossier teinté"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:203
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:211
 msgid ""
 "A complete About dialog with the release notes, and a Help entry (F1) that "
 "opens the guide in your language"
@@ -2024,23 +2047,23 @@ msgstr ""
 "Une boîte « À propos » complète avec les notes de version, et une entrée "
 "« Aide » (F1) qui ouvre le guide dans votre langue"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:204
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:212
 msgid ""
 "Custicon detects more reliably when access to the home folder is missing"
 msgstr ""
 "Custicon détecte plus fiablement l’absence d’accès au dossier personnel"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:205
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:213
 msgid "The README and the user guide are available in English and French"
 msgstr ""
 "Le README et le guide d’utilisation sont disponibles en anglais et en "
 "français"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:211
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:219
 msgid "New ways to customize and to manage folders."
 msgstr "De nouvelles façons de personnaliser et de gérer les dossiers."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:213
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:221
 msgid ""
 "Choose the color of the pictogram: automatic, the accent color of your "
 "system, or your own"
@@ -2048,17 +2071,17 @@ msgstr ""
 "Choisissez la couleur du pictogramme : automatique, couleur d’accent de "
 "votre système, ou la vôtre"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:214
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:222
 msgid "Use letters or symbols as a pictogram"
 msgstr "Utilisez des lettres ou des symboles comme pictogramme"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:215
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:223
 msgid "Save the appearance as named styles, and export or import them"
 msgstr ""
 "Enregistrez l’apparence sous forme de styles nommés, et exportez-les ou "
 "importez-les"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:216
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:224
 msgid ""
 "The appearance you applied is proposed again for the next folders you add, "
 "and can still be changed"
@@ -2066,7 +2089,7 @@ msgstr ""
 "L’apparence appliquée est proposée de nouveau pour les prochains dossiers "
 "ajoutés, et reste modifiable"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:217
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:225
 msgid ""
 "Open a folder in Custicon from Nautilus, with a drag and drop, or from the "
 "command line"
@@ -2074,13 +2097,13 @@ msgstr ""
 "Ouvrez un dossier dans Custicon depuis Nautilus, par glisser-déposer ou en "
 "ligne de commande"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:218
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:226
 msgid "Search pictograms in French, and search your customized folders"
 msgstr ""
 "Cherchez les pictogrammes en français, et cherchez dans vos dossiers "
 "personnalisés"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:219
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:227
 msgid ""
 "Find a folder that was moved or renamed, undo a removal, and remove all "
 "icons at once"
@@ -2088,7 +2111,7 @@ msgstr ""
 "Retrouvez un dossier déplacé ou renommé, annulez un retrait, et retirez "
 "toutes les icônes d’un coup"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:220
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:228
 msgid ""
 "A banner offers to regenerate the icons when the icon theme or the accent "
 "color changed"
@@ -2096,35 +2119,35 @@ msgstr ""
 "Un bandeau propose de régénérer les icônes quand le thème d’icônes ou la "
 "couleur d’accent a changé"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:221
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:229
 msgid "Finer sliders and a more compact list of folders"
 msgstr "Des curseurs plus fins et une liste de dossiers plus compacte"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:222
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:230
 msgid ""
 "Custicon explains how to allow access to the home folder when it is missing"
 msgstr ""
 "Custicon explique comment autoriser l’accès au dossier personnel lorsqu’il "
 "manque"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:228
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:236
 msgid "The first stable version of Custicon."
 msgstr "La première version stable de Custicon."
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:230
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:238
 msgid "Put a pictogram on the real folder icon of your current icon theme"
 msgstr ""
 "Posez un pictogramme sur la vraie icône de dossier de votre thème d’icônes "
 "actuel"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:231
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:239
 msgid ""
 "Choose a pictogram from your icon theme, or use your own SVG or PNG file"
 msgstr ""
 "Choisissez un pictogramme dans votre thème d’icônes, ou utilisez votre "
 "propre fichier SVG ou PNG"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:232
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:240
 msgid ""
 "Let the color be chosen automatically, or set the color, the size and the "
 "position yourself"
@@ -2132,14 +2155,14 @@ msgstr ""
 "Laissez la couleur se choisir automatiquement, ou réglez vous-même la "
 "couleur, la taille et la position"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:233
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:241
 msgid "See the result live before applying it"
 msgstr "Voyez le résultat en direct avant de l’appliquer"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:235
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:243
 msgid "Regenerate every icon after a change of icon theme"
 msgstr "Régénérez toutes les icônes après un changement de thème d’icônes"
 
-#: data/io.github.gor3pig.Custicon.metainfo.xml.in:236
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:244
 msgid "The content of your folders is never modified"
 msgstr "Le contenu de vos dossiers n’est jamais modifié"

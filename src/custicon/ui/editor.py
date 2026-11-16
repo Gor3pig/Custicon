@@ -14,7 +14,7 @@ from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
 from ..textglyph import MAX_CHARACTERS
 from .draft import DEFAULT_BADGE_GLYPH, Draft
 from .filemanager import manager_name
-from .format import display_path, folder_name, from_percent, to_percent
+from .format import display_path, folder_name, from_percent, number_text, parse_percent, to_percent
 from .palette import Palette, hex_of, rgba_of
 
 BIG_SIZE = 180
@@ -59,15 +59,32 @@ class Slider:
         self.scale.update_property([Gtk.AccessibleProperty.LABEL], [title])
         for mark in marks:
             self.scale.add_mark(mark, Gtk.PositionType.BOTTOM, None)
-        self.entry = Gtk.SpinButton(adjustment=self.adjustment, digits=SLIDER_DIGITS, numeric=True, width_chars=6, valign=Gtk.Align.CENTER)
+        self.entry = Gtk.Entry(width_chars=5, max_width_chars=6, max_length=8, xalign=1.0, input_purpose=Gtk.InputPurpose.NUMBER, valign=Gtk.Align.CENTER)
         self.entry.add_css_class("numeric")
         self.entry.update_property([Gtk.AccessibleProperty.LABEL], [title])
+        self.entry.connect("activate", lambda *_args: self.commit())
+        leaving = Gtk.EventControllerFocus()
+        leaving.connect("leave", lambda *_args: self.commit())
+        self.entry.add_controller(leaving)
+        self.adjustment.connect("value-changed", lambda *_args: self._show())
+        self._show()
         unit = Gtk.Label(label="%")
         unit.add_css_class("dim-label")
         self.row.append(self.title)
         self.row.append(self.scale)
         self.row.append(self.entry)
         self.row.append(unit)
+
+    def _show(self) -> None:
+        text = number_text(self.adjustment.get_value())
+        if self.entry.get_text() != text:
+            self.entry.set_text(text)
+
+    def commit(self) -> None:
+        value = parse_percent(self.entry.get_text())
+        if value is not None:
+            self.adjustment.set_value(min(self.adjustment.get_upper(), max(self.adjustment.get_lower(), value)))
+        self._show()
 
     def set_value(self, value: float) -> None:
         self.adjustment.set_value(value)

@@ -1,4 +1,5 @@
 import locale
+import math
 from pathlib import Path
 
 from ..i18n import _
@@ -27,6 +28,19 @@ def percent_text(value: float) -> str:
     if percent == int(percent):
         return _("%d%%") % percent
     return _("%s%%") % locale.format_string("%g", percent)
+
+
+def number_text(value: float) -> str:
+    return locale.format_string("%g", round(value, 1))
+
+
+def parse_percent(text: str) -> float | None:
+    cleaned = text.replace("%", "").replace("\u00a0", "").replace("\u202f", "").replace(" ", "").replace(",", ".")
+    try:
+        value = float(cleaned)
+    except ValueError:
+        return None
+    return value if math.isfinite(value) else None
 
 
 def to_percent(value: float) -> float:
