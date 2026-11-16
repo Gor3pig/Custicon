@@ -111,6 +111,18 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.8.0" date="2026-11-16">
+      <description>
+        <p>A light, dark or system theme, typed values for the sliders, a clearer menu, and an editor that adapts to the window.</p>
+        <ul>
+          <li>Choose System, Light or Dark with three round swatches at the top of the main menu: the choice is kept from one launch to the next</li>
+          <li>Type a value in the field next to each slider: size, position and badge size</li>
+          <li>The main menu is organized in sections: icons, icon sets, styles and backup</li>
+          <li>The custom icon sets dialog is larger</li>
+          <li>The editor adapts to narrow and wide windows: the buttons at the bottom wrap instead of overflowing, and the preview is drawn larger when there is room</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.7.0" date="2026-11-15">
       <description>
         <p>Your own icon sets, a repair dialog, and icons on symbolic links.</p>
