@@ -111,6 +111,14 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.8.1" date="2026-11-16">
+      <description>
+        <p>The value fields next to the sliders are simpler.</p>
+        <ul>
+          <li>The field next to each slider no longer has plus and minus buttons: type a value, then press Enter or leave the field</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.8.0" date="2026-11-16">
       <description>
         <p>A light, dark or system theme, typed values for the sliders, a clearer menu, and an editor that adapts to the window.</p>
