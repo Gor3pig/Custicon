@@ -18,7 +18,7 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setedit", "setpicker", "starterror", "restored")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setedit", "setpicker", "starterror", "restored", "menu", "menudark")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
@@ -187,7 +187,7 @@ def arrange(screen: str, window, demo: Demo) -> None:
     size = NARROW if screen == "narrow" else (TALL if screen in ("badge", "badgeonly") else WIDE)
     window.set_default_size(*size)
     Gtk.Settings.get_default().set_property("gtk-enable-animations", False)
-    scheme = Adw.ColorScheme.FORCE_DARK if screen in ("dark", "darkpicker") else Adw.ColorScheme.FORCE_LIGHT
+    scheme = Adw.ColorScheme.FORCE_DARK if screen in ("dark", "darkpicker", "menudark") else Adw.ColorScheme.FORCE_LIGHT
     Adw.StyleManager.get_default().set_color_scheme(scheme)
     if screen in ("states", "report"):
         window.reload(select=str(demo.folders["Archives"]))
@@ -241,6 +241,9 @@ def arrange(screen: str, window, demo: Demo) -> None:
         GLib.timeout_add(DIALOG_DELAY_MS, show_restored, window, demo)
     if screen == "confirm":
         GLib.timeout_add(DIALOG_DELAY_MS, window._confirm_remove)
+    if screen in ("menu", "menudark"):
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, window.open_menu)
     if screen == "toast":
         window.toast("Icon applied to “Projets”. Press F5 in Nautilus to see it.", "Got It")
     if screen == "report":
@@ -301,12 +304,13 @@ def main(argv: list[str]) -> int:
 
             def finish() -> bool:
                 attempts[0] += 1
-                if not snapshot(window, out) and attempts[0] < RETRIES:
+                target = window.menu_popover() if screen in ("menu", "menudark") else window
+                if not snapshot(target or window, out) and attempts[0] < RETRIES:
                     return True
                 application.quit()
                 return False
 
-            GLib.timeout_add(DIALOG_SETTLE_MS if screen in DIALOG_SCREENS else SETTLE_MS, finish)
+            GLib.timeout_add(DIALOG_SETTLE_MS if screen in DIALOG_SCREENS + ("menu", "menudark") else SETTLE_MS, finish)
 
         app.connect_after("activate", on_activate)
         return app.run([argv[0]])

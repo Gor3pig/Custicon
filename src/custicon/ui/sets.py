@@ -15,11 +15,13 @@ from .messages import describe_error
 
 MAX_SHOWN = 100
 THUMBNAIL = 28
+DIALOG_WIDTH = 720
+DIALOG_HEIGHT = 680
 
 
 class SetsDialog(Adw.Dialog):
     def __init__(self, service, on_message, pick_folder, on_changed=None, pick_files=None):
-        super().__init__(title=_("Custom Icon Sets"), content_width=520)
+        super().__init__(title=_("Custom Icon Sets"), content_width=DIALOG_WIDTH, content_height=DIALOG_HEIGHT)
         self._service = service
         self._on_message = on_message
         self._pick_folder = pick_folder
@@ -56,7 +58,7 @@ class SetsDialog(Adw.Dialog):
         limits.add_css_class("caption")
         limits.add_css_class("dim-label")
         page.append(limits)
-        view.set_content(Gtk.ScrolledWindow(child=page, propagate_natural_height=True, max_content_height=560, hscrollbar_policy=Gtk.PolicyType.NEVER))
+        view.set_content(Gtk.ScrolledWindow(child=Adw.Clamp(maximum_size=DIALOG_WIDTH, child=page), vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER))
         self.set_child(view)
         self.refresh()
 

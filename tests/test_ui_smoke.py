@@ -20,7 +20,6 @@ from custicon.errors import MetadataError, StoreError
 from custicon.store import Entry, Store
 from custicon.ui import window as window_module
 from custicon.ui.draft import Draft
-from custicon.ui.format import percent_text
 
 from .support import WorkspaceTestCase, folder_svg, glyph_svg, make_theme
 
@@ -280,9 +279,40 @@ class EditorBehaviourTests(WindowTestCase):
         self.assertAlmostEqual(self.editor.draft.offset_x, 0.2)
         self.assertAlmostEqual(self.editor.draft.offset_y, -0.1)
 
-    def test_slider_labels_show_the_value(self):
+    def test_slider_entries_show_the_value(self):
         self.editor.size_slider.adjustment.set_value(150)
-        self.assertEqual(self.editor.size_slider.label.get_text(), "150%")
+        self.assertEqual(self.editor.size_slider.entry.get_value(), 150)
+
+    def test_a_value_typed_in_the_entry_moves_the_slider_and_the_draft(self):
+        slider = self.editor.size_slider
+        slider.entry.set_text("37")
+        slider.entry.update()
+        self.assertEqual(slider.adjustment.get_value(), 37)
+        self.assertAlmostEqual(self.editor.draft.size, 0.37)
+
+    def test_a_value_typed_out_of_range_is_brought_back_to_the_limit(self):
+        from custicon.service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
+
+        slider = self.editor.size_slider
+        slider.entry.set_text("99999")
+        slider.entry.update()
+        self.assertEqual(self.editor.draft.size, MAX_SIZE)
+        slider.entry.set_text("1")
+        slider.entry.update()
+        self.assertEqual(self.editor.draft.size, MIN_SIZE)
+        self.editor.x_slider.entry.set_text("-99999")
+        self.editor.x_slider.entry.update()
+        self.assertEqual(self.editor.draft.offset_x, -MAX_OFFSET)
+
+    def test_a_value_typed_between_two_steps_snaps_to_half_a_percent(self):
+        slider = self.editor.size_slider
+        slider.entry.set_value(100.3)
+        self.assertEqual(slider.adjustment.get_value(), 100.5)
+
+    def test_the_badge_size_accepts_a_typed_value(self):
+        self.editor.badge_size_slider.entry.set_text("40")
+        self.editor.badge_size_slider.entry.update()
+        self.assertAlmostEqual(self.editor.draft.badge_size, 0.4)
 
     def test_turning_automatic_color_off_keeps_the_color(self):
         self.editor.color_palette.choose_color("#e62d42")
@@ -534,6 +564,133 @@ class StartupErrorTests(WorkspaceTestCase):
         self.assertIsInstance(self.application.props.active_window, window_module.MainWindow)
 
 
+class ResponsiveWindowTests(WindowTestCase):
+    def test_the_preview_is_drawn_at_the_size_it_is_shown(self):
+        from custicon.ui.editor import WIDE_BIG_SIZE
+
+        self.window.add_folder(self.make_folder())
+        settle()
+        self.window.editor._set_preview_size(WIDE_BIG_SIZE)
+        self.assertTrue(settle(lambda: self.window.editor.big.get_paintable().get_intrinsic_width() == WIDE_BIG_SIZE))
+
+    def test_the_add_button_keeps_only_its_icon_when_the_window_is_narrow(self):
+        labels = lambda: {content.get_label() for content in self.window._add_contents}
+        self.assertEqual(labels(), {"Add Folder"})
+        self.window._collapse_breakpoint.emit("apply")
+        self.assertEqual(labels(), {""})
+        self.window._collapse_breakpoint.emit("unapply")
+        self.assertEqual(labels(), {"Add Folder"})
+
+    def test_the_add_button_keeps_a_name_for_screen_readers_without_its_label(self):
+        self.window._collapse_breakpoint.emit("apply")
+        button = self.window._add_contents[0].get_parent()
+        self.assertEqual(button.get_tooltip_text(), "Choose a folder to customize")
+
+
+class ColorSchemeUiTests(WindowTestCase):
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(Adw.StyleManager.get_default().set_color_scheme, Adw.ColorScheme.DEFAULT)
+
+    def state(self, window=None):
+        return (window or self.window).lookup_action("color-scheme").get_state().get_string()
+
+    def choose(self, name):
+        self.window.lookup_action("color-scheme").activate(GLib.Variant.new_string(name))
+        settle()
+
+    def scheme(self):
+        return Adw.StyleManager.get_default().get_color_scheme()
+
+    def test_the_system_scheme_is_used_at_first(self):
+        self.assertEqual(self.state(), "system")
+        self.assertEqual(self.scheme(), Adw.ColorScheme.DEFAULT)
+
+    def test_choosing_dark_applies_it_and_remembers_it(self):
+        self.choose("dark")
+        self.assertEqual(self.scheme(), Adw.ColorScheme.FORCE_DARK)
+        self.assertEqual(self.state(), "dark")
+        self.assertEqual(self.service.color_scheme(), "dark")
+
+    def test_choosing_light_then_system_goes_back_to_the_desktop_setting(self):
+        self.choose("light")
+        self.assertEqual(self.scheme(), Adw.ColorScheme.FORCE_LIGHT)
+        self.choose("system")
+        self.assertEqual(self.scheme(), Adw.ColorScheme.DEFAULT)
+        self.assertEqual(self.service.color_scheme(), "system")
+
+    def test_an_unknown_scheme_changes_nothing(self):
+        self.choose("dark")
+        self.choose("purple")
+        self.assertEqual(self.scheme(), Adw.ColorScheme.FORCE_DARK)
+        self.assertEqual(self.state(), "dark")
+        self.assertEqual(self.service.color_scheme(), "dark")
+
+    def test_the_remembered_scheme_is_applied_when_the_window_opens(self):
+        from custicon.ui.window import MainWindow
+
+        self.service.remember_color_scheme("dark")
+        window = MainWindow(shared_application(), self.service)
+        self.addCleanup(window.destroy)
+        settle()
+        self.assertEqual(self.scheme(), Adw.ColorScheme.FORCE_DARK)
+        self.assertEqual(self.state(window), "dark")
+
+    def test_the_chips_follow_the_chosen_scheme(self):
+        chips = self.window._theme_chips[0]
+        self.assertEqual({name: button.get_active() for name, button in chips.buttons.items()}, {"system": True, "light": False, "dark": False})
+        self.choose("dark")
+        self.assertEqual({name: button.get_active() for name, button in chips.buttons.items()}, {"system": False, "light": False, "dark": True})
+
+    def test_clicking_a_chip_chooses_its_scheme(self):
+        self.window._menu_buttons[0].popup()
+        settle()
+        self.window._theme_chips[0].buttons["light"].emit("clicked")
+        settle()
+        self.assertEqual(self.scheme(), Adw.ColorScheme.FORCE_LIGHT)
+        self.assertEqual(self.service.color_scheme(), "light")
+
+    def test_the_chips_are_round_whatever_the_length_of_their_name(self):
+        self.window._menu_buttons[0].popup()
+        settle()
+        sizes = {name: (button.get_width(), button.get_height()) for name, button in self.window._theme_chips[0].buttons.items()}
+        self.assertEqual(len(set(sizes.values())), 1, sizes)
+        width, height = next(iter(sizes.values()))
+        self.assertEqual(width, height)
+
+    def test_every_chip_has_a_name_for_screen_readers(self):
+        titles = {"system": "System", "light": "Light", "dark": "Dark"}
+        for name, button in self.window._theme_chips[0].buttons.items():
+            self.assertEqual(button.get_tooltip_text(), titles[name])
+
+    def sections(self):
+        model = self.window._menu_buttons[0].get_popover().get_menu_model()
+        found = []
+        for index in range(model.get_n_items()):
+            label = model.get_item_attribute_value(index, "label")
+            section = model.get_item_link(index, "section")
+            actions = []
+            for position in range(section.get_n_items()):
+                action = section.get_item_attribute_value(position, "action")
+                custom = section.get_item_attribute_value(position, "custom")
+                actions.append(action.get_string() if action else "custom:" + custom.get_string())
+            found.append((label.get_string() if label else None, actions))
+        return found
+
+    def test_the_menu_has_the_theme_chips_first_then_one_section_per_topic(self):
+        self.assertEqual(
+            self.sections(),
+            [
+                (None, ["custom:theme"]),
+                ("Icons", ["win.regenerate", "win.reset-all"]),
+                ("Icon Sets", ["win.icon-sets"]),
+                ("Styles", ["win.export-styles", "win.import-styles"]),
+                ("Backup", ["win.backup", "win.restore"]),
+                (None, ["app.help", "app.about", "app.quit"]),
+            ],
+        )
+
+
 class CustomSetUiTests(WindowTestCase):
     class Answer:
         def __init__(self, response):
@@ -555,6 +712,13 @@ class CustomSetUiTests(WindowTestCase):
         )
         self.dialog.present(self.window)
         settle()
+
+    def test_the_dialog_is_large_and_its_list_scrolls_with_it(self):
+        self.assertEqual(self.dialog.get_content_width(), 720)
+        self.assertEqual(self.dialog.get_content_height(), 680)
+        scrolled = self.dialog.list.get_ancestor(Gtk.ScrolledWindow)
+        self.assertTrue(scrolled.get_vexpand())
+        self.assertFalse(scrolled.get_propagate_natural_height())
 
     def rows(self):
         found, row = [], self.dialog.list.get_first_child()
@@ -1595,6 +1759,39 @@ class DirectManipulationTests(WindowTestCase):
         self.editor._on_drag_update(None, dx, dy)
         self.editor._on_drag_end(None, dx, dy)
 
+    def test_the_action_bar_fits_the_minimum_width_once_stacked(self):
+        from custicon.ui.editor import MIN_WIDTH
+        from custicon.ui.windowstate import MINIMUM_WIDTH
+
+        self.assertLessEqual(MIN_WIDTH, MINIMUM_WIDTH)
+        self.editor.buttons.set_orientation(Gtk.Orientation.VERTICAL)
+        self.assertLessEqual(self.editor.action_bar.measure(Gtk.Orientation.HORIZONTAL, -1)[0], MIN_WIDTH)
+
+    def test_a_wider_preview_is_used_when_there_is_room(self):
+        from custicon.ui.editor import BIG_SIZE, WIDE_BIG_SIZE
+
+        self.assertEqual(self.editor.preview_size, BIG_SIZE)
+        self.editor._set_preview_size(WIDE_BIG_SIZE)
+        self.assertEqual(self.editor.big.get_size_request(), (WIDE_BIG_SIZE, WIDE_BIG_SIZE))
+        self.editor._set_preview_size(BIG_SIZE)
+        self.assertEqual(self.editor.big.get_size_request(), (BIG_SIZE, BIG_SIZE))
+
+    def test_dragging_follows_the_current_preview_size(self):
+        from custicon.ui.editor import WIDE_BIG_SIZE
+
+        self.editor._set_preview_size(WIDE_BIG_SIZE)
+        self.drag(WIDE_BIG_SIZE * 0.1, 0)
+        self.assertAlmostEqual(self.editor.x_slider.adjustment.get_value(), 10.0, places=1)
+
+    def test_changing_the_preview_size_asks_for_a_new_preview(self):
+        from custicon.ui.editor import WIDE_BIG_SIZE
+
+        calls = []
+        self.editor.on_preview_size = lambda: calls.append(1)
+        self.editor._set_preview_size(WIDE_BIG_SIZE)
+        self.editor._set_preview_size(WIDE_BIG_SIZE)
+        self.assertEqual(calls, [1])
+
     def test_dragging_moves_the_pictogram_by_the_fraction_of_the_preview(self):
         from custicon.ui.editor import BIG_SIZE
 
@@ -1607,7 +1804,7 @@ class DirectManipulationTests(WindowTestCase):
 
         self.drag(BIG_SIZE * 0.1, 0)
         self.assertAlmostEqual(self.editor.x_slider.adjustment.get_value(), 10.0, places=1)
-        self.assertEqual(self.editor.x_slider.label.get_text(), "10%")
+        self.assertEqual(self.editor.x_slider.entry.get_value(), 10.0)
 
     def test_the_offsets_are_limited(self):
         from custicon.ui.editor import BIG_SIZE
@@ -1649,7 +1846,7 @@ class DirectManipulationTests(WindowTestCase):
         for _ in range(200):
             self.editor._on_scroll(None, 0, 3)
         self.assertEqual(self.editor.draft.size, MIN_SIZE)
-        self.assertEqual(self.editor.size_slider.label.get_text(), "20%")
+        self.assertEqual(self.editor.size_slider.entry.get_value(), 20.0)
 
     def test_the_wheel_without_movement_or_without_a_pictogram_is_ignored(self):
         self.assertFalse(self.editor._on_scroll(None, 0, 0))
@@ -2916,8 +3113,19 @@ class AboutAndHelpTests(WindowTestCase):
         return ApplicationOpenTests.application(self)
 
     def menu_actions(self):
-        menu = self.window._primary_menu()
-        return [menu.get_item_attribute_value(index, "action", None).get_string() for index in range(menu.get_n_items())]
+        def collect(menu):
+            found = []
+            for index in range(menu.get_n_items()):
+                section = menu.get_item_link(index, "section")
+                if section is not None:
+                    found.extend(collect(section))
+                    continue
+                action = menu.get_item_attribute_value(index, "action", None)
+                if action is not None:
+                    found.append(action.get_string())
+            return found
+
+        return collect(self.window._primary_menu())
 
     def test_the_about_dialog_is_complete(self):
         from custicon.config import APP_ID, APP_NAME, VERSION
@@ -3291,7 +3499,7 @@ class MemoryAndLayoutTests(WindowTestCase):
         settle()
         self.window.editor.size_slider.adjustment.set_value(100.3)
         self.assertAlmostEqual(self.window.editor.draft.size, 1.005)
-        self.assertEqual(self.window.editor.size_slider.label.get_text(), percent_text(1.005))
+        self.assertEqual(self.window.editor.size_slider.entry.get_value(), 100.5)
 
     def test_the_folder_list_uses_compact_icons(self):
         folder = self.add_and_apply()

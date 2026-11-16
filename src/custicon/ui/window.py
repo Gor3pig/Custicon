@@ -30,7 +30,8 @@ from ..service import (
     Service,
 )
 from .draft import Draft
-from .editor import BIG_SIZE, SMALL_SIZES, Editor
+from .editor import SMALL_SIZES, Editor
+from .appearance import SCHEMES, ThemeChips, apply_color_scheme
 from .sets import SetsDialog
 from .filemanager import manager_name
 from .format import display_path, folder_name, is_portal_path, is_text_path, normalize_text
@@ -109,6 +110,11 @@ class MainWindow(Adw.ApplicationWindow):
         self._shown = None
         self._rows_shown = None
 
+        self._menu_buttons: list[Gtk.MenuButton] = []
+        self._add_contents: list[Adw.ButtonContent] = []
+        self._add_label = _("Add Folder")
+        self._theme_chips: list[ThemeChips] = []
+        apply_color_scheme(service.color_scheme())
         self._build_actions()
         self.toasts = Adw.ToastOverlay()
         self.stack = Gtk.Stack(vexpand=True)
@@ -144,6 +150,9 @@ class MainWindow(Adw.ApplicationWindow):
 
         breakpoint_ = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 640sp"))
         breakpoint_.add_setter(self.split, "collapsed", True)
+        self._collapse_breakpoint = breakpoint_
+        breakpoint_.connect("apply", lambda *_args: self._set_add_label(""))
+        breakpoint_.connect("unapply", lambda *_args: self._set_add_label(self._add_label))
         self.add_breakpoint(breakpoint_)
 
         drop = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
@@ -176,32 +185,86 @@ class MainWindow(Adw.ApplicationWindow):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda *_args, cb=callback: cb())
             self.add_action(action)
+        scheme = Gio.SimpleAction.new_stateful("color-scheme", GLib.VariantType.new("s"), GLib.Variant.new_string(self._service.color_scheme()))
+        scheme.connect("activate", lambda action, value: self._on_color_scheme(action, value))
+        scheme.connect("change-state", lambda action, value: self._on_color_scheme(action, value))
+        self.add_action(scheme)
 
     def _primary_menu(self) -> Gio.Menu:
         menu = Gio.Menu()
-        menu.append(_("Regenerate All Icons"), "win.regenerate")
-        menu.append(_("Export Styles…"), "win.export-styles")
-        menu.append(_("Import Styles…"), "win.import-styles")
-        menu.append(_("Save Settings…"), "win.backup")
-        menu.append(_("Restore Settings…"), "win.restore")
-        menu.append(_("Manage Icon Sets…"), "win.icon-sets")
-        menu.append(_("Remove All Icons…"), "win.reset-all")
-        menu.append(_("Help"), "app.help")
-        menu.append(_("About %s") % APP_NAME, "app.about")
-        menu.append(_("Quit"), "app.quit")
+        chips = Gio.MenuItem.new(None, None)
+        chips.set_attribute_value("custom", GLib.Variant.new_string("theme"))
+        theme = Gio.Menu()
+        theme.append_item(chips)
+        menu.append_section(None, theme)
+        icons = Gio.Menu()
+        icons.append(_("Regenerate All Icons"), "win.regenerate")
+        icons.append(_("Remove All Icons…"), "win.reset-all")
+        menu.append_section(_("Icons"), icons)
+        sets = Gio.Menu()
+        sets.append(_("Manage Icon Sets…"), "win.icon-sets")
+        menu.append_section(_("Icon Sets"), sets)
+        styles = Gio.Menu()
+        styles.append(_("Export Styles…"), "win.export-styles")
+        styles.append(_("Import Styles…"), "win.import-styles")
+        menu.append_section(_("Styles"), styles)
+        backup = Gio.Menu()
+        backup.append(_("Save Settings…"), "win.backup")
+        backup.append(_("Restore Settings…"), "win.restore")
+        menu.append_section(_("Backup"), backup)
+        general = Gio.Menu()
+        general.append(_("Help"), "app.help")
+        general.append(_("About %s") % APP_NAME, "app.about")
+        general.append(_("Quit"), "app.quit")
+        menu.append_section(None, general)
         return menu
+
+    def _build_menu_button(self) -> Gtk.MenuButton:
+        popover = Gtk.PopoverMenu.new_from_model(self._primary_menu())
+        chips = ThemeChips()
+        popover.add_child(chips, "theme")
+        self._theme_chips.append(chips)
+        button = Gtk.MenuButton(icon_name="open-menu-symbolic", popover=popover, primary=True)
+        button.set_tooltip_text(_("Main Menu"))
+        self._menu_buttons.append(button)
+        return button
+
+    def menu_popover(self) -> Gtk.Popover | None:
+        for button in self._menu_buttons:
+            if button.get_mapped():
+                return button.get_popover()
+        return None
+
+    def open_menu(self) -> None:
+        for button in self._menu_buttons:
+            if button.get_mapped():
+                button.popup()
+                return
+
+    def _on_color_scheme(self, action: Gio.SimpleAction, value: GLib.Variant) -> None:
+        name = value.get_string()
+        if name not in SCHEMES:
+            return
+        action.set_state(value)
+        apply_color_scheme(name)
+        self._service.remember_color_scheme(name)
+
+    def _set_add_label(self, label: str) -> None:
+        for content in self._add_contents:
+            content.set_label(label)
 
     def _header(self, with_add: bool = True) -> Adw.HeaderBar:
         header = Adw.HeaderBar()
         if with_add:
-            add = Gtk.Button(child=Adw.ButtonContent(icon_name="list-add-symbolic", label=_("Add Folder")))
+            content = Adw.ButtonContent(icon_name="list-add-symbolic", label=self._add_label)
+            self._add_contents.append(content)
+            add = Gtk.Button(child=content)
+            add.update_property([Gtk.AccessibleProperty.LABEL], [_("Add Folder")])
             add.add_css_class("suggested-action")
             add.set_action_name("win.add-folder")
             add.set_tooltip_text(_("Choose a folder to customize"))
             header.pack_start(add)
-        menu = Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=self._primary_menu(), primary=True)
-        menu.set_tooltip_text(_("Main Menu"))
-        header.pack_end(menu)
+        header.pack_end(self._build_menu_button())
         return header
 
     def _build_empty_page(self) -> Gtk.Widget:
@@ -281,6 +344,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.editor.on_pick_suggestion = self._on_suggestion_picked
         self.editor.on_banner_action = self._on_banner_action
         self.editor.on_apply_style = self._apply_style
+        self.editor.on_preview_size = self._schedule_preview
         self.editor.on_delete_style = self._delete_style
         self.editor.on_save_style = self._save_style
         view.set_content(self.editor)
@@ -658,7 +722,7 @@ class MainWindow(Adw.ApplicationWindow):
                 self.editor.set_computed_color(None)
                 self.editor.set_computed_folder_tint(folder_tint)
             self.editor.set_accent_color(self._service.accent_color())
-            self.editor.set_preview(render(BIG_SIZE), [render(size) for size in SMALL_SIZES], note)
+            self.editor.set_preview(render(self.editor.preview_size), [render(size) for size in SMALL_SIZES], note)
             self.editor.set_blocked(False)
         except CusticonError as error:
             self.editor.set_preview(None, [None] * len(SMALL_SIZES), describe_error(error).split("\n")[0])

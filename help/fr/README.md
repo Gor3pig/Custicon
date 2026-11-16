@@ -131,10 +131,13 @@ La colonne de droite règle le rendu.
 - **Horizontal** et **Vertical** : la position, de -50 % à +50 %, depuis le centre de la face du dossier.
 - **Rétablir les valeurs par défaut** remet l’absence de teinte, la couleur automatique, la taille et la position d’origine.
 
-Les curseurs avancent par pas de 0,5 % (flèches du clavier ; Page précédente et Page suivante par pas de 5 %).
+Les curseurs avancent par pas de 0,5 % (flèches du clavier ; Page précédente et Page suivante par pas de 5 %). Vous pouvez aussi
+saisir une valeur dans le champ à côté de chaque curseur (taille, position, taille de la pastille) : une valeur hors des limites
+est ramenée à la limite la plus proche.
 
 Vous pouvez aussi agir directement sur l’aperçu : **faites glisser le pictogramme** pour le déplacer et **utilisez la molette** au-dessus pour le redimensionner.
-Les curseurs suivent. Sur une fenêtre étroite, les deux colonnes s’empilent et l’éditeur défile.
+Les curseurs suivent. Sur une fenêtre étroite, les deux colonnes s’empilent, les boutons du bas passent à la ligne et l’éditeur
+défile. Sur une grande fenêtre, l’aperçu est dessiné plus grand.
 
 ### Styles nommés
 
@@ -281,6 +284,9 @@ Les dossiers dont vous avez changé l’icône en dehors de Custicon sont ignor�
 Appuyez ensuite sur F5 dans votre gestionnaire de fichiers.
 
 ## Aide, À propos et raccourcis clavier
+
+En haut du menu principal, trois pastilles rondes choisissent l’apparence de Custicon : **Système** (par défaut : Custicon suit
+votre bureau), **Clair** ou **Sombre**. Le choix est conservé d’un lancement à l’autre.
 
 Le menu principal contient **Aide** (touche F1), qui ouvre ce guide dans la langue de votre bureau (français ou anglais),
 et **À propos de Custicon**. La boîte « À propos » montre la version, les nouveautés de cette version (**Quoi de neuf**),

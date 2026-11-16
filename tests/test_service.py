@@ -885,6 +885,20 @@ class WindowStateServiceTests(ServiceTestCase):
         self.assertIsNone(self.service.window_state())
 
 
+class ColorSchemeServiceTests(ServiceTestCase):
+    def test_the_system_scheme_is_remembered_at_first(self):
+        self.assertEqual(self.service.color_scheme(), "system")
+
+    def test_a_remembered_scheme_comes_back(self):
+        self.assertTrue(self.service.remember_color_scheme("dark"))
+        self.assertEqual(self.service.color_scheme(), "dark")
+
+    def test_an_unknown_scheme_is_refused_and_the_previous_one_is_kept(self):
+        self.service.remember_color_scheme("light")
+        self.assertFalse(self.service.remember_color_scheme("purple"))
+        self.assertEqual(self.service.color_scheme(), "light")
+
+
 class OutdatedWithKnownStatusTests(ServiceTestCase):
     def test_known_statuses_give_the_same_answer_as_a_fresh_reading(self):
         folder = self.make_folder()

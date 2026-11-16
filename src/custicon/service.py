@@ -522,6 +522,16 @@ class Service:
             return False
         return True
 
+    def color_scheme(self) -> str:
+        return self._store.load_color_scheme()
+
+    def remember_color_scheme(self, value: str) -> bool:
+        try:
+            self._store.save_color_scheme(value)
+        except CusticonError:
+            return False
+        return True
+
     def picker_memory(self) -> PickerMemory:
         loaded = self._store.load_picker()
         return PickerMemory(tuple(loaded["recent"]), tuple(loaded["favorites"]))

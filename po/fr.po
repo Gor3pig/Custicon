@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: custicon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 18:22+0100\n"
+"POT-Creation-Date: 2026-11-15 18:40+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -11,17 +11,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+#: src/custicon/app.py:49
 msgid ""
 "An unexpected error stopped the window from opening. Your folders and icons "
 "are not changed."
-msgstr "Une erreur inattendue a empêché l’ouverture de la fenêtre. Vos dossiers et vos icônes ne sont pas modifiés."
+msgstr ""
+"Une erreur inattendue a empêché l’ouverture de la fenêtre. Vos dossiers et "
+"vos icônes ne sont pas modifiés."
 
+#: src/custicon/app.py:50
 msgid "Custicon Could Not Start"
 msgstr "Custicon n’a pas pu démarrer"
 
+#: src/custicon/app.py:51 src/custicon/ui/window.py:218
 msgid "Quit"
 msgstr "Quitter"
 
+#: src/custicon/ui/about.py:34
 msgid ""
 "The logos are released under CC0 1.0 Universal (public domain). The brands "
 "and logos remain the trademarks of their respective owners, and their use is "
@@ -31,67 +37,99 @@ msgstr ""
 "marques et les logos restent la propriété de leurs détenteurs respectifs, et "
 "leur utilisation est soumise aux règles de ces détenteurs."
 
+#: src/custicon/ui/about.py:52
 msgid "Customize folder icons in your desktop environment."
 msgstr ""
 "Personnalisez les icônes de dossier dans votre environnement de bureau."
 
+#: src/custicon/ui/about.py:58
 msgid "translator-credits"
 msgstr "Gor3pig"
 
+#: src/custicon/ui/appearance.py:58 src/custicon/ui/picker.py:37
+msgid "System"
+msgstr "Système"
+
+#: src/custicon/ui/appearance.py:58
+msgid "Light"
+msgstr "Clair"
+
+#: src/custicon/ui/appearance.py:58
+msgid "Dark"
+msgstr "Sombre"
+
+#: src/custicon/ui/editor.py:183
 msgid "Drag the pictogram to move it, scroll to resize it"
 msgstr ""
 "Faites glisser le pictogramme pour le déplacer, utilisez la molette pour le "
 "redimensionner"
 
+#: src/custicon/ui/editor.py:211
 #, python-format
 msgid "%d px"
 msgstr "%d px"
 
+#: src/custicon/ui/editor.py:233 src/custicon/ui/editor.py:300
 msgid "Choose…"
 msgstr "Choisir…"
 
+#: src/custicon/ui/editor.py:236
 msgid "Remove the central pictogram and keep only the corner badge"
 msgstr "Retirer le pictogramme central et ne garder que la pastille de coin"
 
+#: src/custicon/ui/editor.py:237
 msgid "Remove the central pictogram"
 msgstr "Retirer le pictogramme central"
 
+#: src/custicon/ui/editor.py:244
 msgid "Suggestions"
 msgstr "Suggestions"
 
+#: src/custicon/ui/editor.py:247 src/custicon/ui/editor.py:254
 msgid "Folder Tint"
 msgstr "Teinte du dossier"
 
+#: src/custicon/ui/editor.py:248 src/custicon/ui/editor.py:255
 msgid "Pictogram Color"
 msgstr "Couleur du pictogramme"
 
+#: src/custicon/ui/editor.py:252
 msgid "Pictogram"
 msgstr "Pictogramme"
 
+#: src/custicon/ui/editor.py:260
 msgid "Size"
 msgstr "Taille"
 
+#: src/custicon/ui/editor.py:262
 msgid "Horizontal"
 msgstr "Horizontal"
 
+#: src/custicon/ui/editor.py:264
 msgid "Vertical"
 msgstr "Vertical"
 
+#: src/custicon/ui/editor.py:269
 msgid "SVG or PNG File…"
 msgstr "Fichier SVG ou PNG…"
 
+#: src/custicon/ui/editor.py:272
 msgid "Letters or Symbols…"
 msgstr "Lettres ou symboles…"
 
+#: src/custicon/ui/editor.py:273
 msgid "Tint the Pictogram"
 msgstr "Teinter le pictogramme"
 
+#: src/custicon/ui/editor.py:273
 msgid "For a file: applies the chosen color"
 msgstr "Pour un fichier : applique la couleur choisie"
 
+#: src/custicon/ui/editor.py:284 src/custicon/ui/editor.py:292
 msgid "Corner Badge"
 msgstr "Pastille de coin"
 
+#: src/custicon/ui/editor.py:286
 msgid ""
 "A small colored disc with its own pictogram, next to the central one or on "
 "its own"
@@ -99,109 +137,141 @@ msgstr ""
 "Un petit rond de couleur avec son propre pictogramme, à côté du pictogramme "
 "central ou seul"
 
+#: src/custicon/ui/editor.py:308
 msgid "Top Left"
 msgstr "Haut gauche"
 
+#: src/custicon/ui/editor.py:308
 msgid "Top Right"
 msgstr "Haut droite"
 
+#: src/custicon/ui/editor.py:308
 msgid "Bottom Left"
 msgstr "Bas gauche"
 
+#: src/custicon/ui/editor.py:308
 msgid "Bottom Right"
 msgstr "Bas droite"
 
+#: src/custicon/ui/editor.py:322 src/custicon/ui/editor.py:329
 msgid "Badge Color"
 msgstr "Couleur du rond"
 
+#: src/custicon/ui/editor.py:323
 msgid "Badge Size"
 msgstr "Taille de la pastille"
 
+#: src/custicon/ui/editor.py:327
 msgid "Badge Pictogram"
 msgstr "Pictogramme de la pastille"
 
+#: src/custicon/ui/editor.py:328
 msgid "Corner"
 msgstr "Coin"
 
+#: src/custicon/ui/editor.py:352
 msgid "Type 1 to 3 characters"
 msgstr "Saisissez 1 à 3 caractères"
 
+#: src/custicon/ui/editor.py:355
 msgid "Letters or Symbols"
 msgstr "Lettres ou symboles"
 
+#: src/custicon/ui/editor.py:364
 msgid "No saved styles yet"
 msgstr "Aucun style enregistré"
 
+#: src/custicon/ui/editor.py:369
 msgid "Save Current Appearance…"
 msgstr "Enregistrer l’apparence actuelle…"
 
+#: src/custicon/ui/editor.py:375 src/custicon/ui/window.py:210
 msgid "Styles"
 msgstr "Styles"
 
+#: src/custicon/ui/editor.py:390 src/custicon/ui/editor.py:392
 msgid "Delete Style"
 msgstr "Supprimer le style"
 
+#: src/custicon/ui/editor.py:416
 #, python-format
 msgid "After applying, press F5 in %s if the icon does not show up."
 msgstr "Après l’application, appuyez sur F5 dans %s si l’icône n’apparaît pas."
 
+#: src/custicon/ui/editor.py:426 src/custicon/ui/editor.py:462
+#: src/custicon/ui/editor.py:478
 msgid "Remove Icon"
 msgstr "Retirer l’icône"
 
+#: src/custicon/ui/editor.py:430
 msgid "Reset to Defaults"
 msgstr "Rétablir les valeurs par défaut"
 
+#: src/custicon/ui/editor.py:432 src/custicon/ui/editor.py:461
 msgid "Apply"
 msgstr "Appliquer"
 
+#: src/custicon/ui/editor.py:474 src/custicon/ui/window.py:891
 #, python-format
 msgid "%d folder"
 msgid_plural "%d folders"
 msgstr[0] "%d dossier"
 msgstr[1] "%d dossiers"
 
+#: src/custicon/ui/editor.py:477
 #, python-format
 msgid "Apply to %d Folder"
 msgid_plural "Apply to %d Folders"
 msgstr[0] "Appliquer à %d dossier"
 msgstr[1] "Appliquer à %d dossiers"
 
+#: src/custicon/ui/editor.py:478
 #, python-format
 msgid "Remove %d Icon"
 msgid_plural "Remove %d Icons"
 msgstr[0] "Retirer %d icône"
 msgstr[1] "Retirer %d icônes"
 
+#: src/custicon/ui/editor.py:486
 #, python-format
 msgid "Link to %s"
 msgstr "Lien vers %s"
 
+#: src/custicon/ui/editor.py:498 src/custicon/ui/editor.py:515
 msgid "No pictogram chosen"
 msgstr "Aucun pictogramme choisi"
 
+#: src/custicon/ui/filemanager.py:6
 msgid "your file manager"
 msgstr "votre gestionnaire de fichiers"
 
+#: src/custicon/ui/format.py:28
 #, python-format
 msgid "%d%%"
 msgstr "%d %%"
 
+#: src/custicon/ui/format.py:29
 #, python-format
 msgid "%s%%"
 msgstr "%s %%"
 
+#: src/custicon/ui/messages.py:26
 msgid "An icon that is needed was not found in your icon theme."
 msgstr "Une icône nécessaire est introuvable dans votre thème d’icônes."
 
+#: src/custicon/ui/messages.py:27
 msgid "An icon file could not be read."
 msgstr "Un fichier d’icône n’a pas pu être lu."
 
+#: src/custicon/ui/messages.py:28
 msgid "These settings are not valid."
 msgstr "Ces réglages ne sont pas valides."
 
+#: src/custicon/ui/messages.py:29
 msgid "This is not a usable folder."
 msgstr "Ce n’est pas un dossier utilisable."
 
+#: src/custicon/ui/messages.py:30
 msgid ""
 "The new icon could not be recorded for this folder. Check that Custicon can "
 "access it."
@@ -209,55 +279,71 @@ msgstr ""
 "La nouvelle icône n’a pas pu être enregistrée pour ce dossier. Vérifiez que "
 "Custicon peut y accéder."
 
+#: src/custicon/ui/messages.py:31
 msgid "Custicon could not save its data."
 msgstr "Custicon n’a pas pu enregistrer ses données."
 
+#: src/custicon/ui/messages.py:32
 msgid "This icon set could not be used."
 msgstr "Ce jeu d’icônes n’a pas pu être utilisé."
 
+#: src/custicon/ui/messages.py:37
 msgid "An unexpected error occurred."
 msgstr "Une erreur inattendue s’est produite."
 
+#: src/custicon/ui/messages.py:42
 msgid "Folder not found"
 msgstr "Dossier introuvable"
 
+#: src/custicon/ui/messages.py:43
 msgid "Icon changed outside Custicon"
 msgstr "Icône modifiée en dehors de Custicon"
 
+#: src/custicon/ui/messages.py:44
 msgid "Icon file missing"
 msgstr "Fichier d’icône manquant"
 
+#: src/custicon/ui/messages.py:45
 msgid "Metadata unreadable"
 msgstr "Métadonnées illisibles"
 
+#: src/custicon/ui/messages.py:51
 msgid "This folder no longer exists."
 msgstr "Ce dossier n’existe plus."
 
+#: src/custicon/ui/messages.py:52
 msgid "This icon was replaced outside Custicon: Custicon no longer touches it."
 msgstr ""
 "Cette icône a été remplacée en dehors de Custicon : Custicon n’y touche plus."
 
+#: src/custicon/ui/messages.py:53
 msgid "The icon file of this folder is missing."
 msgstr "Le fichier d’icône de ce dossier est manquant."
 
+#: src/custicon/ui/messages.py:54
 msgid "The metadata of this folder cannot be read."
 msgstr "Les métadonnées de ce dossier ne peuvent pas être lues."
 
+#: src/custicon/ui/messages.py:60
 msgid "Take Back the Custicon Icon"
 msgstr "Reprendre l’icône Custicon"
 
+#: src/custicon/ui/messages.py:61
 msgid "Regenerate the Icon"
 msgstr "Régénérer l’icône"
 
+#: src/custicon/ui/messages.py:62
 msgid "Find the Folder…"
 msgstr "Retrouver le dossier…"
 
+#: src/custicon/ui/messages.py:70
 #, python-format
 msgid "%d icon removed"
 msgid_plural "%d icons removed"
 msgstr[0] "%d icône retirée"
 msgstr[1] "%d icônes retirées"
 
+#: src/custicon/ui/messages.py:73
 #, python-format
 msgid "%d icon kept because you changed it outside Custicon"
 msgid_plural "%d icons kept because you changed them outside Custicon"
@@ -265,266 +351,338 @@ msgstr[0] "%d icône conservée car vous l’avez changée en dehors de Custicon
 msgstr[1] ""
 "%d icônes conservées car vous les avez changées en dehors de Custicon"
 
+#: src/custicon/ui/messages.py:76
 #, python-format
 msgid "%d folder not found and forgotten"
 msgid_plural "%d folders not found and forgotten"
 msgstr[0] "%d dossier introuvable et oublié"
 msgstr[1] "%d dossiers introuvables et oubliés"
 
+#: src/custicon/ui/messages.py:79
 #, python-format
 msgid "%d icon could not be removed"
 msgid_plural "%d icons could not be removed"
 msgstr[0] "%d icône n’a pas pu être retirée"
 msgstr[1] "%d icônes n’ont pas pu être retirées"
 
+#: src/custicon/ui/messages.py:85
 #, python-format
 msgid "%d customized folder"
 msgid_plural "%d customized folders"
 msgstr[0] "%d dossier personnalisé"
 msgstr[1] "%d dossiers personnalisés"
 
+#: src/custicon/ui/messages.py:86
 #, python-format
 msgid "%d named style"
 msgid_plural "%d named styles"
 msgstr[0] "%d style nommé"
 msgstr[1] "%d styles nommés"
 
+#: src/custicon/ui/messages.py:87
 #, python-format
 msgid "%d recent or favorite pictogram"
 msgid_plural "%d recent or favorite pictograms"
 msgstr[0] "%d pictogramme récent ou favori"
 msgstr[1] "%d pictogrammes récents ou favoris"
 
+#: src/custicon/ui/messages.py:95
 #, python-format
 msgid "%d icon restored"
 msgid_plural "%d icons restored"
 msgstr[0] "%d icône restaurée"
 msgstr[1] "%d icônes restaurées"
 
+#: src/custicon/ui/messages.py:98
 #, python-format
 msgid "%d folder not found, ignored"
 msgid_plural "%d folders not found, ignored"
 msgstr[0] "%d dossier introuvable, ignoré"
 msgstr[1] "%d dossiers introuvables, ignorés"
 
+#: src/custicon/ui/messages.py:101
 #, python-format
 msgid "%d folder whose icon was changed elsewhere, left as it is"
 msgid_plural "%d folders whose icon was changed elsewhere, left as they are"
 msgstr[0] "%d dossier dont l’icône a été changée ailleurs, laissé tel quel"
 msgstr[1] "%d dossiers dont l’icône a été changée ailleurs, laissés tels quels"
 
+#: src/custicon/ui/messages.py:104
 #, python-format
 msgid "%d icon could not be restored"
 msgid_plural "%d icons could not be restored"
 msgstr[0] "%d icône n’a pas pu être restaurée"
 msgstr[1] "%d icônes n’ont pas pu être restaurées"
 
+#: src/custicon/ui/messages.py:107
 #, python-format
 msgid "%d style added"
 msgid_plural "%d styles added"
 msgstr[0] "%d style ajouté"
 msgstr[1] "%d styles ajoutés"
 
+#: src/custicon/ui/messages.py:110
 #, python-format
 msgid "%d style ignored because it is not valid"
 msgid_plural "%d styles ignored because they are not valid"
 msgstr[0] "%d style ignoré car il n’est pas valide"
 msgstr[1] "%d styles ignorés car ils ne sont pas valides"
 
+#: src/custicon/ui/messages.py:122
 #, python-format
 msgid "%d icon updated"
 msgid_plural "%d icons updated"
 msgstr[0] "%d icône mise à jour"
 msgstr[1] "%d icônes mises à jour"
 
+#: src/custicon/ui/messages.py:125
 #, python-format
 msgid "%d icon already up to date"
 msgid_plural "%d icons already up to date"
 msgstr[0] "%d icône déjà à jour"
 msgstr[1] "%d icônes déjà à jour"
 
+#: src/custicon/ui/messages.py:129
 #, python-format
 msgid "%d folder skipped: icon changed outside Custicon"
 msgid_plural "%d folders skipped: icon changed outside Custicon"
 msgstr[0] "%d dossier ignoré : icône modifiée en dehors de Custicon"
 msgstr[1] "%d dossiers ignorés : icône modifiée en dehors de Custicon"
 
+#: src/custicon/ui/messages.py:134
 #, python-format
 msgid "%d folder not found"
 msgid_plural "%d folders not found"
 msgstr[0] "%d dossier introuvable"
 msgstr[1] "%d dossiers introuvables"
 
+#: src/custicon/ui/messages.py:137
 #, python-format
 msgid "%d folder could not be updated"
 msgid_plural "%d folders could not be updated"
 msgstr[0] "%d dossier n’a pas pu être mis à jour"
 msgstr[1] "%d dossiers n’ont pas pu être mis à jour"
 
+#: src/custicon/ui/palette.py:16
 msgid "Blue"
 msgstr "Bleu"
 
+#: src/custicon/ui/palette.py:17
 msgid "Teal"
 msgstr "Sarcelle"
 
+#: src/custicon/ui/palette.py:18
 msgid "Green"
 msgstr "Vert"
 
+#: src/custicon/ui/palette.py:19
 msgid "Yellow"
 msgstr "Jaune"
 
+#: src/custicon/ui/palette.py:20
 msgid "Orange"
 msgstr "Orange"
 
+#: src/custicon/ui/palette.py:21
 msgid "Red"
 msgstr "Rouge"
 
+#: src/custicon/ui/palette.py:22
 msgid "Pink"
 msgstr "Rose"
 
+#: src/custicon/ui/palette.py:23
 msgid "Purple"
 msgstr "Violet"
 
+#: src/custicon/ui/palette.py:24
 msgid "Slate"
 msgstr "Ardoise"
 
+#: src/custicon/ui/palette.py:190
 msgid "None"
 msgstr "Aucune"
 
+#: src/custicon/ui/palette.py:190
 msgid "Automatic"
 msgstr "Automatique"
 
+#: src/custicon/ui/palette.py:197 src/custicon/ui/palette.py:251
 msgid "System Accent"
 msgstr "Accent du système"
 
+#: src/custicon/ui/palette.py:202 src/custicon/ui/palette.py:203
 msgid "Custom"
 msgstr "Personnalisée"
 
+#: src/custicon/ui/picker.py:21
 msgid "Arrows"
 msgstr "Flèches"
 
+#: src/custicon/ui/picker.py:22
 msgid "Logos"
 msgstr "Logos"
 
+#: src/custicon/ui/picker.py:23
 msgid "Commerce"
 msgstr "Commerce"
 
+#: src/custicon/ui/picker.py:24
 msgid "Communication"
 msgstr "Communication"
 
+#: src/custicon/ui/picker.py:25
 msgid "Design"
 msgstr "Design"
 
+#: src/custicon/ui/picker.py:26
 msgid "Development"
 msgstr "Développement"
 
+#: src/custicon/ui/picker.py:27
 msgid "Editor"
 msgstr "Éditeur"
 
+#: src/custicon/ui/picker.py:28
 msgid "Finance"
 msgstr "Finance"
 
+#: src/custicon/ui/picker.py:29
 msgid "Games"
 msgstr "Jeux"
 
+#: src/custicon/ui/picker.py:30
 msgid "Health"
 msgstr "Santé"
 
+#: src/custicon/ui/picker.py:31
 msgid "Maps"
 msgstr "Cartes"
 
+#: src/custicon/ui/picker.py:32
 msgid "Media"
 msgstr "Médias"
 
+#: src/custicon/ui/picker.py:33
 msgid "Nature"
 msgstr "Nature"
 
+#: src/custicon/ui/picker.py:34
 msgid "Objects"
 msgstr "Objets"
 
+#: src/custicon/ui/picker.py:35
 msgid "Office"
 msgstr "Bureautique"
 
+#: src/custicon/ui/picker.py:36
 msgid "People"
 msgstr "Personnes"
 
-msgid "System"
-msgstr "Système"
-
+#: src/custicon/ui/picker.py:38
 msgid "Weather"
 msgstr "Météo"
 
+#: src/custicon/ui/picker.py:39
 msgid "Smileys"
 msgstr "Visages"
 
+#: src/custicon/ui/picker.py:40
 msgid "Food"
 msgstr "Nourriture"
 
+#: src/custicon/ui/picker.py:41
 msgid "Travel"
 msgstr "Voyages"
 
+#: src/custicon/ui/picker.py:42
 msgid "Activities"
 msgstr "Activités"
 
+#: src/custicon/ui/picker.py:43
 msgid "Symbols"
 msgstr "Symboles"
 
+#: src/custicon/ui/picker.py:44
 msgid "Flags"
 msgstr "Drapeaux"
 
+#: src/custicon/ui/picker.py:50
 msgid "Choose a Pictogram"
 msgstr "Choisir un pictogramme"
 
+#: src/custicon/ui/picker.py:74 src/custicon/ui/sets.py:160
+#: src/custicon/ui/sets.py:215 src/custicon/ui/sets.py:242
+#: src/custicon/ui/window.py:511 src/custicon/ui/window.py:660
+#: src/custicon/ui/window.py:781 src/custicon/ui/window.py:1032
+#: src/custicon/ui/window.py:1108 src/custicon/ui/window.py:1243
+#: src/custicon/ui/window.py:1360
 msgid "Cancel"
 msgstr "Annuler"
 
+#: src/custicon/ui/picker.py:77
 msgid "Choose"
 msgstr "Choisir"
 
+#: src/custicon/ui/picker.py:86
 msgid "Search by name, in English or French (example: camera, musique)"
 msgstr ""
 "Rechercher par nom, en anglais ou en français (exemple : camera, musique)"
 
+#: src/custicon/ui/picker.py:92
 msgid "Icon theme"
 msgstr "Thème d’icônes"
 
+#: src/custicon/ui/picker.py:93
 msgid "Emoji"
 msgstr "Émoji"
 
+#: src/custicon/ui/picker.py:93
 msgid "Brands"
 msgstr "Marques"
 
+#: src/custicon/ui/picker.py:144
 #, python-format
 msgid "Suggestions for “%s”"
 msgstr "Suggestions pour « %s »"
 
+#: src/custicon/ui/picker.py:145
 msgid "Recent"
 msgstr "Récents"
 
+#: src/custicon/ui/picker.py:146
 msgid "Favorites"
 msgstr "Favoris"
 
+#: src/custicon/ui/picker.py:167 src/custicon/ui/picker.py:320
+#: src/custicon/ui/picker.py:360
 msgid "Add to Favorites"
 msgstr "Ajouter aux favoris"
 
+#: src/custicon/ui/picker.py:247
 msgid "All"
 msgstr "Toutes"
 
+#: src/custicon/ui/picker.py:304
 #, python-format
 msgid "%d pictogram found"
 msgid_plural "%d pictograms found"
 msgstr[0] "%d pictogramme trouvé"
 msgstr[1] "%d pictogrammes trouvés"
 
+#: src/custicon/ui/picker.py:304
 msgid "No pictogram found"
 msgstr "Aucun pictogramme trouvé"
 
+#: src/custicon/ui/picker.py:320 src/custicon/ui/picker.py:360
 msgid "Remove from Favorites"
 msgstr "Retirer des favoris"
 
+#: src/custicon/ui/sets.py:24
 msgid "Custom Icon Sets"
 msgstr "Jeux d’icônes personnels"
 
+#: src/custicon/ui/sets.py:39
 msgid ""
 "Add a folder of SVG files. Custicon keeps a copy, so you can move or delete "
 "the original folder afterwards."
@@ -532,9 +690,11 @@ msgstr ""
 "Ajoutez un dossier de fichiers SVG. Custicon en garde une copie : vous "
 "pouvez ensuite déplacer ou supprimer le dossier d’origine."
 
+#: src/custicon/ui/sets.py:48 src/custicon/ui/sets.py:279
 msgid "Add a Set from a Folder…"
 msgstr "Ajouter un jeu depuis un dossier…"
 
+#: src/custicon/ui/sets.py:53
 #, python-format
 msgid ""
 "Up to %(sets)d sets and %(files)d SVG files per set. Removing a set does not "
@@ -543,36 +703,48 @@ msgstr ""
 "Jusqu’à %(sets)d jeux et %(files)d fichiers SVG par jeu. Retirer un jeu ne "
 "change pas les dossiers déjà personnalisés : leurs icônes sont conservées."
 
+#: src/custicon/ui/sets.py:75
 msgid "No custom set yet"
 msgstr "Aucun jeu personnel pour l’instant"
 
+#: src/custicon/ui/sets.py:80
 msgid "Remove Set"
 msgstr "Retirer le jeu"
 
+#: src/custicon/ui/sets.py:94
 #, python-format
 msgid "%d icon"
 msgid_plural "%d icons"
 msgstr[0] "%d icône"
 msgstr[1] "%d icônes"
 
+#: src/custicon/ui/sets.py:98
 msgid "Add Icons…"
 msgstr "Ajouter des icônes…"
 
+#: src/custicon/ui/sets.py:101
 msgid "Search in this set"
 msgstr "Chercher dans ce jeu"
 
+#: src/custicon/ui/sets.py:128
 msgid "Could Not Read the Set"
 msgstr "Impossible de lire le jeu"
 
+#: src/custicon/ui/sets.py:141 src/custicon/ui/sets.py:161
+#: src/custicon/ui/sets.py:216 src/custicon/ui/window.py:1033
+#: src/custicon/ui/window.py:1106
 msgid "Remove"
 msgstr "Retirer"
 
+#: src/custicon/ui/sets.py:148
 msgid "Search to see the other icons"
 msgstr "Cherchez pour voir les autres icônes"
 
+#: src/custicon/ui/sets.py:157
 msgid "Remove This Icon?"
 msgstr "Retirer cette icône ?"
 
+#: src/custicon/ui/sets.py:158
 #, python-format
 msgid ""
 "“%s” is removed from the set. The folders already customized with it keep "
@@ -581,33 +753,40 @@ msgstr ""
 "« %s » est retirée du jeu. Les dossiers déjà personnalisés avec elle gardent "
 "leur icône."
 
+#: src/custicon/ui/sets.py:173 src/custicon/ui/window.py:1127
 msgid "Could Not Remove the Icon"
 msgstr "Impossible de retirer l’icône"
 
+#: src/custicon/ui/sets.py:189
 msgid "Could Not Add the Icons"
 msgstr "Impossible d’ajouter les icônes"
 
+#: src/custicon/ui/sets.py:194 src/custicon/ui/sets.py:290
 #, python-format
 msgid "%(added)d icon added"
 msgid_plural "%(added)d icons added"
 msgstr[0] "%(added)d icône ajoutée"
 msgstr[1] "%(added)d icônes ajoutées"
 
+#: src/custicon/ui/sets.py:196
 #, python-format
 msgid "%(replaced)d replaced"
 msgid_plural "%(replaced)d replaced"
 msgstr[0] "%(replaced)d remplacée"
 msgstr[1] "%(replaced)d remplacées"
 
+#: src/custicon/ui/sets.py:198
 #, python-format
 msgid "%(ignored)d ignored"
 msgid_plural "%(ignored)d ignored"
 msgstr[0] "%(ignored)d ignorée"
 msgstr[1] "%(ignored)d ignorées"
 
+#: src/custicon/ui/sets.py:199
 msgid "Nothing was added."
 msgstr "Rien n’a été ajouté."
 
+#: src/custicon/ui/sets.py:201
 msgid ""
 "The folders that use a replaced icon are marked as outdated: Regenerate "
 "updates them."
@@ -615,13 +794,16 @@ msgstr ""
 "Les dossiers qui utilisent une icône remplacée sont signalés comme périmés : "
 "Régénérer les met à jour."
 
+#: src/custicon/ui/sets.py:202
 #, python-format
 msgid "Icons Added to “%s”"
 msgstr "Icônes ajoutées à « %s »"
 
+#: src/custicon/ui/sets.py:212
 msgid "Remove This Set?"
 msgstr "Retirer ce jeu ?"
 
+#: src/custicon/ui/sets.py:213
 #, python-format
 msgid ""
 "“%s” is removed. The folders already customized with its pictograms keep "
@@ -630,52 +812,70 @@ msgstr ""
 "« %s » est retiré. Les dossiers déjà personnalisés avec ses pictogrammes "
 "gardent leurs icônes."
 
+#: src/custicon/ui/sets.py:228
 msgid "Could Not Remove the Set"
 msgstr "Impossible de retirer le jeu"
 
+#: src/custicon/ui/sets.py:238
 msgid "Name the Set"
 msgstr "Nommer le jeu"
 
+#: src/custicon/ui/sets.py:239
 msgid ""
 "The icons are copied as they are. Make sure you are allowed to use them."
 msgstr ""
 "Les icônes sont copiées telles quelles. Vérifiez que vous avez le droit de "
 "les utiliser."
 
+#: src/custicon/ui/sets.py:243
 msgid "Add"
 msgstr "Ajouter"
 
+#: src/custicon/ui/sets.py:266
 msgid "Adding…"
 msgstr "Ajout en cours…"
 
+#: src/custicon/ui/sets.py:287
 msgid "Could Not Add the Set"
 msgstr "Impossible d’ajouter le jeu"
 
+#: src/custicon/ui/sets.py:292
 #, python-format
 msgid ", %(ignored)d ignored (unreadable, too large or already present)."
 msgstr ", %(ignored)d ignorée(s) (illisibles, trop grosses ou déjà présentes)."
 
+#: src/custicon/ui/sets.py:293
 #, python-format
 msgid "“%s” Is Ready"
 msgstr "« %s » est prêt"
 
+#: src/custicon/ui/window.py:115 src/custicon/ui/window.py:262
+msgid "Add Folder"
+msgstr "Ajouter un dossier"
+
+#: src/custicon/ui/window.py:122
 msgid "Custicon cannot see your home folder"
 msgstr "Custicon ne voit pas votre dossier personnel"
 
+#: src/custicon/ui/window.py:123
 msgid "How to Fix"
 msgstr "Comment faire"
 
+#: src/custicon/ui/window.py:128
 msgid "Some icons no longer match your icon theme or accent color"
 msgstr ""
 "Certaines icônes ne correspondent plus à votre thème d’icônes ou à votre "
 "couleur d’accent"
 
+#: src/custicon/ui/window.py:129
 msgid "Regenerate"
 msgstr "Régénérer"
 
+#: src/custicon/ui/window.py:133
 msgid "Repair…"
 msgstr "Réparer…"
 
+#: src/custicon/ui/window.py:137
 #, python-format
 msgid ""
 "%s cannot show custom folder icons, so the icons made with Custicon will not "
@@ -684,46 +884,68 @@ msgstr ""
 "%s ne peut pas afficher d’icônes de dossier personnalisées : les icônes "
 "créées avec Custicon n’y apparaîtront pas."
 
+#: src/custicon/ui/window.py:201 src/custicon/ui/window.py:328
 msgid "Regenerate All Icons"
 msgstr "Régénérer toutes les icônes"
 
-msgid "Export Styles…"
-msgstr "Exporter les styles…"
-
-msgid "Import Styles…"
-msgstr "Importer des styles…"
-
-msgid "Save Settings…"
-msgstr "Sauvegarder les réglages…"
-
-msgid "Restore Settings…"
-msgstr "Restaurer les réglages…"
-
-msgid "Manage Icon Sets…"
-msgstr "Gérer les jeux d’icônes…"
-
+#: src/custicon/ui/window.py:202
 msgid "Remove All Icons…"
 msgstr "Retirer toutes les icônes…"
 
+#: src/custicon/ui/window.py:203
+msgid "Icons"
+msgstr "Icônes"
+
+#: src/custicon/ui/window.py:205
+msgid "Manage Icon Sets…"
+msgstr "Gérer les jeux d’icônes…"
+
+#: src/custicon/ui/window.py:206
+msgid "Icon Sets"
+msgstr "Jeux d’icônes"
+
+#: src/custicon/ui/window.py:208
+msgid "Export Styles…"
+msgstr "Exporter les styles…"
+
+#: src/custicon/ui/window.py:209
+msgid "Import Styles…"
+msgstr "Importer des styles…"
+
+#: src/custicon/ui/window.py:212
+msgid "Save Settings…"
+msgstr "Sauvegarder les réglages…"
+
+#: src/custicon/ui/window.py:213
+msgid "Restore Settings…"
+msgstr "Restaurer les réglages…"
+
+#: src/custicon/ui/window.py:214
+msgid "Backup"
+msgstr "Sauvegarde"
+
+#: src/custicon/ui/window.py:216
 msgid "Help"
 msgstr "Aide"
 
+#: src/custicon/ui/window.py:217
 #, python-format
 msgid "About %s"
 msgstr "À propos de %s"
 
-msgid "Add Folder"
-msgstr "Ajouter un dossier"
-
-msgid "Choose a folder to customize"
-msgstr "Choisir un dossier à personnaliser"
-
+#: src/custicon/ui/window.py:228
 msgid "Main Menu"
 msgstr "Menu principal"
 
+#: src/custicon/ui/window.py:265
+msgid "Choose a folder to customize"
+msgstr "Choisir un dossier à personnaliser"
+
+#: src/custicon/ui/window.py:275
 msgid "No Customized Folders"
 msgstr "Aucun dossier personnalisé"
 
+#: src/custicon/ui/window.py:276
 msgid ""
 "Choose a folder to add a pictogram to it, like the Documents or Music "
 "folders have. The content of the folder is never modified."
@@ -731,86 +953,111 @@ msgstr ""
 "Choisissez un dossier pour lui ajouter un pictogramme, comme celui des "
 "dossiers Documents ou Musique. Le contenu du dossier n’est jamais modifié."
 
+#: src/custicon/ui/window.py:278
 msgid "Choose a Folder…"
 msgstr "Choisir un dossier…"
 
+#: src/custicon/ui/window.py:298
 msgid "Customized Folders"
 msgstr "Dossiers personnalisés"
 
+#: src/custicon/ui/window.py:302
 msgid "Search folders"
 msgstr "Rechercher des dossiers"
 
+#: src/custicon/ui/window.py:308
 msgid "Search Folders (Ctrl+F)"
 msgstr "Rechercher des dossiers (Ctrl+F)"
 
+#: src/custicon/ui/window.py:309
 msgid "Search Folders"
 msgstr "Rechercher des dossiers"
 
+#: src/custicon/ui/window.py:312 src/custicon/ui/window.py:313
 msgid "Select Several Folders"
 msgstr "Sélectionner plusieurs dossiers"
 
+#: src/custicon/ui/window.py:321
 msgid "No folder matches your search"
 msgstr "Aucun dossier ne correspond à votre recherche"
 
+#: src/custicon/ui/window.py:431
 #, python-format
 msgid "%d folder to check"
 msgid_plural "%d folders to check"
 msgstr[0] "%d dossier à vérifier"
 msgstr[1] "%d dossiers à vérifier"
 
+#: src/custicon/ui/window.py:438
 msgid "Choose SVG Files"
 msgstr "Choisir des fichiers SVG"
 
+#: src/custicon/ui/window.py:440
 msgid "SVG files"
 msgstr "Fichiers SVG"
 
+#: src/custicon/ui/window.py:458
 msgid "Choose a Folder of SVG Files"
 msgstr "Choisir un dossier de fichiers SVG"
 
+#: src/custicon/ui/window.py:468 src/custicon/ui/window.py:809
+#: src/custicon/ui/window.py:919
 msgid "Folder Not Accessible"
 msgstr "Dossier inaccessible"
 
+#: src/custicon/ui/window.py:468
 msgid "Custicon cannot read this folder. Choose a folder on this computer."
 msgstr ""
 "Custicon ne peut pas lire ce dossier. Choisissez un dossier de cet "
 "ordinateur."
 
+#: src/custicon/ui/window.py:476 src/custicon/ui/window.py:559
 msgid "Could Not Read the Saved Data"
 msgstr "Impossible de lire les données enregistrées"
 
+#: src/custicon/ui/window.py:479
 msgid "Nothing needs to be repaired."
 msgstr "Rien à réparer."
 
+#: src/custicon/ui/window.py:483
 msgid "Regenerate the icon"
 msgstr "Régénérer l’icône"
 
+#: src/custicon/ui/window.py:484
 msgid "Take back the Custicon icon (replaces the one you chose)"
 msgstr "Reprendre l’icône Custicon (remplace celle que vous avez choisie)"
 
+#: src/custicon/ui/window.py:485
 msgid "Forget this folder (there is no icon to restore)"
 msgstr "Oublier ce dossier (aucune icône à remettre)"
 
+#: src/custicon/ui/window.py:487
 msgid "Repair Folders"
 msgstr "Réparer des dossiers"
 
+#: src/custicon/ui/window.py:487
 msgid ""
 "Choose what Custicon should do. Nothing is changed until you click Repair."
 msgstr ""
 "Choisissez ce que Custicon doit faire. Rien n’est modifié avant de cliquer "
 "sur Réparer."
 
+#: src/custicon/ui/window.py:512 src/custicon/ui/window.py:520
 msgid "Repair"
 msgstr "Réparer"
 
+#: src/custicon/ui/window.py:520
 #, python-format
 msgid "Repair %d Folder"
 msgid_plural "Repair %d Folders"
 msgstr[0] "Réparer %d dossier"
 msgstr[1] "Réparer %d dossiers"
 
+#: src/custicon/ui/window.py:534
 msgid "Could Not Repair the Folders"
 msgstr "Impossible de réparer les dossiers"
 
+#: src/custicon/ui/window.py:538
 #, python-format
 msgid ""
 "%(repaired)d repaired, %(forgotten)d forgotten, %(failed)d failed. Press F5 "
@@ -819,22 +1066,28 @@ msgstr ""
 "%(repaired)d réparé(s), %(forgotten)d oublié(s), %(failed)d en échec. "
 "Appuyez sur F5 dans %(manager)s pour voir les changements."
 
+#: src/custicon/ui/window.py:544
 msgid "Some Folders Could Not Be Repaired"
 msgstr "Certains dossiers n’ont pas pu être réparés"
 
+#: src/custicon/ui/window.py:660
 msgid "Forget This Folder"
 msgstr "Oublier ce dossier"
 
+#: src/custicon/ui/window.py:708
 #, python-format
 msgid "Live preview with the folder icon of the current theme (%s)."
 msgstr "Aperçu en direct, avec l’icône de dossier du thème actif (%s)."
 
+#: src/custicon/ui/window.py:753
 msgid "Find the Folder"
 msgstr "Retrouver le dossier"
 
+#: src/custicon/ui/window.py:768
 msgid "Could Not Find the Folder"
 msgstr "Impossible de retrouver le dossier"
 
+#: src/custicon/ui/window.py:770
 #, python-format
 msgid ""
 "“%(folder)s” is back in the list. Press F5 in %(manager)s to see its icon."
@@ -842,12 +1095,15 @@ msgstr ""
 "« %(folder)s » est de retour dans la liste. Appuyez sur F5 dans %(manager)s "
 "pour voir son icône."
 
+#: src/custicon/ui/window.py:775
 msgid "There are no customized folders."
 msgstr "Il n’y a aucun dossier personnalisé."
 
+#: src/custicon/ui/window.py:778
 msgid "Remove All Icons?"
 msgstr "Retirer toutes les icônes ?"
 
+#: src/custicon/ui/window.py:779
 msgid ""
 "Every customized folder gets back the icon it had before Custicon. The "
 "content of the folders is not modified."
@@ -855,19 +1111,25 @@ msgstr ""
 "Chaque dossier personnalisé retrouve l’icône qu’il avait avant Custicon. Le "
 "contenu des dossiers n’est pas modifié."
 
+#: src/custicon/ui/window.py:782
 msgid "Remove All"
 msgstr "Tout retirer"
 
+#: src/custicon/ui/window.py:794
 msgid "Could Not Remove the Icons"
 msgstr "Impossible de retirer les icônes"
 
+#: src/custicon/ui/window.py:800 src/custicon/ui/window.py:1060
+#: src/custicon/ui/window.py:1205 src/custicon/ui/window.py:1388
 #, python-format
 msgid "Press F5 in %s to see the changes."
 msgstr "Appuyez sur F5 dans %s pour voir les changements."
 
+#: src/custicon/ui/window.py:801 src/custicon/ui/window.py:1061
 msgid "Icons Removed"
 msgstr "Icônes retirées"
 
+#: src/custicon/ui/window.py:809 src/custicon/ui/window.py:919
 msgid ""
 "Custicon needs the real location of the folder. Choose a folder inside your "
 "home folder."
@@ -875,49 +1137,61 @@ msgstr ""
 "Custicon a besoin de l’emplacement réel du dossier. Choisissez un dossier "
 "situé dans votre dossier personnel."
 
+#: src/custicon/ui/window.py:812 src/custicon/ui/window.py:985
 msgid "Name Not Supported"
 msgstr "Nom non pris en charge"
 
+#: src/custicon/ui/window.py:812 src/custicon/ui/window.py:985
 msgid "This name is not valid UTF-8 text, so Custicon cannot use it."
 msgstr ""
 "Ce nom n’est pas un texte UTF-8 valide : Custicon ne peut pas l’utiliser."
 
+#: src/custicon/ui/window.py:824
 msgid "Not a Folder"
 msgstr "Ce n’est pas un dossier"
 
+#: src/custicon/ui/window.py:824
 msgid "Custicon customizes folders, not files."
 msgstr "Custicon personnalise des dossiers, pas des fichiers."
 
+#: src/custicon/ui/window.py:844
 #, python-format
 msgid "%d item ignored: not a usable folder"
 msgid_plural "%d items ignored: not usable folders"
 msgstr[0] "%d élément ignoré : ce n’est pas un dossier utilisable"
 msgstr[1] "%d éléments ignorés : ce ne sont pas des dossiers utilisables"
 
+#: src/custicon/ui/window.py:904
 msgid "Choose Folders"
 msgstr "Choisir des dossiers"
 
+#: src/custicon/ui/window.py:968
 msgid "SVG and PNG images"
 msgstr "Images SVG et PNG"
 
+#: src/custicon/ui/window.py:973
 msgid "Choose a Pictogram File"
 msgstr "Choisir un fichier de pictogramme"
 
+#: src/custicon/ui/window.py:998
 #, python-format
 msgid "%d folder customized"
 msgid_plural "%d folders customized"
 msgstr[0] "%d dossier personnalisé"
 msgstr[1] "%d dossiers personnalisés"
 
+#: src/custicon/ui/window.py:999
 #, python-format
 msgid "%d folder could not be customized"
 msgid_plural "%d folders could not be customized"
 msgstr[0] "%d dossier n’a pas pu être personnalisé"
 msgstr[1] "%d dossiers n’ont pas pu être personnalisés"
 
+#: src/custicon/ui/window.py:1001
 msgid "Some Icons Could Not Be Applied"
 msgstr "Certaines icônes n’ont pas pu être appliquées"
 
+#: src/custicon/ui/window.py:1003
 #, python-format
 msgid "Icon applied to %(count)d folder. Press F5 in %(manager)s to see it."
 msgid_plural ""
@@ -929,18 +1203,22 @@ msgstr[1] ""
 "Icône appliquée à %(count)d dossiers. Appuyez sur F5 dans %(manager)s pour "
 "la voir."
 
+#: src/custicon/ui/window.py:1003 src/custicon/ui/window.py:1020
 msgid "Got It"
 msgstr "Compris"
 
+#: src/custicon/ui/window.py:1015
 msgid "Could Not Apply the Icon"
 msgstr "Impossible d’appliquer l’icône"
 
+#: src/custicon/ui/window.py:1020
 #, python-format
 msgid "Icon applied to “%(folder)s”. Press F5 in %(manager)s to see it."
 msgstr ""
 "Icône appliquée à « %(folder)s ». Appuyez sur F5 dans %(manager)s pour "
 "l’afficher."
 
+#: src/custicon/ui/window.py:1028
 msgid ""
 "The folders will get back the icon they had before Custicon. Their content "
 "is not modified."
@@ -948,18 +1226,21 @@ msgstr ""
 "Les dossiers retrouveront l’icône qu’ils avaient avant Custicon. Leur "
 "contenu n’est pas modifié."
 
+#: src/custicon/ui/window.py:1030
 #, python-format
 msgid "%d folder without a Custicon icon is left alone."
 msgid_plural "%d folders without a Custicon icon are left alone."
 msgstr[0] "%d dossier sans icône Custicon est laissé tel quel."
 msgstr[1] "%d dossiers sans icône Custicon sont laissés tels quels."
 
+#: src/custicon/ui/window.py:1031
 #, python-format
 msgid "Remove the Icon of %d Folder?"
 msgid_plural "Remove the Icons of %d Folders?"
 msgstr[0] "Retirer l’icône de %d dossier ?"
 msgstr[1] "Retirer les icônes de %d dossiers ?"
 
+#: src/custicon/ui/window.py:1064 src/custicon/ui/window.py:1067
 #, python-format
 msgid "Icon removed from %(count)d folder. Press F5 in %(manager)s to see it."
 msgid_plural ""
@@ -971,12 +1252,16 @@ msgstr[1] ""
 "Icônes retirées de %(count)d dossiers. Appuyez sur F5 dans %(manager)s pour "
 "voir le changement."
 
+#: src/custicon/ui/window.py:1064 src/custicon/ui/window.py:1068
+#: src/custicon/ui/window.py:1137
 msgid "Undo"
 msgstr "Annuler"
 
+#: src/custicon/ui/window.py:1080 src/custicon/ui/window.py:1144
 msgid "Could Not Restore the Icon"
 msgstr "Impossible de rétablir l’icône"
 
+#: src/custicon/ui/window.py:1083
 #, python-format
 msgid "Icon restored on %(count)d folder. Press F5 in %(manager)s to see it."
 msgid_plural ""
@@ -988,22 +1273,27 @@ msgstr[1] ""
 "Icônes rétablies sur %(count)d dossiers. Appuyez sur F5 dans %(manager)s "
 "pour les voir."
 
+#: src/custicon/ui/window.py:1100
 #, python-format
 msgid "Forget “%s”?"
 msgstr "Oublier « %s » ?"
 
+#: src/custicon/ui/window.py:1101
 msgid ""
 "Custicon will stop managing this folder. Its current icon is not changed."
 msgstr ""
 "Custicon cessera de gérer ce dossier. Son icône actuelle n’est pas modifiée."
 
+#: src/custicon/ui/window.py:1102
 msgid "Forget"
 msgstr "Oublier"
 
+#: src/custicon/ui/window.py:1104
 #, python-format
 msgid "Remove the Icon of “%s”?"
 msgstr "Retirer l’icône de « %s » ?"
 
+#: src/custicon/ui/window.py:1105
 msgid ""
 "The folder will get back the icon it had before Custicon. Its content is not "
 "modified."
@@ -1011,134 +1301,172 @@ msgstr ""
 "Le dossier retrouvera l’icône qu’il avait avant Custicon. Son contenu n’est "
 "pas modifié."
 
+#: src/custicon/ui/window.py:1130
 #, python-format
 msgid "“%s” was no longer in the list."
 msgstr "« %s » ne figurait plus dans la liste."
 
+#: src/custicon/ui/window.py:1132
 #, python-format
 msgid "“%s”: the icon you chose outside Custicon was kept."
 msgstr ""
 "« %s » : l’icône que vous avez choisie en dehors de Custicon a été conservée."
 
+#: src/custicon/ui/window.py:1134
 #, python-format
 msgid "“%s” was forgotten."
 msgstr "« %s » a été oublié."
 
+#: src/custicon/ui/window.py:1137
 #, python-format
 msgid "Icon removed from “%(folder)s”. Press F5 in %(manager)s to see it."
 msgstr ""
 "Icône retirée de « %(folder)s ». Appuyez sur F5 dans %(manager)s pour voir "
 "le changement."
 
+#: src/custicon/ui/window.py:1146
 #, python-format
 msgid "Icon restored on “%(folder)s”. Press F5 in %(manager)s to see it."
 msgstr ""
 "Icône rétablie sur « %(folder)s ». Appuyez sur F5 dans %(manager)s pour la "
 "voir."
 
+#: src/custicon/ui/window.py:1158
 msgid "There are no customized folders to regenerate."
 msgstr "Aucun dossier personnalisé à régénérer."
 
+#: src/custicon/ui/window.py:1203
 msgid "Nothing needed to be updated."
 msgstr "Rien n’avait besoin d’être mis à jour."
 
+#: src/custicon/ui/window.py:1206
 msgid "Regeneration Complete"
 msgstr "Régénération terminée"
 
+#: src/custicon/ui/window.py:1207 src/custicon/ui/window.py:1402
+#: src/custicon/ui/window.py:1408
 msgid "Close"
 msgstr "Fermer"
 
+#: src/custicon/ui/window.py:1231
 msgid "Could Not Delete the Style"
 msgstr "Impossible de supprimer le style"
 
+#: src/custicon/ui/window.py:1234
 #, python-format
 msgid "Style “%s” deleted."
 msgstr "Style « %s » supprimé."
 
+#: src/custicon/ui/window.py:1240
 msgid "Style name"
 msgstr "Nom du style"
 
+#: src/custicon/ui/window.py:1241
 msgid "Save Style"
 msgstr "Enregistrer le style"
 
+#: src/custicon/ui/window.py:1241
 msgid "Give a name to the current appearance to reuse it for other folders."
 msgstr ""
 "Donnez un nom à l’apparence actuelle pour la réutiliser sur d’autres "
 "dossiers."
 
+#: src/custicon/ui/window.py:1244
 msgid "Save"
 msgstr "Enregistrer"
 
+#: src/custicon/ui/window.py:1257
 msgid "Could Not Save the Style"
 msgstr "Impossible d’enregistrer le style"
 
+#: src/custicon/ui/window.py:1260
 #, python-format
 msgid "Style “%s” saved."
 msgstr "Style « %s » enregistré."
 
+#: src/custicon/ui/window.py:1264
 msgid "There are no styles to export."
 msgstr "Il n’y a aucun style à exporter."
 
+#: src/custicon/ui/window.py:1266
 msgid "Export Styles"
 msgstr "Exporter les styles"
 
+#: src/custicon/ui/window.py:1276 src/custicon/ui/window.py:1281
 msgid "Could Not Export the Styles"
 msgstr "Impossible d’exporter les styles"
 
+#: src/custicon/ui/window.py:1276 src/custicon/ui/window.py:1320
 msgid "Choose a location on this computer."
 msgstr "Choisissez un emplacement sur cet ordinateur."
 
+#: src/custicon/ui/window.py:1283
 #, python-format
 msgid "%d style exported."
 msgid_plural "%d styles exported."
 msgstr[0] "%d style exporté."
 msgstr[1] "%d styles exportés."
 
+#: src/custicon/ui/window.py:1286
 msgid "Import Styles"
 msgstr "Importer des styles"
 
+#: src/custicon/ui/window.py:1296 src/custicon/ui/window.py:1301
 msgid "Could Not Import the Styles"
 msgstr "Impossible d’importer les styles"
 
+#: src/custicon/ui/window.py:1296 src/custicon/ui/window.py:1344
 msgid "Choose a file on this computer."
 msgstr "Choisissez un fichier sur cet ordinateur."
 
+#: src/custicon/ui/window.py:1305
 #, python-format
 msgid "%(imported)d imported, %(ignored)d ignored because they are not valid"
 msgstr "%(imported)d importé(s), %(ignored)d ignoré(s) car non valides"
 
+#: src/custicon/ui/window.py:1307
 #, python-format
 msgid "%d style imported."
 msgid_plural "%d styles imported."
 msgstr[0] "%d style importé."
 msgstr[1] "%d styles importés."
 
+#: src/custicon/ui/window.py:1310
 msgid "Save Settings"
 msgstr "Sauvegarder les réglages"
 
+#: src/custicon/ui/window.py:1320 src/custicon/ui/window.py:1325
 msgid "Could Not Save the Settings"
 msgstr "Impossible de sauvegarder les réglages"
 
+#: src/custicon/ui/window.py:1329
 msgid "Settings Saved"
 msgstr "Réglages sauvegardés"
 
+#: src/custicon/ui/window.py:1330
 #, python-format
 msgid "The file “%s” was saved."
 msgstr "Le fichier « %s » a été enregistré."
 
+#: src/custicon/ui/window.py:1330
 msgid "The file only holds paths and settings, never images."
 msgstr ""
 "Le fichier ne contient que des chemins et des réglages, jamais d’images."
 
+#: src/custicon/ui/window.py:1334
 msgid "Restore Settings"
 msgstr "Restaurer les réglages"
 
+#: src/custicon/ui/window.py:1344 src/custicon/ui/window.py:1349
+#: src/custicon/ui/window.py:1376
 msgid "Could Not Restore the Settings"
 msgstr "Impossible de restaurer les réglages"
 
+#: src/custicon/ui/window.py:1352
 msgid "Restore the Settings?"
 msgstr "Restaurer les réglages ?"
 
+#: src/custicon/ui/window.py:1354
 #, python-format
 msgid ""
 "The icon of %d folder will be regenerated with the settings of the file. "
@@ -1157,18 +1485,23 @@ msgstr[1] ""
 "Les dossiers qui n’existent plus sont ignorés. Vos styles actuels sont "
 "conservés et complétés."
 
+#: src/custicon/ui/window.py:1361
 msgid "Restore"
 msgstr "Restaurer"
 
+#: src/custicon/ui/window.py:1389
 msgid "Restoration Finished"
 msgstr "Restauration terminée"
 
+#: src/custicon/ui/window.py:1389
 msgid "The file contained nothing to restore."
 msgstr "Le fichier ne contenait rien à restaurer."
 
+#: src/custicon/ui/window.py:1393
 msgid "Allow Access to Your Home Folder"
 msgstr "Autoriser l’accès à votre dossier personnel"
 
+#: src/custicon/ui/window.py:1395
 msgid ""
 "Custicon needs to see the real location of your folders. Custicon never "
 "modifies the content of a folder.\n"
@@ -1185,18 +1518,23 @@ msgstr ""
 "puis relancez Custicon. Elle convient aussi à une installation pour tous les "
 "utilisateurs :"
 
+#: data/io.github.gor3pig.Custicon.desktop.in:3
 msgid "Custicon"
 msgstr "Custicon"
 
+#: data/io.github.gor3pig.Custicon.desktop.in:4
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:8
 msgid "Customize folder icons in your desktop environment"
 msgstr "Personnalisez les icônes de dossier dans votre environnement de bureau"
 
+#: data/io.github.gor3pig.Custicon.desktop.in:10
 msgid ""
 "folder;icon;customize;pictogram;nautilus;nemo;caja;dolphin;file manager;"
 msgstr ""
 "dossier;icône;personnaliser;pictogramme;nautilus;nemo;caja;dolphin;gestionnaire "
 "de fichiers;"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:10
 msgid ""
 "Custicon adds a pictogram to the icon of a folder, like the Documents or "
 "Music folders have. The pictogram is placed on the real folder icon of your "
@@ -1206,6 +1544,7 @@ msgstr ""
 "dossiers Documents ou Musique. Le pictogramme est posé sur la vraie icône de "
 "dossier de votre thème d’icônes actuel : le résultat suit donc votre thème."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:16
 msgid ""
 "Choose among thousands of pictograms: your icon theme, Phosphor, emoji and "
 "brand logos, your own SVG or PNG file, or a few letters"
@@ -1214,6 +1553,7 @@ msgstr ""
 "Phosphor, des émojis et des logos de marques, votre propre fichier SVG ou "
 "PNG, ou quelques lettres"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:17
 msgid ""
 "Get suggestions from the name of the folder, and find your recent and "
 "favorite pictograms"
@@ -1221,6 +1561,7 @@ msgstr ""
 "Obtenez des suggestions à partir du nom du dossier et retrouvez vos "
 "pictogrammes récents et favoris"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:18
 msgid ""
 "Pick colors from a palette, drag the pictogram on the preview and scroll to "
 "resize it"
@@ -1228,13 +1569,17 @@ msgstr ""
 "Choisissez les couleurs dans une palette, faites glisser le pictogramme sur "
 "l’aperçu et utilisez la molette pour le redimensionner"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:19
 msgid "Tint the folder itself, or follow the accent color of your system"
 msgstr ""
 "Teintez le dossier lui-même, ou suivez la couleur d’accent de votre système"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:20
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:62
 msgid "Customize or restore several folders at once"
 msgstr "Personnalisez ou restaurez plusieurs dossiers à la fois"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:21
 msgid ""
 "Add a small colored badge with its own pictogram in a corner of the folder, "
 "with or without a central pictogram"
@@ -1242,6 +1587,7 @@ msgstr ""
 "Ajoutez une petite pastille de couleur avec son propre pictogramme dans un "
 "coin du dossier, avec ou sans pictogramme central"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:22
 msgid ""
 "Use your own SVG icons as a set in the picker, and repair the folders that "
 "need a check in one dialog"
@@ -1249,12 +1595,14 @@ msgstr ""
 "Utilisez vos propres icônes SVG comme un jeu dans le sélecteur, et réparez "
 "en une fois les dossiers à vérifier"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:23
 msgid ""
 "Save named styles, and regenerate every icon after a change of icon theme"
 msgstr ""
 "Enregistrez des styles nommés et régénérez toutes les icônes après un "
 "changement de thème d’icônes"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:24
 msgid ""
 "Save all your settings in one file and restore them later, for example on a "
 "new computer"
@@ -1262,11 +1610,14 @@ msgstr ""
 "Sauvegardez tous vos réglages dans un seul fichier et restaurez-les plus "
 "tard, par exemple sur un nouvel ordinateur"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:25
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:234
 msgid "Remove an icon at any time: the folder gets back the icon it had before"
 msgstr ""
 "Retirez une icône à tout moment : le dossier retrouve l’icône qu’il avait "
 "avant"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:27
 msgid ""
 "Custicon works with the GNOME, Cinnamon, MATE, KDE Plasma and LXQt desktop "
 "environments. Xfce, LXDE and COSMIC cannot show custom folder icons."
@@ -1275,6 +1626,7 @@ msgstr ""
 "KDE Plasma et LXQt. Xfce, LXDE et COSMIC ne peuvent pas afficher d’icônes de "
 "dossier personnalisées."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:31
 msgid ""
 "Custicon needs access to your home folder to know where your folders are, "
 "and it has no access to the network. It never changes the content of your "
@@ -1287,55 +1639,102 @@ msgstr ""
 "petit fichier caché .directory placé dans le dossier, que Custicon supprime "
 "quand vous retirez l’icône."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:42
 msgid "Choose a pictogram, a color and a position, with a live preview"
 msgstr ""
 "Choisissez un pictogramme, une couleur et une position, avec un aperçu en "
 "direct"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:47
 msgid "Thousands of pictograms: icon theme, Phosphor, emoji and brand logos"
 msgstr ""
 "Des milliers de pictogrammes : thème d’icônes, Phosphor, émojis et logos de "
 "marques"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:52
 msgid "Tint the folder and keep its shading"
 msgstr "Teintez le dossier en conservant ses ombres"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:57
 msgid "A small colored badge in a corner of the folder"
 msgstr "Une petite pastille de couleur dans un coin du dossier"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:67
 msgid "Follow every customized folder and find the ones that moved"
 msgstr ""
 "Suivez chaque dossier personnalisé et retrouvez ceux qui ont été déplacés"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:72
 msgid "folder"
 msgstr "dossier"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:73
 msgid "icon"
 msgstr "icône"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:74
 msgid "customize"
 msgstr "personnaliser"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:75
 msgid "pictogram"
 msgstr "pictogramme"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:76
 msgid "emoji"
 msgstr "émoji"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:77
 msgid "color"
 msgstr "couleur"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:78
 msgid "Nautilus"
 msgstr "Nautilus"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:79
 msgid "Dolphin"
 msgstr "Dolphin"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:116
+msgid ""
+"A light, dark or system theme, typed values for the sliders, a clearer menu, "
+"and an editor that adapts to the window."
+msgstr "Un thème clair, sombre ou du système, des valeurs saisies à la main pour les curseurs, un menu plus clair et un éditeur qui s’adapte à la fenêtre."
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:118
+msgid ""
+"Choose System, Light or Dark with three round swatches at the top of the "
+"main menu: the choice is kept from one launch to the next"
+msgstr "Choisissez Système, Clair ou Sombre avec trois pastilles rondes en haut du menu principal : le choix est conservé d’un lancement à l’autre"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:119
+msgid ""
+"Type a value in the field next to each slider: size, position and badge size"
+msgstr "Saisissez une valeur dans le champ à côté de chaque curseur : taille, position et taille de la pastille"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:120
+msgid ""
+"The main menu is organized in sections: icons, icon sets, styles and backup"
+msgstr "Le menu principal est organisé en sections : icônes, jeux d’icônes, styles et sauvegarde"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:121
+msgid "The custom icon sets dialog is larger"
+msgstr "La boîte des jeux d’icônes personnels est plus grande"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:122
+msgid ""
+"The editor adapts to narrow and wide windows: the buttons at the bottom wrap "
+"instead of overflowing, and the preview is drawn larger when there is room"
+msgstr "L’éditeur s’adapte aux fenêtres étroites et larges : les boutons du bas passent à la ligne au lieu de déborder, et l’aperçu est dessiné plus grand quand il y a de la place"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:128
 msgid "Your own icon sets, a repair dialog, and icons on symbolic links."
 msgstr ""
 "Vos propres jeux d’icônes, une boîte pour tout réparer, et des icônes sur "
 "les liens symboliques."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:130
 msgid ""
 "Add a folder of SVG files as a set of your own, then add or remove icons one "
 "by one: it appears in the picker and keeps working even if you remove the set"
@@ -1344,6 +1743,7 @@ msgstr ""
 "retirez des icônes une à une : il apparaît dans le sélecteur et continue de "
 "fonctionner même si vous retirez le jeu"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:131
 msgid ""
 "A bar tells you how many folders need a check, and one dialog repairs them, "
 "only the way you choose"
@@ -1351,6 +1751,7 @@ msgstr ""
 "Un bandeau indique combien de dossiers sont à vérifier, et une seule boîte "
 "les répare, uniquement comme vous l’avez choisi"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:132
 msgid ""
 "A symbolic link to a folder, on your desktop for example, can have its own "
 "icon with GNOME, Cinnamon and MATE"
@@ -1358,11 +1759,13 @@ msgstr ""
 "Un lien symbolique vers un dossier, sur votre bureau par exemple, peut avoir "
 "sa propre icône avec GNOME, Cinnamon et MATE"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:133
 msgid "Safer handling of damaged data and of unusual text in saved settings"
 msgstr ""
 "Meilleure tolérance aux données abîmées et aux textes inhabituels dans les "
 "réglages enregistrés"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:139
 msgid ""
 "A corner badge can now be put alone on a folder, and the texts speak of your "
 "desktop environment."
@@ -1370,12 +1773,14 @@ msgstr ""
 "Une pastille de coin peut maintenant être posée seule sur un dossier, et les "
 "textes parlent de votre environnement de bureau."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:141
 msgid ""
 "Remove the central pictogram to keep only the corner badge on the folder icon"
 msgstr ""
 "Retirez le pictogramme central pour ne garder que la pastille de coin sur "
 "l’icône du dossier"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:142
 msgid ""
 "The About dialog, the store entry and the website now name the desktop "
 "environments instead of one file manager"
@@ -1383,6 +1788,7 @@ msgstr ""
 "La fenêtre À propos, la fiche de l’application et le site citent les "
 "environnements de bureau plutôt qu’un seul gestionnaire de fichiers"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:148
 msgid ""
 "Custicon now works with KDE Plasma and other desktops, and can remove "
 "several icons at once."
@@ -1390,6 +1796,7 @@ msgstr ""
 "Custicon fonctionne désormais avec KDE Plasma et d’autres bureaux, et peut "
 "retirer plusieurs icônes d’un coup."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:150
 msgid ""
 "KDE Plasma (Dolphin) and LXQt (PCManFM-Qt) are supported, in addition to "
 "GNOME, Cinnamon and MATE: the right method is chosen automatically"
@@ -1397,6 +1804,7 @@ msgstr ""
 "KDE Plasma (Dolphin) et LXQt (PCManFM-Qt) sont pris en charge, en plus de "
 "GNOME, Cinnamon et MATE : la bonne méthode est choisie automatiquement"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:151
 msgid ""
 "With Dolphin and PCManFM-Qt the icon is kept in a small hidden .directory "
 "file inside the folder, which is removed when you remove the icon"
@@ -1404,6 +1812,7 @@ msgstr ""
 "Avec Dolphin et PCManFM-Qt, l’icône est conservée dans un petit fichier "
 "caché .directory placé dans le dossier, supprimé quand vous retirez l’icône"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:152
 msgid ""
 "A banner tells you when your file manager (Thunar, PCManFM, COSMIC Files) "
 "cannot show custom folder icons"
@@ -1412,6 +1821,7 @@ msgstr ""
 "PCManFM, COSMIC Files) ne peut pas afficher d’icônes de dossier "
 "personnalisées"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:153
 msgid ""
 "Remove the icons of several folders in one step, with a confirmation and an "
 "Undo for the whole batch"
@@ -1419,11 +1829,13 @@ msgstr ""
 "Retirez les icônes de plusieurs dossiers en une seule étape, avec une "
 "confirmation et un bouton Annuler pour tout le lot"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:154
 msgid "The texts now speak of your file manager instead of Nautilus only"
 msgstr ""
 "Les textes parlent désormais de votre gestionnaire de fichiers, et plus "
 "seulement de Nautilus"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:155
 msgid ""
 "A corner badge: a small colored disc with its own pictogram next to the "
 "central one"
@@ -1431,10 +1843,12 @@ msgstr ""
 "Une pastille de coin : un petit rond de couleur avec son propre pictogramme, "
 "à côté du pictogramme central"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:156
 msgid "Save all your settings in one file and restore them later"
 msgstr ""
 "Sauvegardez tous vos réglages dans un seul fichier et restaurez-les plus tard"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:157
 msgid ""
 "A complete page in the app store, with screenshots, keywords and categories "
 "for every desktop"
@@ -1442,12 +1856,14 @@ msgstr ""
 "Une fiche complète dans la logithèque, avec captures d’écran, mots-clés et "
 "catégories pour tous les bureaux"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:163
 msgid ""
 "Custicon now works on openSUSE Tumbleweed without changing its permissions."
 msgstr ""
 "Custicon fonctionne désormais sur openSUSE Tumbleweed sans modifier ses "
 "permissions."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:165
 msgid ""
 "Access to the home folder is now read and write: the read-only form did not "
 "work on every system, and Custicon had to be allowed more access by hand"
@@ -1456,6 +1872,7 @@ msgstr ""
 "en lecture seule ne fonctionnait pas partout, et il fallait accorder plus "
 "d’accès à Custicon à la main"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:166
 msgid ""
 "Custicon still never writes in your folders: the icon is saved by the GVfs "
 "service of your session"
@@ -1463,6 +1880,7 @@ msgstr ""
 "Custicon n’écrit toujours jamais dans vos dossiers : l’icône est enregistrée "
 "par le service GVfs de votre session"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:167
 msgid ""
 "The custom color is now a round rainbow swatch that shows the chosen color "
 "in its center"
@@ -1470,12 +1888,14 @@ msgstr ""
 "La couleur personnalisée est désormais une pastille ronde arc-en-ciel qui "
 "affiche en son centre la couleur choisie"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:168
 msgid ""
 "The help and the documentation describe the permissions as they really are"
 msgstr ""
 "L’aide et la documentation décrivent les permissions telles qu’elles sont "
 "réellement"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:174
 msgid ""
 "A faster interface, readable in dark mode, and a window that remembers its "
 "size."
@@ -1483,6 +1903,7 @@ msgstr ""
 "Une interface plus rapide, lisible en mode sombre, et une fenêtre qui "
 "retient sa taille."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:176
 msgid ""
 "Custicon now asks for GPU acceleration by default, so the interface is drawn "
 "by your graphics card"
@@ -1490,6 +1911,7 @@ msgstr ""
 "Custicon demande désormais l’accélération GPU par défaut : l’interface est "
 "dessinée par votre carte graphique"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:177
 msgid ""
 "The bundled pictograms (Phosphor, emoji, logos) follow the text color and "
 "are readable in the dark style"
@@ -1497,6 +1919,7 @@ msgstr ""
 "Les pictogrammes fournis (Phosphor, émoji, logos) suivent la couleur du "
 "texte et sont lisibles en mode sombre"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:178
 msgid ""
 "The folder list and the picker are lighter: regaining focus and switching "
 "sets are quicker"
@@ -1504,6 +1927,7 @@ msgstr ""
 "La liste des dossiers et le sélecteur sont plus légers : la reprise du focus "
 "et le changement de jeu sont plus rapides"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:179
 msgid ""
 "The main preview is smaller, and the window opens at a size that shows "
 "everything, then remembers its size and whether it was maximized"
@@ -1511,6 +1935,7 @@ msgstr ""
 "L’aperçu principal est plus petit, et la fenêtre s’ouvre à une taille où "
 "tout est visible, puis retient sa taille et son état maximisé"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:180
 msgid ""
 "The help explains how to restore a permission with Flatseal or for an "
 "installation for all users"
@@ -1518,11 +1943,13 @@ msgstr ""
 "L’aide explique comment rétablir une permission avec Flatseal ou pour une "
 "installation pour tous les utilisateurs"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:186
 msgid "Many more pictograms, a roomier editor and several folders at once."
 msgstr ""
 "Beaucoup plus de pictogrammes, un éditeur plus à l’aise et plusieurs "
 "dossiers à la fois."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:188
 msgid ""
 "The whole Phosphor set (1,500 pictograms), plus about 1,600 monochrome emoji "
 "and 3,400 brand logos, found by name in English or French"
@@ -1531,6 +1958,7 @@ msgstr ""
 "monochromes et 3 400 logos de marques, trouvés par leur nom en français ou "
 "en anglais"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:189
 msgid ""
 "Suggestions that follow the name of the folder, and your recent and favorite "
 "pictograms"
@@ -1538,6 +1966,7 @@ msgstr ""
 "Des suggestions selon le nom du dossier, et vos pictogrammes récents et "
 "favoris"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:190
 msgid ""
 "A new editor in two columns that needs no scrolling: choose colors from a "
 "palette, drag the pictogram on the preview and scroll to resize it"
@@ -1546,6 +1975,7 @@ msgstr ""
 "couleurs dans une palette, faites glisser le pictogramme sur l’aperçu et "
 "utilisez la molette pour le redimensionner"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:191
 msgid ""
 "Customize several folders at once, from the folder chooser, by dropping "
 "them, or by ticking them in the list"
@@ -1553,6 +1983,7 @@ msgstr ""
 "Personnalisez plusieurs dossiers à la fois, depuis le sélecteur de dossiers, "
 "en les déposant, ou en les cochant dans la liste"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:192
 msgid ""
 "The README is simpler, and the website now has a slideshow and follows the "
 "language of your browser"
@@ -1560,10 +1991,12 @@ msgstr ""
 "Le README est plus simple, et le site web a désormais un diaporama et suit "
 "la langue de votre navigateur"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:198
 msgid "More pictograms, a tinted folder and a complete About dialog."
 msgstr ""
 "Plus de pictogrammes, un dossier teinté et une boîte « À propos » complète."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:200
 msgid ""
 "Choose a pictogram from the new Phosphor set, bundled with Custicon, as well "
 "as from your icon theme"
@@ -1571,6 +2004,7 @@ msgstr ""
 "Choisir un pictogramme dans le nouveau jeu Phosphor, fourni avec Custicon, "
 "comme dans votre thème d’icônes"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:201
 msgid ""
 "Tint the folder itself: no tint, the accent color of your system, or a color "
 "of your own"
@@ -1578,9 +2012,11 @@ msgstr ""
 "Teinter le dossier lui-même : aucune teinte, la couleur d’accent de votre "
 "système, ou une couleur de votre choix"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:202
 msgid "The automatic color of the pictogram follows the tinted folder"
 msgstr "La couleur automatique du pictogramme suit le dossier teinté"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:203
 msgid ""
 "A complete About dialog with the release notes, and a Help entry (F1) that "
 "opens the guide in your language"
@@ -1588,19 +2024,23 @@ msgstr ""
 "Une boîte « À propos » complète avec les notes de version, et une entrée "
 "« Aide » (F1) qui ouvre le guide dans votre langue"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:204
 msgid ""
 "Custicon detects more reliably when access to the home folder is missing"
 msgstr ""
 "Custicon détecte plus fiablement l’absence d’accès au dossier personnel"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:205
 msgid "The README and the user guide are available in English and French"
 msgstr ""
 "Le README et le guide d’utilisation sont disponibles en anglais et en "
 "français"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:211
 msgid "New ways to customize and to manage folders."
 msgstr "De nouvelles façons de personnaliser et de gérer les dossiers."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:213
 msgid ""
 "Choose the color of the pictogram: automatic, the accent color of your "
 "system, or your own"
@@ -1608,14 +2048,17 @@ msgstr ""
 "Choisissez la couleur du pictogramme : automatique, couleur d’accent de "
 "votre système, ou la vôtre"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:214
 msgid "Use letters or symbols as a pictogram"
 msgstr "Utilisez des lettres ou des symboles comme pictogramme"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:215
 msgid "Save the appearance as named styles, and export or import them"
 msgstr ""
 "Enregistrez l’apparence sous forme de styles nommés, et exportez-les ou "
 "importez-les"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:216
 msgid ""
 "The appearance you applied is proposed again for the next folders you add, "
 "and can still be changed"
@@ -1623,6 +2066,7 @@ msgstr ""
 "L’apparence appliquée est proposée de nouveau pour les prochains dossiers "
 "ajoutés, et reste modifiable"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:217
 msgid ""
 "Open a folder in Custicon from Nautilus, with a drag and drop, or from the "
 "command line"
@@ -1630,11 +2074,13 @@ msgstr ""
 "Ouvrez un dossier dans Custicon depuis Nautilus, par glisser-déposer ou en "
 "ligne de commande"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:218
 msgid "Search pictograms in French, and search your customized folders"
 msgstr ""
 "Cherchez les pictogrammes en français, et cherchez dans vos dossiers "
 "personnalisés"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:219
 msgid ""
 "Find a folder that was moved or renamed, undo a removal, and remove all "
 "icons at once"
@@ -1642,6 +2088,7 @@ msgstr ""
 "Retrouvez un dossier déplacé ou renommé, annulez un retrait, et retirez "
 "toutes les icônes d’un coup"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:220
 msgid ""
 "A banner offers to regenerate the icons when the icon theme or the accent "
 "color changed"
@@ -1649,29 +2096,35 @@ msgstr ""
 "Un bandeau propose de régénérer les icônes quand le thème d’icônes ou la "
 "couleur d’accent a changé"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:221
 msgid "Finer sliders and a more compact list of folders"
 msgstr "Des curseurs plus fins et une liste de dossiers plus compacte"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:222
 msgid ""
 "Custicon explains how to allow access to the home folder when it is missing"
 msgstr ""
 "Custicon explique comment autoriser l’accès au dossier personnel lorsqu’il "
 "manque"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:228
 msgid "The first stable version of Custicon."
 msgstr "La première version stable de Custicon."
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:230
 msgid "Put a pictogram on the real folder icon of your current icon theme"
 msgstr ""
 "Posez un pictogramme sur la vraie icône de dossier de votre thème d’icônes "
 "actuel"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:231
 msgid ""
 "Choose a pictogram from your icon theme, or use your own SVG or PNG file"
 msgstr ""
 "Choisissez un pictogramme dans votre thème d’icônes, ou utilisez votre "
 "propre fichier SVG ou PNG"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:232
 msgid ""
 "Let the color be chosen automatically, or set the color, the size and the "
 "position yourself"
@@ -1679,11 +2132,14 @@ msgstr ""
 "Laissez la couleur se choisir automatiquement, ou réglez vous-même la "
 "couleur, la taille et la position"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:233
 msgid "See the result live before applying it"
 msgstr "Voyez le résultat en direct avant de l’appliquer"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:235
 msgid "Regenerate every icon after a change of icon theme"
 msgstr "Régénérez toutes les icônes après un changement de thème d’icônes"
 
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:236
 msgid "The content of your folders is never modified"
 msgstr "Le contenu de vos dossiers n’est jamais modifié"

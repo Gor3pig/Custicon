@@ -1,5 +1,6 @@
 src/custicon/app.py
 src/custicon/ui/about.py
+src/custicon/ui/appearance.py
 src/custicon/ui/editor.py
 src/custicon/ui/filemanager.py
 src/custicon/ui/format.py

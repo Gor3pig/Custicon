@@ -14,10 +14,12 @@ from ..service import MAX_OFFSET, MAX_SIZE, MIN_SIZE
 from ..textglyph import MAX_CHARACTERS
 from .draft import DEFAULT_BADGE_GLYPH, Draft
 from .filemanager import manager_name
-from .format import display_path, folder_name, from_percent, percent_text, to_percent
+from .format import display_path, folder_name, from_percent, to_percent
 from .palette import Palette, hex_of, rgba_of
 
 BIG_SIZE = 180
+WIDE_BIG_SIZE = 240
+MIN_WIDTH = 330
 SMALL_SIZES = (64, 48, 32)
 MAX_TEXT_LENGTH = MAX_CHARACTERS
 SLIDER_STEP = 0.5
@@ -27,6 +29,7 @@ OFFSET_STEP = 0.005
 SCROLL_FACTOR = 1.06
 SUGGESTION_SIZE = 22
 NARROW_CONDITION = "max-width: 600sp"
+WIDE_CONDITION = "min-width: 820sp"
 LABEL_WIDTH = 9
 
 
@@ -56,16 +59,18 @@ class Slider:
         self.scale.update_property([Gtk.AccessibleProperty.LABEL], [title])
         for mark in marks:
             self.scale.add_mark(mark, Gtk.PositionType.BOTTOM, None)
-        self.label = Gtk.Label(xalign=1.0, width_chars=7)
-        self.label.add_css_class("dim-label")
-        self.label.add_css_class("numeric")
+        self.entry = Gtk.SpinButton(adjustment=self.adjustment, digits=SLIDER_DIGITS, numeric=True, width_chars=6, valign=Gtk.Align.CENTER)
+        self.entry.add_css_class("numeric")
+        self.entry.update_property([Gtk.AccessibleProperty.LABEL], [title])
+        unit = Gtk.Label(label="%")
+        unit.add_css_class("dim-label")
         self.row.append(self.title)
         self.row.append(self.scale)
-        self.row.append(self.label)
+        self.row.append(self.entry)
+        self.row.append(unit)
 
     def set_value(self, value: float) -> None:
         self.adjustment.set_value(value)
-        self.label.set_text(percent_text(from_percent(value)))
 
     def connect_changed(self, callback) -> None:
         def handler(adjustment):
@@ -74,7 +79,6 @@ class Slider:
             if rounded != value:
                 adjustment.set_value(rounded)
                 return
-            self.label.set_text(percent_text(from_percent(value)))
             callback(value)
 
         self.adjustment.connect("value-changed", handler)
@@ -102,7 +106,7 @@ def card_of(rows: list[Gtk.Widget]) -> Gtk.Widget:
 
 class Editor(Gtk.Box):
     def __init__(self):
-        super().__init__(orientation=Gtk.Orientation.VERTICAL)
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, hexpand=True)
         self.on_change = None
         self.on_apply = None
         self.on_remove = None
@@ -113,6 +117,8 @@ class Editor(Gtk.Box):
         self.on_banner_action = None
         self.on_apply_style = None
         self.on_delete_style = None
+        self.on_preview_size = None
+        self.preview_size = BIG_SIZE
         self.on_save_style = None
         self._draft: Draft | None = None
         self._loading = False
@@ -140,14 +146,31 @@ class Editor(Gtk.Box):
         clamp = Adw.Clamp(maximum_size=960, tightening_threshold=720, child=content)
         scrolled = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
         scrolled.set_child(clamp)
-        breakpoint_bin = Adw.BreakpointBin(width_request=300, height_request=200, vexpand=True)
-        breakpoint_bin.set_child(scrolled)
+        breakpoint_bin = Adw.BreakpointBin(width_request=MIN_WIDTH, height_request=200, vexpand=True)
+        action_bar = self._build_action_bar()
+        body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        body.append(scrolled)
+        body.append(action_bar)
+        breakpoint_bin.set_child(body)
         narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse(NARROW_CONDITION))
         narrow.add_setter(columns, "orientation", Gtk.Orientation.VERTICAL)
+        narrow.add_setter(self.buttons, "orientation", Gtk.Orientation.VERTICAL)
         breakpoint_bin.add_breakpoint(narrow)
+        wide = Adw.Breakpoint.new(Adw.BreakpointCondition.parse(WIDE_CONDITION))
+        wide.connect("apply", lambda *_args: self._set_preview_size(WIDE_BIG_SIZE))
+        wide.connect("unapply", lambda *_args: self._set_preview_size(BIG_SIZE))
+        breakpoint_bin.add_breakpoint(wide)
         self.scrolled = scrolled
+        self.action_bar = action_bar
         self.append(breakpoint_bin)
-        self.append(self._build_action_bar())
+
+    def _set_preview_size(self, size: int) -> None:
+        if size == self.preview_size:
+            return
+        self.preview_size = size
+        self.big.set_size_request(size, size)
+        if self.on_preview_size is not None:
+            self.on_preview_size()
 
     def _build_preview(self) -> Gtk.Widget:
         column = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, valign=Gtk.Align.START)
@@ -155,7 +178,7 @@ class Editor(Gtk.Box):
         card.add_css_class("card")
         stage = Gtk.Box(halign=Gtk.Align.CENTER, margin_top=14, margin_bottom=4, margin_start=14, margin_end=14)
         self.big = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN, can_shrink=False)
-        self.big.set_size_request(BIG_SIZE, BIG_SIZE)
+        self.big.set_size_request(self.preview_size, self.preview_size)
         self.big.set_cursor_from_name("grab")
         self.big.set_tooltip_text(_("Drag the pictogram to move it, scroll to resize it"))
         drag = Gtk.GestureDrag()
@@ -399,21 +422,22 @@ class Editor(Gtk.Box):
         self.hint = hint
         bar.append(hint)
         buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        self.remove_button = Gtk.Button(label=_("Remove Icon"))
+        self.buttons = buttons
+        self.remove_button = Gtk.Button(label=_("Remove Icon"), halign=Gtk.Align.START)
         self.remove_button.add_css_class("destructive-action")
         self.remove_button.add_css_class("flat")
         self.remove_button.connect("clicked", lambda *_: self.on_remove and self.on_remove())
-        spacer = Gtk.Box(hexpand=True)
         self.reset_button = Gtk.Button(label=_("Reset to Defaults"))
         self.reset_button.connect("clicked", self._on_reset_appearance)
         self.apply_button = Gtk.Button(label=_("Apply"))
         self.apply_button.add_css_class("suggested-action")
         self.apply_button.connect("clicked", lambda *_: self.on_apply and self.on_apply())
+        group = Adw.WrapBox(child_spacing=8, line_spacing=8, align=1.0, hexpand=True)
+        group.append(self._build_styles_button())
+        group.append(self.reset_button)
+        group.append(self.apply_button)
         buttons.append(self.remove_button)
-        buttons.append(spacer)
-        buttons.append(self._build_styles_button())
-        buttons.append(self.reset_button)
-        buttons.append(self.apply_button)
+        buttons.append(group)
         bar.append(buttons)
         return bar
 
@@ -661,8 +685,8 @@ class Editor(Gtk.Box):
             return
         origin_x, origin_y = self._drag_origin
         self._apply_direct(
-            offset_x=snapped(origin_x + dx / BIG_SIZE, -MAX_OFFSET, MAX_OFFSET),
-            offset_y=snapped(origin_y + dy / BIG_SIZE, -MAX_OFFSET, MAX_OFFSET),
+            offset_x=snapped(origin_x + dx / self.preview_size, -MAX_OFFSET, MAX_OFFSET),
+            offset_y=snapped(origin_y + dy / self.preview_size, -MAX_OFFSET, MAX_OFFSET),
         )
 
     def _on_drag_end(self, _gesture, _dx, _dy) -> None:

@@ -131,10 +131,12 @@ The right column sets the rendering.
 - **Horizontal** and **Vertical**: the position, from -50% to +50%, from the center of the folder face.
 - **Reset to Defaults** brings back no tint, the automatic color, and the original size and position.
 
-The sliders move in steps of 0.5% (arrow keys; Page Up and Page Down move by 5%).
+The sliders move in steps of 0.5% (arrow keys; Page Up and Page Down move by 5%). You can also type a value in the field
+next to each slider (size, position, badge size): a value outside the allowed range is brought back to the nearest limit.
 
 You can also act directly on the preview: **drag the pictogram** to move it and **scroll the wheel** over it to resize it.
-The sliders follow. On a narrow window, the two columns stack and the editor scrolls.
+The sliders follow. On a narrow window, the two columns stack, the buttons at the bottom wrap onto several lines and the
+editor scrolls. On a wide window, the preview is drawn larger.
 
 ### Named styles
 
@@ -280,6 +282,9 @@ Folders whose icon you changed outside Custicon are skipped.
 Then press F5 in your file manager.
 
 ## Help, About and keyboard shortcuts
+
+At the top of the main menu, three round swatches choose the appearance of Custicon: **System** (the default: Custicon follows
+your desktop), **Light** or **Dark**. The choice is kept from one launch to the next.
 
 The main menu contains **Help** (F1 key), which opens this guide in the language of your desktop (English or French),
 and **About Custicon**. The About dialog shows the version, what is new in this version (**What’s New**),

@@ -12,6 +12,8 @@ REGISTRY_NAME = "registry.json"
 DEFAULTS_NAME = "defaults.json"
 PICKER_NAME = "picker.json"
 WINDOW_NAME = "window.json"
+APPEARANCE_NAME = "appearance.json"
+COLOR_SCHEMES = ("system", "light", "dark")
 MIN_WINDOW_SIZE = 360
 MAX_WINDOW_SIZE = 10000
 MAX_RECENT = 12
@@ -58,6 +60,7 @@ class Store:
         self.defaults_path = self.root / DEFAULTS_NAME
         self.picker_path = self.root / PICKER_NAME
         self.window_path = self.root / WINDOW_NAME
+        self.appearance_path = self.root / APPEARANCE_NAME
         self.styles_path = self.root / STYLES_NAME
 
     def icon_path(self, digest: str) -> Path:
@@ -184,6 +187,19 @@ class Store:
             raise StoreError("unusable window size")
         document = {"width": width, "height": height, "maximized": bool(maximized)}
         self._write_atomic(self.window_path, json.dumps(document, indent=2).encode())
+
+    def load_color_scheme(self) -> str:
+        try:
+            document = json.loads(self.appearance_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, RecursionError):
+            return COLOR_SCHEMES[0]
+        value = document.get("color_scheme") if isinstance(document, dict) else None
+        return value if isinstance(value, str) and value in COLOR_SCHEMES else COLOR_SCHEMES[0]
+
+    def save_color_scheme(self, value: str) -> None:
+        if not isinstance(value, str) or value not in COLOR_SCHEMES:
+            raise StoreError("unknown color scheme")
+        self._write_atomic(self.appearance_path, json.dumps({"color_scheme": value}, indent=2).encode())
 
     def load_styles(self) -> list[dict]:
         try:

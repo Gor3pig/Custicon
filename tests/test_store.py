@@ -313,3 +313,36 @@ class WindowStateStoreTests(WorkspaceTestCase):
         self.store.window_path.mkdir()
         with self.assertRaises(StoreError):
             self.store.save_window(800, 600, False)
+
+
+class ColorSchemeStoreTests(WorkspaceTestCase):
+    def setUp(self):
+        self.root = self.make_workspace() / "data"
+        self.store = Store(self.root)
+
+    def write(self, text: str):
+        self.root.mkdir(parents=True, exist_ok=True)
+        self.store.appearance_path.write_text(text, encoding="utf-8")
+
+    def test_the_system_scheme_is_the_default(self):
+        self.assertEqual(self.store.load_color_scheme(), "system")
+
+    def test_every_scheme_comes_back(self):
+        for name in ("light", "dark", "system"):
+            self.store.save_color_scheme(name)
+            self.assertEqual(self.store.load_color_scheme(), name)
+
+    def test_unreadable_files_fall_back_to_the_system_scheme(self):
+        for text in ("", "{", "[]", "null", '{"color_scheme": 3}', '{"color_scheme": "purple"}', '{"color_scheme": ["dark"]}', "[" * 100000):
+            self.write(text)
+            self.assertEqual(self.store.load_color_scheme(), "system", text[:20])
+
+    def test_an_unknown_scheme_is_refused_and_nothing_is_written(self):
+        for value in ("purple", "", None, 3, "Dark"):
+            with self.assertRaises(StoreError):
+                self.store.save_color_scheme(value)
+        self.assertFalse(self.store.appearance_path.exists())
+
+    def test_the_file_is_named_after_the_appearance(self):
+        self.store.save_color_scheme("dark")
+        self.assertEqual(self.store.appearance_path.name, "appearance.json")
