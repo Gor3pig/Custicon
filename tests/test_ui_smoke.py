@@ -1613,25 +1613,85 @@ class CustomSwatchTests(unittest.TestCase):
         self.swatch.set_rgba(rgba_from_hex("#445566"))
         self.assertEqual(self.draw_swatch(), (0x44, 0x55, 0x66))
 
-    def test_a_click_opens_the_color_dialog_with_the_current_color(self):
-        self.swatch.set_rgba(rgba_from_hex("#445566"))
-        with mock.patch.object(Gtk.ColorDialog, "choose_rgba") as choose:
+    def open_picker(self):
+        from custicon.ui import palette as palette_module
+
+        opened = []
+        with mock.patch.object(palette_module.ColorPickerDialog, "present", lambda dialog, parent=None: opened.append(dialog)):
             self.swatch.emit("clicked")
-        choose.assert_called_once()
-        self.assertEqual(hex_from_rgba(choose.call_args.args[1]), "#445566")
+        self.assertEqual(len(opened), 1)
+        return opened[0]
+
+    def test_a_click_opens_the_color_picker_with_the_current_color(self):
+        self.swatch.set_rgba(rgba_from_hex("#445566"))
+        dialog = self.open_picker()
+        self.assertEqual(dialog.hex, "#445566")
+        self.assertEqual(dialog.entry.get_text(), "#445566")
 
     def test_the_chosen_color_becomes_the_color_of_the_swatch(self):
-        dialog = mock.Mock()
-        dialog.choose_rgba_finish.return_value = rgba_from_hex("#778899")
-        self.swatch._on_chosen(dialog, None)
+        dialog = self.open_picker()
+        dialog.entry.set_text("#778899")
+        dialog.choose_button.emit("clicked")
         self.assertEqual(hex_from_rgba(self.swatch.get_rgba()), "#778899")
 
-    def test_a_cancelled_dialog_changes_nothing(self):
+    def test_a_cancelled_picker_changes_nothing(self):
         self.swatch.set_rgba(rgba_from_hex("#445566"))
-        dialog = mock.Mock()
-        dialog.choose_rgba_finish.side_effect = GLib.Error("dismissed")
-        self.swatch._on_chosen(dialog, None)
+        dialog = self.open_picker()
+        dialog.entry.set_text("#778899")
+        dialog.commit_entry()
         self.assertEqual(hex_from_rgba(self.swatch.get_rgba()), "#445566")
+
+    def test_dragging_in_the_plane_sets_saturation_and_brightness_even_outside_it(self):
+        dialog = self.open_picker()
+        dialog.set_hex("#ff0000")
+        dialog.plane._on_position(0.5, 0.25)
+        self.assertEqual(dialog.hex, "#bf6060")
+        dialog.plane._on_position(3.0, -2.0)
+        self.assertEqual(dialog.hex, "#ff0000")
+        dialog.plane._on_position(-3.0, 9.0)
+        self.assertEqual(dialog.hex, "#000000")
+
+    def test_a_drag_leaving_the_area_reports_positions_kept_inside_it(self):
+        from custicon.ui.colorpicker import DragArea
+
+        positions = []
+        area = DragArea(lambda x, y: positions.append((x, y)), lambda *_args: None)
+        with mock.patch.object(area, "get_width", return_value=200), mock.patch.object(area, "get_height", return_value=100):
+            area._begin(None, 50.0, 25.0)
+            area._update(None, 400.0, -300.0)
+            area._update(None, -400.0, 300.0)
+        self.assertEqual(positions, [(0.25, 0.25), (1.0, 0.0), (0.0, 1.0)])
+
+    def test_dragging_the_hue_bar_changes_only_the_hue(self):
+        dialog = self.open_picker()
+        dialog.set_hex("#ff0000")
+        dialog.hue._on_position(1 / 3, 0.0)
+        self.assertEqual(dialog.hex, "#00ff00")
+        dialog.hue._on_position(2.0, 0.0)
+        self.assertEqual(dialog.hex, "#ff0000")
+
+    def test_arrow_keys_move_the_plane_and_the_hue(self):
+        dialog = self.open_picker()
+        dialog.set_hex("#ff0000")
+        dialog.plane._on_key(-1, 0, False)
+        self.assertEqual(dialog.hex, "#ff0505")
+        dialog.set_hex("#ff0000")
+        dialog.hue._on_key(1, 0, True)
+        self.assertEqual(dialog.hex, "#ff5500")
+
+    def test_an_invalid_code_is_reported_and_keeps_the_color(self):
+        dialog = self.open_picker()
+        dialog.set_hex("#112233")
+        dialog.entry.set_text("#12zz")
+        dialog.commit_entry()
+        self.assertEqual(dialog.hex, "#112233")
+        self.assertTrue(dialog.error.get_visible())
+        dialog.choose_button.emit("clicked")
+        self.assertIsNone(self.swatch.get_rgba())
+        dialog.entry.set_text("abcdef")
+        dialog.commit_entry()
+        self.assertEqual(dialog.hex, "#abcdef")
+        self.assertFalse(dialog.error.get_visible())
 
     def test_the_palette_marks_the_swatch_only_for_a_custom_color(self):
         from custicon.ui.palette import Palette

@@ -2166,3 +2166,27 @@ msgstr "Régénérez toutes les icônes après un changement de thème d’icôn
 #: data/io.github.gor3pig.Custicon.metainfo.xml.in:244
 msgid "The content of your folders is never modified"
 msgstr "Le contenu de vos dossiers n’est jamais modifié"
+
+#: src/custicon/ui/colorpicker.py
+msgid "Custom Color"
+msgstr "Couleur personnalisée"
+
+#: src/custicon/ui/colorpicker.py
+msgid "Saturation and brightness: use the arrow keys"
+msgstr "Saturation et luminosité : utilisez les flèches du clavier"
+
+#: src/custicon/ui/colorpicker.py
+msgid "Previous color and new color"
+msgstr "Ancienne couleur et nouvelle couleur"
+
+#: src/custicon/ui/colorpicker.py
+msgid "Hexadecimal code of the color"
+msgstr "Code hexadécimal de la couleur"
+
+#: src/custicon/ui/colorpicker.py
+msgid "Invalid code: expected #RRGGBB."
+msgstr "Code invalide : attendu #RRGGBB."
+
+#: src/custicon/ui/colorpicker.py
+msgid "Hue"
+msgstr "Teinte"

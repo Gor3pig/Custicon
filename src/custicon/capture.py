@@ -18,12 +18,12 @@ from .service import STATUS_FOLDER_MISSING, STATUS_ICON_CHANGED, RegenerationRep
 from .store import Store
 from .ui.editor import rgba_from_hex
 
-SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setedit", "setpicker", "starterror", "restored", "menu", "menudark")
+SCREENS = ("main", "empty", "picker", "phosphor", "emoji", "brands", "tint", "about", "states", "report", "dark", "narrow", "confirm", "new", "toast", "batch", "choosing", "darkpicker", "custom", "badge", "badgeonly", "list", "repair", "sets", "setedit", "setpicker", "starterror", "restored", "menu", "menudark", "colorpicker", "colorpickerdark")
 SETTLE_MS = 1500
 RETRIES = 6
 DIALOG_DELAY_MS = 600
 DIALOG_SETTLE_MS = 3200
-DIALOG_SCREENS = ("repair", "sets", "setedit", "setpicker", "darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge")
+DIALOG_SCREENS = ("repair", "sets", "setedit", "setpicker", "darkpicker", "picker", "phosphor", "emoji", "brands", "about", "confirm", "report", "restored", "badge", "colorpicker", "colorpickerdark")
 SET_SCREENS = {"setpicker": ("mine-mes-icones", ""), "darkpicker": ("emoji", "chat"), "phosphor": ("phosphor", ""), "emoji": ("emoji", "chat"), "brands": ("brands", "git")}
 WIDE = (1000, 720)
 NARROW = (400, 720)
@@ -122,6 +122,11 @@ def show_badge(window) -> bool:
     return False
 
 
+def show_color_picker(window) -> bool:
+    window.editor.color_palette.custom_button.emit("clicked")
+    return False
+
+
 def make_sample_set(demo) -> None:
     source = demo.root / "icones"
     source.mkdir()
@@ -187,7 +192,7 @@ def arrange(screen: str, window, demo: Demo) -> None:
     size = NARROW if screen == "narrow" else (TALL if screen in ("badge", "badgeonly") else WIDE)
     window.set_default_size(*size)
     Gtk.Settings.get_default().set_property("gtk-enable-animations", False)
-    scheme = Adw.ColorScheme.FORCE_DARK if screen in ("dark", "darkpicker", "menudark") else Adw.ColorScheme.FORCE_LIGHT
+    scheme = Adw.ColorScheme.FORCE_DARK if screen in ("dark", "darkpicker", "menudark", "colorpickerdark") else Adw.ColorScheme.FORCE_LIGHT
     Adw.StyleManager.get_default().set_color_scheme(scheme)
     if screen in ("states", "report"):
         window.reload(select=str(demo.folders["Archives"]))
@@ -217,6 +222,9 @@ def arrange(screen: str, window, demo: Demo) -> None:
         GLib.timeout_add(DIALOG_DELAY_MS, show_custom, window)
     if screen == "about":
         GLib.timeout_add(DIALOG_DELAY_MS, show_about, window)
+    if screen in ("colorpicker", "colorpickerdark"):
+        window.reload(select=str(demo.folders["Projets"]))
+        GLib.timeout_add(DIALOG_DELAY_MS, show_color_picker, window)
     if screen == "badge":
         window.reload(select=str(demo.folders["Projets"]))
         GLib.timeout_add(DIALOG_DELAY_MS, show_badge, window)

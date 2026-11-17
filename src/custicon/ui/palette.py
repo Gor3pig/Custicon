@@ -8,6 +8,7 @@ from gi.repository import Adw, Gdk, GLib, GObject, Gtk
 
 from ..color import is_hex_color
 from ..i18n import _
+from .colorpicker import ColorPickerDialog
 
 SWATCH_SIZE = 24
 DEFAULT_ACCENT = "#3584e4"
@@ -153,16 +154,9 @@ class CustomSwatch(Gtk.Button):
         return self._chosen
 
     def _on_clicked(self, _button) -> None:
-        dialog = Gtk.ColorDialog(with_alpha=False)
+        dialog = ColorPickerDialog(hex_of(self.rgba) if self.rgba is not None else DEFAULT_CUSTOM, lambda value: self.set_rgba(rgba_of(value)))
         root = self.get_root()
-        dialog.choose_rgba(root if isinstance(root, Gtk.Window) else None, self.rgba, None, self._on_chosen)
-
-    def _on_chosen(self, dialog, result) -> None:
-        try:
-            color = dialog.choose_rgba_finish(result)
-        except GLib.Error:
-            return
-        self.set_rgba(color)
+        dialog.present(root if isinstance(root, Gtk.Widget) else None)
 
 
 class CustomChoice:
