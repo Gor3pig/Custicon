@@ -111,6 +111,16 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.8.2" date="2026-11-17">
+      <description>
+        <p>The custom color picker is easier to use.</p>
+        <ul>
+          <li>A larger plane to choose a color freely: dragging keeps working when the pointer leaves the area, and a long press no longer interrupts it</li>
+          <li>A hue bar, a hexadecimal code field, and the previous color shown next to the new one</li>
+          <li>The arrow keys move the choice, and Shift makes bigger steps</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.8.1" date="2026-11-16">
       <description>
         <p>The value fields next to the sliders are simpler.</p>

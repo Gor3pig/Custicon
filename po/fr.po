@@ -2190,3 +2190,27 @@ msgstr "Code invalide : attendu #RRGGBB."
 #: src/custicon/ui/colorpicker.py
 msgid "Hue"
 msgstr "Teinte"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:116
+msgid "The custom color picker is easier to use."
+msgstr "Le sélecteur de couleur personnalisée est plus facile à utiliser."
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:118
+msgid ""
+"A larger plane to choose a color freely: dragging keeps working when the "
+"pointer leaves the area, and a long press no longer interrupts it"
+msgstr ""
+"Un plan plus grand pour choisir librement une couleur : le glisser continue "
+"quand le pointeur sort de la zone, et un appui long ne l’interrompt plus"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:119
+msgid ""
+"A hue bar, a hexadecimal code field, and the previous color shown next to "
+"the new one"
+msgstr ""
+"Une barre de teinte, un champ pour le code hexadécimal, et l’ancienne "
+"couleur affichée à côté de la nouvelle"
+
+#: data/io.github.gor3pig.Custicon.metainfo.xml.in:120
+msgid "The arrow keys move the choice, and Shift makes bigger steps"
+msgstr "Les flèches du clavier déplacent le choix, et Maj fait des pas plus grands"
